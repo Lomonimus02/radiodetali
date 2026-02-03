@@ -5,6 +5,9 @@ import { Package } from "lucide-react";
 import { getCategories } from "@/app/actions";
 import { ProductGridSkeleton } from "../components";
 
+// Отключаем статический пререндеринг (требуется БД)
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Каталог радиодеталей",
   description:

@@ -15,6 +15,9 @@ import {
 import { getCategoryShowcase } from "@/app/actions";
 import { prisma } from "@/lib/prisma";
 
+// Отключаем статический пререндеринг (требуется БД)
+export const dynamic = "force-dynamic";
+
 // Форматирование цены
 function formatPrice(price: number): string {
   return new Intl.NumberFormat("ru-RU", {

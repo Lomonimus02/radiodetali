@@ -20,14 +20,13 @@ function TelegramIcon({ className }: { className?: string }) {
   );
 }
 
-// Популярные запросы с маппингом на категории
 const POPULAR_SEARCHES = [
-  { label: "Конденсаторы КМ", slug: "kondensatory-km" },
-  { label: "Транзисторы", slug: "tranzistory" },
-  { label: "Микросхемы", slug: "mikroshemy" },
-  { label: "Разъемы", slug: "razemy" },
-  { label: "Реле", slug: "rele" },
-  { label: "Резисторы", slug: "rezistory" },
+  "Конденсаторы КМ",
+  "Транзисторы",
+  "Микросхемы",
+  "Разъемы",
+  "Реле",
+  "Резисторы",
 ];
 
 export function Header() {
@@ -127,7 +126,7 @@ export function Header() {
                 <Home className="w-6 h-6 text-white" />
               </div>
               <span className="hidden lg:block font-bold text-xl">
-                ДРАГСОЮЗ
+                Драг Союз
               </span>
             </Link>
 
@@ -174,18 +173,17 @@ export function Header() {
                       <p className="text-xs font-semibold text-[var(--gray-500)] uppercase tracking-wide">Популярные запросы</p>
                     </div>
                     <div className="p-2">
-                      {POPULAR_SEARCHES.map((item) => (
+                      {POPULAR_SEARCHES.map((term) => (
                         <button
-                          key={item.slug}
+                          key={term}
                           type="button"
                           onClick={() => {
-                            router.push(`/catalog/${item.slug}`);
-                            setIsSearchFocused(false);
+                            setSearchQuery(term);
                           }}
                           className="w-full flex items-center gap-3 px-3 py-2 text-[var(--gray-700)] hover:bg-[var(--gray-50)] rounded-md transition-colors text-left"
                         >
                           <Search className="w-4 h-4 text-[var(--gray-400)]" />
-                          <span>{item.label}</span>
+                          <span>{term}</span>
                         </button>
                       ))}
                     </div>
@@ -296,10 +294,10 @@ export function Header() {
             {/* Mobile: Phone + Search + Menu button */}
             <div className="flex items-center lg:hidden">
               {/* Center: Phone icons and number */}
-              <div className="flex items-center gap-1 flex-1 justify-center">
+              <div className="flex items-center gap-1 flex-1 justify-center min-w-0">
                 <a
                   href={PHONE_HREF}
-                  className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors"
+                  className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-white/10 rounded-lg transition-colors"
                   aria-label="Позвонить"
                 >
                   <Phone className="w-5 h-5 text-[var(--accent-400)]" />
@@ -308,20 +306,20 @@ export function Header() {
                   href={TELEGRAM_HREF}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors"
+                  className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-white/10 rounded-lg transition-colors"
                   aria-label="Telegram"
                 >
                   <TelegramIcon className="w-5 h-5 text-[var(--accent-400)]" />
                 </a>
                 <a
                   href={PHONE_HREF}
-                  className="text-base sm:text-lg font-bold text-[var(--accent-400)] hover:text-[var(--accent-300)] transition-colors whitespace-nowrap"
+                  className="text-sm sm:text-base font-bold text-[var(--accent-400)] hover:text-[var(--accent-300)] transition-colors whitespace-nowrap truncate"
                 >
                   {PHONE_NUMBER}
                 </a>
               </div>
               {/* Right: Search and Menu */}
-              <div className="flex items-center gap-1">
+              <div className="flex items-center shrink-0">
                 <button
                   onClick={() => setIsSearchOpen(true)}
                   className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-lg transition-colors"
@@ -390,23 +388,13 @@ export function Header() {
 
           {/* Phone CTA */}
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10 bg-[var(--primary-900)]/80 backdrop-blur">
-            <div className="flex gap-3">
-              <a
-                href={TELEGRAM_HREF}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center w-14 py-4 bg-gradient-to-r from-[var(--accent-500)] to-[var(--accent-600)] hover:from-[var(--accent-600)] hover:to-[var(--accent-700)] rounded-xl font-bold text-white transition-all shadow-lg shadow-amber-500/20"
-              >
-                <TelegramIcon className="w-6 h-6" />
-              </a>
-              <a
-                href={PHONE_HREF}
-                className="flex items-center justify-center gap-3 flex-1 py-4 bg-gradient-to-r from-[var(--accent-500)] to-[var(--accent-600)] hover:from-[var(--accent-600)] hover:to-[var(--accent-700)] rounded-xl font-bold text-lg text-white transition-all shadow-lg shadow-amber-500/20"
-              >
-                <Phone className="w-5 h-5" />
-                {PHONE_NUMBER}
-              </a>
-            </div>
+            <a
+              href={PHONE_HREF}
+              className="flex items-center justify-center gap-3 w-full py-4 bg-gradient-to-r from-[var(--accent-500)] to-[var(--accent-600)] hover:from-[var(--accent-600)] hover:to-[var(--accent-700)] rounded-xl font-bold text-lg text-white transition-all shadow-lg shadow-amber-500/20"
+            >
+              <Phone className="w-5 h-5" />
+              {PHONE_NUMBER}
+            </a>
             <p className="text-center text-white/50 text-sm mt-3">
               Ежедневно с 10:00 до 20:00
             </p>

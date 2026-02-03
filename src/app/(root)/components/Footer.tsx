@@ -27,7 +27,7 @@ export function Footer() {
               <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center shadow-lg shadow-amber-500/20">
                 <Zap className="w-6 h-6 text-white" />
               </div>
-              <span className="font-bold text-xl">Драг Союз</span>
+              <span className="font-bold text-xl">ДРАГСОЮЗ</span>
             </Link>
             <p className="text-white/60 text-sm leading-relaxed mb-4">
               Профессиональная скупка радиодеталей, содержащих драгоценные
@@ -154,7 +154,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-8 pt-6 border-t border-white/10">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-white/40">
-            <p>© 2026 Драг Союз. Все права защищены.</p>
+            <p>© 2026 ДРАГСОЮЗ. Все права защищены.</p>
             <p>Санкт-Петербург</p>
           </div>
         </div>

@@ -3,6 +3,9 @@ import { ProductForm } from "../components/ProductForm";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
+// Отключаем статический пререндеринг (требуется БД)
+export const dynamic = "force-dynamic";
+
 export default async function NewProductPage() {
   const categoriesResult = await getCategories();
 

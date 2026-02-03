@@ -388,13 +388,24 @@ export function Header() {
 
           {/* Phone CTA */}
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10 bg-[var(--primary-900)]/80 backdrop-blur">
-            <a
-              href={PHONE_HREF}
-              className="flex items-center justify-center gap-3 w-full py-4 bg-gradient-to-r from-[var(--accent-500)] to-[var(--accent-600)] hover:from-[var(--accent-600)] hover:to-[var(--accent-700)] rounded-xl font-bold text-lg text-white transition-all shadow-lg shadow-amber-500/20"
-            >
-              <Phone className="w-5 h-5" />
-              {PHONE_NUMBER}
-            </a>
+            <div className="flex gap-3">
+              <a
+                href={TELEGRAM_HREF}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center w-14 py-4 bg-gradient-to-r from-[var(--accent-500)] to-[var(--accent-600)] hover:from-[var(--accent-600)] hover:to-[var(--accent-700)] rounded-xl transition-all shadow-lg shadow-amber-500/20"
+                aria-label="Telegram"
+              >
+                <TelegramIcon className="w-6 h-6 text-white" />
+              </a>
+              <a
+                href={PHONE_HREF}
+                className="flex items-center justify-center gap-3 flex-1 py-4 bg-gradient-to-r from-[var(--accent-500)] to-[var(--accent-600)] hover:from-[var(--accent-600)] hover:to-[var(--accent-700)] rounded-xl font-bold text-lg text-white transition-all shadow-lg shadow-amber-500/20"
+              >
+                <Phone className="w-5 h-5" />
+                {PHONE_NUMBER}
+              </a>
+            </div>
             <p className="text-center text-white/50 text-sm mt-3">
               Ежедневно с 10:00 до 20:00
             </p>

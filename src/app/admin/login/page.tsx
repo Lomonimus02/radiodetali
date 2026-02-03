@@ -24,8 +24,8 @@ export default function AdminLoginPage() {
       const result = await loginAdmin(password);
       
       if (result.success) {
-        router.push("/admin");
-        router.refresh();
+        // Используем window.location для надёжного редиректа с cookies
+        window.location.href = "/admin";
       } else {
         setError(result.error);
       }

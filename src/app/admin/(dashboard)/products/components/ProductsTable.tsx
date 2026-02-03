@@ -36,10 +36,10 @@ export function ProductsTable({ products }: ProductsTableProps) {
 
   const formatMetalContent = (product: ProductWithPrice) => {
     const metals = [];
-    if (product.contentGold > 0) metals.push(`Au: ${product.contentGold}г`);
-    if (product.contentSilver > 0) metals.push(`Ag: ${product.contentSilver}г`);
-    if (product.contentPlatinum > 0) metals.push(`Pt: ${product.contentPlatinum}г`);
-    if (product.contentPalladium > 0) metals.push(`Pd: ${product.contentPalladium}г`);
+    if (product.contentGold > 0) metals.push(`Au: ${product.contentGold}мг`);
+    if (product.contentSilver > 0) metals.push(`Ag: ${product.contentSilver}мг`);
+    if (product.contentPlatinum > 0) metals.push(`Pt: ${product.contentPlatinum}мг`);
+    if (product.contentPalladium > 0) metals.push(`Pd: ${product.contentPalladium}мг`);
     return metals.length > 0 ? metals.join(", ") : "—";
   };
 

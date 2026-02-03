@@ -436,7 +436,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
           {/* Metal content - NEW and USED in two columns */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
             <h2 className="text-lg font-semibold text-slate-800 mb-6">
-              Содержание металлов (граммы)
+              Содержание металлов (мг)
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -486,7 +486,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                           placeholder="0"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">
-                          г
+                          мг
                         </span>
                       </div>
                     </div>
@@ -540,7 +540,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                           placeholder="0"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">
-                          г
+                          мг
                         </span>
                       </div>
                     </div>

@@ -1,36 +1,132 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RadioDetali - Каталог скупки радиодеталей
 
-## Getting Started
+Сайт-каталог для скупки радиодеталей и лома драгметаллов с динамическим расчётом цен на основе биржевых курсов металлов.
 
-First, run the development server:
+## 🏗️ Технологии
+
+- **Framework:** Next.js 14+ (App Router)
+- **Database:** PostgreSQL (Docker)
+- **ORM:** Prisma
+- **UI:** Tailwind CSS, Lucide Icons
+- **Язык:** TypeScript
+
+## 🚀 Быстрый старт
+
+### 1. Установка зависимостей
+
+```bash
+npm install
+```
+
+### 2. Запуск PostgreSQL через Docker
+
+```bash
+docker-compose up -d
+```
+
+Это запустит контейнер PostgreSQL на порту 5432.
+
+### 3. Настройка переменных окружения
+
+Файл `.env` уже создан с настройками по умолчанию. При необходимости отредактируйте:
+
+```env
+DATABASE_URL="postgresql://radiodetali:radiodetali_secret@localhost:5432/radiodetali?schema=public"
+```
+
+### 4. Применение миграций и генерация Prisma Client
+
+```bash
+npm run db:migrate
+```
+
+Или для быстрого прототипирования (без создания файлов миграций):
+
+```bash
+npm run db:push
+npm run db:generate
+```
+
+### 5. Заполнение базы тестовыми данными
+
+```bash
+npm run db:seed
+```
+
+### 6. Запуск приложения
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Приложение будет доступно по адресу: http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📊 Просмотр базы данных
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Для удобного просмотра и редактирования данных используйте Prisma Studio:
 
-## Learn More
+```bash
+npm run db:studio
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 📁 Структура проекта
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+radiodetali/
+├── prisma/
+│   ├── schema.prisma      # Схема базы данных
+│   └── seed.ts            # Скрипт заполнения тестовыми данными
+├── src/
+│   ├── app/               # Next.js App Router
+│   └── lib/
+│       ├── prisma.ts      # Prisma Client singleton
+│       └── price-calculator.ts  # Функции расчёта цен
+├── docker-compose.yml     # Конфигурация Docker для PostgreSQL
+├── .env                   # Переменные окружения (не в git)
+└── .env.example           # Пример переменных окружения
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 💰 Бизнес-логика
 
-## Deploy on Vercel
+### Расчёт цены товара
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Цена товара рассчитывается по формуле:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+Цена = (Содержание_Au × Курс_Au) + (Содержание_Ag × Курс_Ag) + 
+       (Содержание_Pt × Курс_Pt) + (Содержание_Pd × Курс_Pd)
+```
+
+Где:
+- **Au** - Золото
+- **Ag** - Серебро  
+- **Pt** - Платина
+- **Pd** - Палладий
+
+### Фиксированная цена
+
+Для отдельных товаров можно установить фиксированную цену (`isFixedPrice: true`), 
+которая будет использоваться вместо расчётной формулы.
+
+## 🗃️ Модели данных
+
+### MetalRate
+Хранит текущие закупочные курсы металлов (одна активная запись).
+
+### Category
+Древовидная структура категорий с поддержкой вложенности.
+
+### Product
+Товар с содержанием металлов и опциональной фиксированной ценой.
+
+## 📝 Полезные команды
+
+| Команда | Описание |
+|---------|----------|
+| `npm run dev` | Запуск dev-сервера |
+| `npm run db:generate` | Генерация Prisma Client |
+| `npm run db:migrate` | Применение миграций |
+| `npm run db:push` | Push схемы без миграций |
+| `npm run db:seed` | Заполнение тестовыми данными |
+| `npm run db:studio` | Открыть Prisma Studio |
+| `npm run db:reset` | Сброс и пересоздание БД |

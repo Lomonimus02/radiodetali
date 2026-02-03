@@ -1,0 +1,203 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import {
+  Phone,
+  Mail,
+  MapPin,
+  Clock,
+  MessageCircle,
+  Send,
+  ChevronRight,
+} from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Контакты",
+  description:
+    "Свяжитесь с нами для оценки радиодеталей. Телефон, WhatsApp, Telegram, адрес пункта приёма.",
+};
+
+// Контактные данные
+const CONTACTS = {
+  phone: "+7 (900) 123-45-67",
+  phoneRaw: "+79001234567",
+  email: "info@radioskupka.ru",
+  telegram: "@radioskupka",
+  whatsapp: "79001234567",
+  address: "г. Москва, ул. Примерная, д. 123",
+  workingHours: {
+    weekdays: "Пн-Пт: 9:00 - 18:00",
+    saturday: "Сб: 10:00 - 15:00",
+    sunday: "Вс: выходной",
+  },
+};
+
+export default function ContactsPage() {
+  return (
+    <div className="min-h-screen bg-[var(--gray-50)]">
+      {/* Breadcrumbs */}
+      <div className="bg-white border-b border-[var(--gray-200)]">
+        <div className="container mx-auto px-4 py-3">
+          <nav className="flex items-center gap-2 text-sm text-[var(--gray-500)]">
+            <Link href="/" className="hover:text-[var(--primary-600)]">
+              Главная
+            </Link>
+            <ChevronRight className="w-4 h-4" />
+            <span className="text-[var(--gray-900)] font-medium">Контакты</span>
+          </nav>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8 md:py-12">
+        {/* Header */}
+        <div className="text-center mb-10 md:mb-14">
+          <h1 className="text-3xl md:text-4xl font-bold text-[var(--gray-900)] mb-4">
+            Свяжитесь с нами
+          </h1>
+          <p className="text-lg text-[var(--gray-600)] max-w-2xl mx-auto">
+            Мы всегда рады помочь с оценкой ваших радиодеталей. Выберите удобный
+            способ связи.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          {/* Contact Cards */}
+          <div className="space-y-4">
+            {/* Phone */}
+            <a
+              href={`tel:${CONTACTS.phoneRaw}`}
+              className="flex items-center gap-4 p-6 bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--primary-400)] hover:shadow-md transition-all"
+            >
+              <div className="w-14 h-14 bg-[var(--primary-100)] rounded-full flex items-center justify-center shrink-0">
+                <Phone className="w-7 h-7 text-[var(--primary-600)]" />
+              </div>
+              <div>
+                <p className="text-sm text-[var(--gray-500)] mb-1">Телефон</p>
+                <p className="text-xl font-semibold text-[var(--gray-900)]">
+                  {CONTACTS.phone}
+                </p>
+              </div>
+            </a>
+
+            {/* WhatsApp */}
+            <a
+              href={`https://wa.me/${CONTACTS.whatsapp}?text=Здравствуйте, хочу узнать о скупке радиодеталей.`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-4 p-6 bg-white rounded-xl border border-[var(--gray-200)] hover:border-green-400 hover:shadow-md transition-all"
+            >
+              <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center shrink-0">
+                <MessageCircle className="w-7 h-7 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-[var(--gray-500)] mb-1">WhatsApp</p>
+                <p className="text-xl font-semibold text-[var(--gray-900)]">
+                  Написать в WhatsApp
+                </p>
+              </div>
+            </a>
+
+            {/* Telegram */}
+            <a
+              href={`https://t.me/${CONTACTS.telegram.replace("@", "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-4 p-6 bg-white rounded-xl border border-[var(--gray-200)] hover:border-blue-400 hover:shadow-md transition-all"
+            >
+              <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
+                <Send className="w-7 h-7 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-[var(--gray-500)] mb-1">Telegram</p>
+                <p className="text-xl font-semibold text-[var(--gray-900)]">
+                  {CONTACTS.telegram}
+                </p>
+              </div>
+            </a>
+
+            {/* Email */}
+            <a
+              href={`mailto:${CONTACTS.email}`}
+              className="flex items-center gap-4 p-6 bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-md transition-all"
+            >
+              <div className="w-14 h-14 bg-[var(--accent-100)] rounded-full flex items-center justify-center shrink-0">
+                <Mail className="w-7 h-7 text-[var(--accent-600)]" />
+              </div>
+              <div>
+                <p className="text-sm text-[var(--gray-500)] mb-1">Email</p>
+                <p className="text-xl font-semibold text-[var(--gray-900)]">
+                  {CONTACTS.email}
+                </p>
+              </div>
+            </a>
+          </div>
+
+          {/* Address & Map */}
+          <div className="space-y-4">
+            {/* Address Card */}
+            <div className="p-6 bg-white rounded-xl border border-[var(--gray-200)]">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-14 h-14 bg-[var(--gray-100)] rounded-full flex items-center justify-center shrink-0">
+                  <MapPin className="w-7 h-7 text-[var(--gray-600)]" />
+                </div>
+                <div>
+                  <p className="text-sm text-[var(--gray-500)] mb-1">Адрес</p>
+                  <p className="text-xl font-semibold text-[var(--gray-900)]">
+                    {CONTACTS.address}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 bg-[var(--gray-100)] rounded-full flex items-center justify-center shrink-0">
+                  <Clock className="w-7 h-7 text-[var(--gray-600)]" />
+                </div>
+                <div>
+                  <p className="text-sm text-[var(--gray-500)] mb-1">
+                    Время работы
+                  </p>
+                  <p className="font-medium text-[var(--gray-900)]">
+                    {CONTACTS.workingHours.weekdays}
+                  </p>
+                  <p className="font-medium text-[var(--gray-900)]">
+                    {CONTACTS.workingHours.saturday}
+                  </p>
+                  <p className="font-medium text-[var(--gray-500)]">
+                    {CONTACTS.workingHours.sunday}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Map Placeholder */}
+            <div className="relative bg-[var(--gray-200)] rounded-xl overflow-hidden h-64 md:h-80">
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--gray-500)]">
+                <MapPin className="w-12 h-12 mb-2" />
+                <p className="text-sm">Карта проезда</p>
+                <p className="text-xs mt-1">{CONTACTS.address}</p>
+              </div>
+              {/* Можно заменить на реальную карту Яндекс/Google */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--gray-300)] to-transparent opacity-50" />
+            </div>
+          </div>
+        </div>
+
+        {/* CTA Section */}
+        <div className="bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-800)] rounded-2xl p-8 md:p-12 text-white text-center">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4">
+            Готовы сдать радиодетали?
+          </h2>
+          <p className="text-lg text-white/80 mb-6 max-w-2xl mx-auto">
+            Добавьте детали в лист оценки и отправьте нам список. Мы свяжемся с
+            вами для уточнения деталей.
+          </p>
+          <Link
+            href="/catalog"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-[var(--accent-500)] hover:bg-[var(--accent-600)] text-white font-semibold rounded-lg transition-colors"
+          >
+            Перейти в каталог
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}

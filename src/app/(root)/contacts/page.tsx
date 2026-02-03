@@ -18,16 +18,21 @@ export const metadata: Metadata = {
 
 // Контактные данные
 const CONTACTS = {
-  phone: "+7 (900) 123-45-67",
-  phoneRaw: "+79001234567",
-  email: "info@radioskupka.ru",
-  telegram: "@radioskupka",
-  whatsapp: "79001234567",
-  address: "г. Москва, ул. Примерная, д. 123",
+  phone: "+7 (812) 983-49-76",
+  phoneRaw: "+78129834976",
+  email: "info@dragsoyuz.ru",
+  telegram: "@dragsoyuz",
+  whatsapp: "78129834976",
+  address: "г. Санкт-Петербург",
   workingHours: {
-    weekdays: "Пн-Пт: 9:00 - 18:00",
-    saturday: "Сб: 10:00 - 15:00",
+    weekdays: "Пн-Пт: 10:00 - 18:00",
+    saturday: "Сб: по записи",
     sunday: "Вс: выходной",
+  },
+  // Координаты для Яндекс Карт
+  coordinates: {
+    lat: 59.9343,
+    lon: 30.3351,
   },
 };
 
@@ -168,15 +173,17 @@ export default function ContactsPage() {
               </div>
             </div>
 
-            {/* Map Placeholder */}
+            {/* Yandex Map */}
             <div className="relative bg-[var(--gray-200)] rounded-xl overflow-hidden h-64 md:h-80">
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--gray-500)]">
-                <MapPin className="w-12 h-12 mb-2" />
-                <p className="text-sm">Карта проезда</p>
-                <p className="text-xs mt-1">{CONTACTS.address}</p>
-              </div>
-              {/* Можно заменить на реальную карту Яндекс/Google */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[var(--gray-300)] to-transparent opacity-50" />
+              <iframe
+                src={`https://yandex.ru/map-widget/v1/?ll=${CONTACTS.coordinates.lon}%2C${CONTACTS.coordinates.lat}&z=14&pt=${CONTACTS.coordinates.lon}%2C${CONTACTS.coordinates.lat}%2Cpm2rdm`}
+                width="100%"
+                height="100%"
+                frameBorder="0"
+                allowFullScreen
+                style={{ position: 'absolute', top: 0, left: 0 }}
+                title="Яндекс Карта - Драг Союз"
+              />
             </div>
           </div>
         </div>
@@ -187,8 +194,8 @@ export default function ContactsPage() {
             Готовы сдать радиодетали?
           </h2>
           <p className="text-lg text-white/80 mb-6 max-w-2xl mx-auto">
-            Добавьте детали в лист оценки и отправьте нам список. Мы свяжемся с
-            вами для уточнения деталей.
+            Позвоните нам или напишите в мессенджер — мы ответим на все вопросы
+            и поможем с оценкой ваших деталей.
           </p>
           <Link
             href="/catalog"

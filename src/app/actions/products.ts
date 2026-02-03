@@ -28,6 +28,7 @@ export interface ProductWithPrice {
   image: string | null;
   categoryId: string;
   categoryName: string;
+  categorySlug: string;
   sortOrder: number;
   // Содержание металлов для НОВЫХ
   contentGold: number;
@@ -135,7 +136,7 @@ interface DbProductWithCategory {
   slug: string;
   image: string | null;
   categoryId: string;
-  category: { name: string };
+  category: { name: string; slug: string };
   sortOrder: number;
   // Содержание металлов для НОВЫХ
   contentGold: unknown; // Prisma Decimal
@@ -215,6 +216,7 @@ function serializeProduct(
     image: product.image,
     categoryId: product.categoryId,
     categoryName: product.category.name,
+    categorySlug: product.category.slug,
     sortOrder: product.sortOrder,
     contentGold: toNumber(product.contentGold),
     contentSilver: toNumber(product.contentSilver),
@@ -361,7 +363,7 @@ export async function getProducts(
       prisma.product.findMany({
         where,
         include: {
-          category: { select: { name: true } },
+          category: { select: { name: true, slug: true } },
         },
         orderBy: { sortOrder: "asc" },
         take: limit,
@@ -400,7 +402,7 @@ export async function getProductById(id: string): Promise<ProductResult> {
       prisma.product.findUnique({
         where: { id },
         include: {
-          category: { select: { name: true } },
+          category: { select: { name: true, slug: true } },
         },
       }),
       getCurrentRates(),
@@ -436,7 +438,7 @@ export async function getProductBySlug(slug: string): Promise<ProductResult> {
       prisma.product.findUnique({
         where: { slug },
         include: {
-          category: { select: { name: true } },
+          category: { select: { name: true, slug: true } },
         },
       }),
       getCurrentRates(),
@@ -537,7 +539,7 @@ export async function createProduct(
         manualPriceUsed: input.manualPriceUsed ?? null,
       },
       include: {
-        category: { select: { name: true } },
+        category: { select: { name: true, slug: true } },
       },
     });
 
@@ -654,7 +656,7 @@ export async function updateProduct(
       where: { id: input.id },
       data: updateData,
       include: {
-        category: { select: { name: true } },
+        category: { select: { name: true, slug: true } },
       },
     });
 
@@ -744,7 +746,7 @@ export async function getProductsByIds(ids: string[]): Promise<ProductsResult> {
           id: { in: ids },
         },
         include: {
-          category: { select: { name: true } },
+          category: { select: { name: true, slug: true } },
         },
       }),
       getCurrentRates(),

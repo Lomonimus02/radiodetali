@@ -225,10 +225,12 @@ async function CatalogSection() {
                     <Package className="w-16 h-16 text-[var(--gray-300)]" />
                   </div>
                 )}
-                {/* Category badge */}
-                <span className="absolute top-2 left-2 px-2 py-1 bg-[var(--primary-900)]/80 text-white text-xs rounded-md backdrop-blur-sm">
-                  {item.categoryName}
-                </span>
+                {/* Category label with gradient fade at top */}
+                <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/70 via-black/40 to-transparent pt-3 pb-10 px-3">
+                  <span className="block text-white text-lg font-bold drop-shadow-md">
+                    {item.categoryName}
+                  </span>
+                </div>
               </div>
 
               {/* Content */}

@@ -4,16 +4,41 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Search, Menu, X, Zap, Package, Phone, MapPin, Loader2, ChevronRight, Home } from "lucide-react";
-import { findBestMatchProduct } from "@/app/actions";
+import { findBestMatchProduct, getProducts, ProductWithPrice } from "@/app/actions";
+import { MobileSearchOverlay } from "./MobileSearchOverlay";
 
 const PHONE_NUMBER = "+7 (812) 983-49-76";
 const PHONE_HREF = "tel:+78129834976";
+const TELEGRAM_HREF = "https://t.me/dragsoyuz";
+
+// Custom Telegram icon component
+function TelegramIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+    </svg>
+  );
+}
+
+// Популярные запросы с маппингом на категории
+const POPULAR_SEARCHES = [
+  { label: "Конденсаторы КМ", slug: "kondensatory-km" },
+  { label: "Транзисторы", slug: "tranzistory" },
+  { label: "Микросхемы", slug: "mikroshemy" },
+  { label: "Разъемы", slug: "razemy" },
+  { label: "Реле", slug: "rele" },
+  { label: "Резисторы", slug: "rezistory" },
+];
 
 export function Header() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [desktopSearchResults, setDesktopSearchResults] = useState<ProductWithPrice[]>([]);
+  const [isLoadingDesktopResults, setIsLoadingDesktopResults] = useState(false);
 
   // Блокируем скролл body когда меню открыто
   useEffect(() => {
@@ -26,6 +51,34 @@ export function Header() {
       document.body.style.overflow = "";
     };
   }, [mobileMenuOpen]);
+
+  // Live search for desktop
+  useEffect(() => {
+    const searchProducts = async () => {
+      if (!searchQuery.trim() || searchQuery.length < 2) {
+        setDesktopSearchResults([]);
+        return;
+      }
+
+      setIsLoadingDesktopResults(true);
+      try {
+        const result = await getProducts({
+          search: searchQuery.trim(),
+          limit: 8,
+        });
+        if (result.success) {
+          setDesktopSearchResults(result.data);
+        }
+      } catch (error) {
+        console.error("Desktop search error:", error);
+      } finally {
+        setIsLoadingDesktopResults(false);
+      }
+    };
+
+    const debounce = setTimeout(searchProducts, 300);
+    return () => clearTimeout(debounce);
+  }, [searchQuery]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,11 +123,11 @@ export function Header() {
           <div className="flex items-center justify-between h-16 lg:h-20 gap-4">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 shrink-0">
-              <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center shadow-lg shadow-amber-500/20">
-                <Zap className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center lg:hidden">
+                <Home className="w-6 h-6 text-white" />
               </div>
-              <span className="hidden sm:block font-bold text-xl">
-                Драг Союз
+              <span className="hidden lg:block font-bold text-xl">
+                ДРАГСОЮЗ
               </span>
             </Link>
 
@@ -83,11 +136,19 @@ export function Header() {
               onSubmit={handleSearch}
               className="hidden md:flex flex-1 max-w-2xl mx-4"
             >
-              <div className="relative w-full">
+              <div className="relative w-full group">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={(e) => {
+                    // Не закрываем если клик был внутри dropdown
+                    if (e.relatedTarget?.closest('.suggestions-dropdown')) {
+                      return;
+                    }
+                    setTimeout(() => setIsSearchFocused(false), 150);
+                  }}
                   placeholder="Поиск по маркировке или названию..."
                   className="w-full h-12 pl-5 pr-12 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)] focus:bg-white/15"
                 />
@@ -102,6 +163,91 @@ export function Header() {
                     <Search className="w-5 h-5" />
                   )}
                 </button>
+                
+                {/* Proactive Suggestions Dropdown */}
+                {isSearchFocused && !searchQuery.trim() && (
+                  <div 
+                    className="suggestions-dropdown absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl border border-[var(--gray-200)] overflow-hidden z-[999]"
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    <div className="p-3 border-b border-[var(--gray-100)]">
+                      <p className="text-xs font-semibold text-[var(--gray-500)] uppercase tracking-wide">Популярные запросы</p>
+                    </div>
+                    <div className="p-2">
+                      {POPULAR_SEARCHES.map((item) => (
+                        <button
+                          key={item.slug}
+                          type="button"
+                          onClick={() => {
+                            router.push(`/catalog/${item.slug}`);
+                            setIsSearchFocused(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-3 py-2 text-[var(--gray-700)] hover:bg-[var(--gray-50)] rounded-md transition-colors text-left"
+                        >
+                          <Search className="w-4 h-4 text-[var(--gray-400)]" />
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Live Search Results Dropdown */}
+                {isSearchFocused && searchQuery.trim().length >= 2 && (
+                  <div 
+                    className="suggestions-dropdown absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl border border-[var(--gray-200)] overflow-hidden z-[999] max-h-[400px] overflow-y-auto"
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    {isLoadingDesktopResults ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-[var(--primary-500)]" />
+                      </div>
+                    ) : desktopSearchResults.length > 0 ? (
+                      <div className="divide-y divide-[var(--gray-100)]">
+                        {desktopSearchResults.map((product) => (
+                          <button
+                            key={product.id}
+                            type="button"
+                            onClick={() => {
+                              router.push(`/catalog/${product.categorySlug}?highlight=${product.slug}`);
+                              setSearchQuery("");
+                              setIsSearchFocused(false);
+                            }}
+                            className="w-full flex items-center gap-3 p-3 hover:bg-[var(--gray-50)] transition-colors text-left"
+                          >
+                            <div className="w-10 h-10 bg-[var(--gray-100)] rounded-lg flex-shrink-0 overflow-hidden">
+                              {product.image ? (
+                                <img
+                                  src={product.image}
+                                  alt={product.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <Package className="w-4 h-4 text-[var(--gray-400)]" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-[var(--gray-900)] truncate">{product.name}</p>
+                              <p className="text-xs text-[var(--gray-500)]">{product.categoryName}</p>
+                            </div>
+                            {product.priceNew && (
+                              <span className="text-sm font-semibold text-[var(--primary-600)] whitespace-nowrap">
+                                {product.priceNew.toLocaleString("ru-RU")} ₽
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6">
+                        <Package className="w-8 h-8 text-[var(--gray-300)] mx-auto mb-2" />
+                        <p className="text-sm text-[var(--gray-500)]">Ничего не найдено</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </form>
 
@@ -121,33 +267,78 @@ export function Header() {
                 <MapPin className="w-5 h-5" />
                 Контакты
               </Link>
-              <a
-                href={PHONE_HREF}
-                className="flex items-center gap-2 text-lg font-bold text-[var(--accent-400)] hover:text-[var(--accent-300)] transition-colors"
-              >
-                <Phone className="w-5 h-5" />
-                {PHONE_NUMBER}
-              </a>
+              <div className="flex items-center gap-2">
+                <a
+                  href={PHONE_HREF}
+                  className="flex items-center justify-center w-9 h-9 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                  aria-label="Позвонить"
+                >
+                  <Phone className="w-5 h-5 text-[var(--accent-400)]" />
+                </a>
+                <a
+                  href={TELEGRAM_HREF}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-9 h-9 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                  aria-label="Telegram"
+                >
+                  <TelegramIcon className="w-5 h-5 text-[var(--accent-400)]" />
+                </a>
+                <a
+                  href={PHONE_HREF}
+                  className="text-lg font-bold text-[var(--accent-400)] hover:text-[var(--accent-300)] transition-colors"
+                >
+                  {PHONE_NUMBER}
+                </a>
+              </div>
             </nav>
 
-            {/* Mobile: Phone + Menu button */}
-            <div className="flex items-center gap-3 lg:hidden">
-              <a
-                href={PHONE_HREF}
-                className="flex items-center gap-1 text-[var(--accent-400)] hover:text-[var(--accent-300)] transition-colors"
-              >
-                <Phone className="w-5 h-5" />
-                <span className="font-bold text-sm hidden sm:inline">{PHONE_NUMBER}</span>
-              </a>
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="relative w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-lg transition-colors"
-                aria-label="Меню"
-              >
-                <span className={`absolute w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${mobileMenuOpen ? 'rotate-45' : '-translate-y-1.5'}`} />
-                <span className={`absolute w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${mobileMenuOpen ? 'opacity-0 scale-0' : 'opacity-100'}`} />
-                <span className={`absolute w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${mobileMenuOpen ? '-rotate-45' : 'translate-y-1.5'}`} />
-              </button>
+            {/* Mobile: Phone + Search + Menu button */}
+            <div className="flex items-center lg:hidden">
+              {/* Center: Phone icons and number */}
+              <div className="flex items-center gap-1 flex-1 justify-center">
+                <a
+                  href={PHONE_HREF}
+                  className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors"
+                  aria-label="Позвонить"
+                >
+                  <Phone className="w-5 h-5 text-[var(--accent-400)]" />
+                </a>
+                <a
+                  href={TELEGRAM_HREF}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors"
+                  aria-label="Telegram"
+                >
+                  <TelegramIcon className="w-5 h-5 text-[var(--accent-400)]" />
+                </a>
+                <a
+                  href={PHONE_HREF}
+                  className="text-base sm:text-lg font-bold text-[var(--accent-400)] hover:text-[var(--accent-300)] transition-colors whitespace-nowrap"
+                >
+                  {PHONE_NUMBER}
+                </a>
+              </div>
+              {/* Right: Search and Menu */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setIsSearchOpen(true)}
+                  className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-lg transition-colors"
+                  aria-label="Поиск"
+                >
+                  <Search className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="relative w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-lg transition-colors"
+                  aria-label="Меню"
+                >
+                  <span className={`absolute w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${mobileMenuOpen ? 'rotate-45' : '-translate-y-1.5'}`} />
+                  <span className={`absolute w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${mobileMenuOpen ? 'opacity-0 scale-0' : 'opacity-100'}`} />
+                  <span className={`absolute w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${mobileMenuOpen ? '-rotate-45' : 'translate-y-1.5'}`} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -174,34 +365,8 @@ export function Header() {
               </button>
             </div>
 
-            {/* Search */}
-            <div className="p-4">
-              <form onSubmit={handleSearch}>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Поиск по маркировке..."
-                    className="w-full h-12 pl-4 pr-12 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)] focus:bg-white/15"
-                  />
-                  <button
-                    type="submit"
-                    disabled={isSearching}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-white/10 rounded-lg disabled:opacity-50 text-white"
-                  >
-                    {isSearching ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Search className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-
           {/* Navigation links */}
-          <nav className="px-4 py-2">
+          <nav className="px-4 py-4">
             {menuItems.map((item, index) => (
               <Link
                 key={item.href}
@@ -225,13 +390,23 @@ export function Header() {
 
           {/* Phone CTA */}
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10 bg-[var(--primary-900)]/80 backdrop-blur">
-            <a
-              href={PHONE_HREF}
-              className="flex items-center justify-center gap-3 w-full py-4 bg-gradient-to-r from-[var(--accent-500)] to-[var(--accent-600)] hover:from-[var(--accent-600)] hover:to-[var(--accent-700)] rounded-xl font-bold text-lg text-white transition-all shadow-lg shadow-amber-500/20"
-            >
-              <Phone className="w-5 h-5" />
-              {PHONE_NUMBER}
-            </a>
+            <div className="flex gap-3">
+              <a
+                href={TELEGRAM_HREF}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center w-14 py-4 bg-gradient-to-r from-[var(--accent-500)] to-[var(--accent-600)] hover:from-[var(--accent-600)] hover:to-[var(--accent-700)] rounded-xl font-bold text-white transition-all shadow-lg shadow-amber-500/20"
+              >
+                <TelegramIcon className="w-6 h-6" />
+              </a>
+              <a
+                href={PHONE_HREF}
+                className="flex items-center justify-center gap-3 flex-1 py-4 bg-gradient-to-r from-[var(--accent-500)] to-[var(--accent-600)] hover:from-[var(--accent-600)] hover:to-[var(--accent-700)] rounded-xl font-bold text-lg text-white transition-all shadow-lg shadow-amber-500/20"
+              >
+                <Phone className="w-5 h-5" />
+                {PHONE_NUMBER}
+              </a>
+            </div>
             <p className="text-center text-white/50 text-sm mt-3">
               Ежедневно с 10:00 до 20:00
             </p>
@@ -269,6 +444,12 @@ export function Header() {
           animation: slideIn 0.3s ease-out forwards;
         }
       `}</style>
+
+      {/* Mobile Search Overlay */}
+      <MobileSearchOverlay 
+        isOpen={isSearchOpen} 
+        onClose={() => setIsSearchOpen(false)} 
+      />
     </>
   );
 }

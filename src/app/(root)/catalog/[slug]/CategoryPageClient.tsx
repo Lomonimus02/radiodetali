@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ChevronRight, Package, ArrowLeft, AlertTriangle } from "lucide-react";
@@ -22,18 +22,28 @@ export function CategoryPageClient({ category, products, total }: CategoryPageCl
   const searchParams = useSearchParams();
   const highlightSlug = searchParams.get("highlight");
   const highlightedRef = useRef<HTMLDivElement>(null);
+  const [isHighlightVisible, setIsHighlightVisible] = useState(true);
 
   // Scroll to highlighted product and animate
   useEffect(() => {
     if (highlightSlug && highlightedRef.current) {
       // Small delay to ensure the page is fully rendered
-      const timer = setTimeout(() => {
+      const scrollTimer = setTimeout(() => {
         highlightedRef.current?.scrollIntoView({
           behavior: "smooth",
           block: "center",
         });
       }, 300);
-      return () => clearTimeout(timer);
+      
+      // Remove highlight after animation completes (4.5s = 1.5s * 3 iterations)
+      const fadeTimer = setTimeout(() => {
+        setIsHighlightVisible(false);
+      }, 5000);
+      
+      return () => {
+        clearTimeout(scrollTimer);
+        clearTimeout(fadeTimer);
+      };
     }
   }, [highlightSlug]);
 
@@ -99,11 +109,11 @@ export function CategoryPageClient({ category, products, total }: CategoryPageCl
             {/* Products grid - 5 columns on xl screens */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
               {products.map((product) => {
-                const isHighlighted = highlightSlug === product.slug;
+                const isHighlighted = highlightSlug === product.slug && isHighlightVisible;
                 return (
                   <div
                     key={product.id}
-                    ref={isHighlighted ? highlightedRef : null}
+                    ref={highlightSlug === product.slug ? highlightedRef : null}
                     className={`transition-all duration-500 rounded-lg ${
                       isHighlighted
                         ? "ring-4 ring-yellow-400 ring-offset-2 animate-pulse-highlight"

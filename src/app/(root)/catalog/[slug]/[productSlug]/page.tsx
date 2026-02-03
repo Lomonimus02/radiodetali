@@ -12,7 +12,7 @@ import {
   Phone,
 } from "lucide-react";
 import { getProductBySlug, getProducts, getCategoryBySlug } from "@/app/actions";
-import { ProductCard, ProductGridSkeleton, AddToCartButton } from "../../../components";
+import { ProductCard, ProductGridSkeleton } from "../../../components";
 
 interface ProductPageProps {
   params: Promise<{ slug: string; productSlug: string }>;
@@ -273,11 +273,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
             {/* CTA buttons */}
             <div className="flex flex-col gap-3 mb-8">
-              <AddToCartButton productId={product.id} size="lg" />
               <div className="flex flex-col sm:flex-row gap-3">
                 <a
                   href="tel:+79001234567"
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[var(--gray-200)] hover:bg-[var(--gray-300)] text-[var(--gray-800)] rounded-xl font-semibold transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-white rounded-xl font-semibold transition-colors"
                 >
                   <Phone className="w-5 h-5" />
                   Позвонить

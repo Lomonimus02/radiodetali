@@ -7,3 +7,4 @@ export { CategoryCard } from "./CategoryCard";
 export { CategoryShowcaseCard } from "./CategoryShowcaseCard";
 export { ProductSkeleton, ProductGridSkeleton } from "./ProductSkeleton";
 export { AddToCartButton } from "./AddToCartButton";
+export { MobileSearchOverlay } from "./MobileSearchOverlay";

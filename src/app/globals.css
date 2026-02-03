@@ -83,8 +83,8 @@ body {
   background: var(--gray-500);
 }
 
-/* Smooth transitions */
-* {
+/* Smooth transitions - only for interactive elements */
+a, button, input, select, textarea {
   transition-property: color, background-color, border-color, box-shadow;
   transition-duration: 150ms;
   transition-timing-function: ease-in-out;

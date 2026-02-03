@@ -48,7 +48,7 @@ export async function loginAdmin(password: string): Promise<LoginResult> {
   const cookieStore = await cookies();
   cookieStore.set(ADMIN_COOKIE_NAME, sessionToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: false, // Для HTTP без HTTPS
     sameSite: "lax",
     maxAge: COOKIE_MAX_AGE,
     path: "/",

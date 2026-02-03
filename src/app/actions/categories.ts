@@ -619,8 +619,8 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
         continue;
       }
 
-      // Рассчитываем priceNew для каждого товара и находим самый дорогой
-      let maxPriceNew = -Infinity;
+      // Рассчитываем цены для каждого товара и находим самый дорогой
+      let maxEffectivePrice = -Infinity;
       let mostExpensiveProduct: typeof allProducts[0] | null = null;
       let bestPriceNew: number | null = null;
       let bestPriceUsed: number | null = null;
@@ -660,18 +660,18 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
           }
         }
 
-        // Находим товар с максимальной ценой priceNew
-        const effectivePrice = priceNew ?? 0;
-        if (effectivePrice > maxPriceNew) {
-          maxPriceNew = effectivePrice;
+        // Находим товар с максимальной ценой (priceNew или priceUsed - берём большую)
+        const effectivePrice = Math.max(priceNew ?? 0, priceUsed ?? 0);
+        if (effectivePrice > maxEffectivePrice) {
+          maxEffectivePrice = effectivePrice;
           mostExpensiveProduct = product;
           bestPriceNew = priceNew;
           bestPriceUsed = priceUsed;
         }
       }
 
-      // Добавляем товар в результат, если нашли
-      if (mostExpensiveProduct && maxPriceNew > 0) {
+      // Добавляем товар в результат, если нашли (с любой ценой > 0)
+      if (mostExpensiveProduct && maxEffectivePrice > 0) {
         showcaseItems.push({
           // Данные товара
           id: mostExpensiveProduct.id,

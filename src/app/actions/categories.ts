@@ -542,7 +542,7 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
     }
 
     const markup = globalSettings?.priceMarkup ? Number(globalSettings.priceMarkup) : 1;
-    const markupUsed = globalSettings?.priceMarkupUsed ? Number(globalSettings.priceMarkupUsed) : markup;
+    const markupUsed = markup; // Используем тот же коэффициент для Б/У товаров
 
     // Получаем только корневые категории с товарами (включая товары подкатегорий)
     const categories = await prisma.category.findMany({

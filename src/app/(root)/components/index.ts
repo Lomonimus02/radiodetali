@@ -6,3 +6,4 @@ export { ProductCardCompact } from "./ProductCardCompact";
 export { CategoryCard } from "./CategoryCard";
 export { CategoryShowcaseCard } from "./CategoryShowcaseCard";
 export { ProductSkeleton, ProductGridSkeleton } from "./ProductSkeleton";
+export { AddToCartButton } from "./AddToCartButton";

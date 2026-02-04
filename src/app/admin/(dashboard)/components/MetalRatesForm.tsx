@@ -61,10 +61,10 @@ export function MetalRatesForm({ initialRates }: MetalRatesFormProps) {
   };
 
   const metals = [
-    { key: "gold" as const, label: "Золото (Au)", symbol: "Au", color: "amber" },
-    { key: "silver" as const, label: "Серебро (Ag)", symbol: "Ag", color: "slate" },
-    { key: "platinum" as const, label: "Платина (Pt)", symbol: "Pt", color: "cyan" },
-    { key: "palladium" as const, label: "Палладий (Pd)", symbol: "Pd", color: "violet" },
+    { key: "gold" as const, label: "Золото (Au) — Цена за 1 мг (₽)", symbol: "Au", color: "amber" },
+    { key: "silver" as const, label: "Серебро (Ag) — Цена за 1 мг (₽)", symbol: "Ag", color: "slate" },
+    { key: "platinum" as const, label: "Платина (Pt) — Цена за 1 мг (₽)", symbol: "Pt", color: "cyan" },
+    { key: "palladium" as const, label: "Палладий (Pd) — Цена за 1 мг (₽)", symbol: "Pd", color: "violet" },
   ];
 
   return (

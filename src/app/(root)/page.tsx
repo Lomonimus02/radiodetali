@@ -11,6 +11,7 @@ import {
   Sparkles,
   Package,
   Recycle,
+  Tag,
 } from "lucide-react";
 import { getCategoryShowcase } from "@/app/actions";
 import { prisma } from "@/lib/prisma";
@@ -18,12 +19,22 @@ import { prisma } from "@/lib/prisma";
 // Отключаем статический пререндеринг (требуется БД)
 export const dynamic = "force-dynamic";
 
+// Получить суффикс единицы измерения для цены
+function getPriceUnitSuffix(unitType: "PIECE" | "GRAM" | "KG"): string {
+  switch (unitType) {
+    case "GRAM": return "/г.";
+    case "KG": return "/кг.";
+    default: return "/шт.";
+  }
+}
+
 // Форматирование цены
 function formatPrice(price: number): string {
   return new Intl.NumberFormat("ru-RU", {
     style: "currency",
     currency: "RUB",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 3,
   }).format(price);
 }
 
@@ -243,24 +254,30 @@ async function CatalogSection() {
                 {/* Prices */}
                 <div className="space-y-1">
                   {item.priceNew !== null && (
-                    <div className="flex items-center justify-between bg-green-50 px-2 py-1.5 rounded-md">
+                    <div className={`flex items-center justify-between px-2 py-1.5 rounded-md ${item.isSingleType ? 'bg-blue-50' : 'bg-green-50'}`}>
                       <div className="flex items-center gap-1">
-                        <Sparkles className="w-3 h-3 text-green-600" />
-                        <span className="text-xs font-medium text-green-700">Новый</span>
+                        {item.isSingleType ? (
+                          <Tag className="w-3 h-3 text-blue-600" />
+                        ) : (
+                          <Sparkles className="w-3 h-3 text-green-600" />
+                        )}
+                        <span className={`text-xs font-medium ${item.isSingleType ? 'text-blue-700' : 'text-green-700'}`}>
+                          {item.isSingleType ? 'Цена' : 'Новый'}
+                        </span>
                       </div>
-                      <span className="font-bold text-green-700">
-                        {formatPrice(item.priceNew)}
+                      <span className={`font-bold ${item.isSingleType ? 'text-blue-700' : 'text-green-700'}`}>
+                        {formatPrice(item.priceNew)}{getPriceUnitSuffix(item.unitType)}
                       </span>
                     </div>
                   )}
-                  {item.priceUsed !== null && (
+                  {item.priceUsed !== null && !item.isSingleType && (
                     <div className="flex items-center justify-between bg-amber-50 px-2 py-1.5 rounded-md">
                       <div className="flex items-center gap-1">
                         <Recycle className="w-3 h-3 text-amber-600" />
                         <span className="text-xs font-medium text-amber-700">Б/У</span>
                       </div>
                       <span className="font-bold text-amber-700">
-                        {formatPrice(item.priceUsed)}
+                        {formatPrice(item.priceUsed)}{getPriceUnitSuffix(item.unitType)}
                       </span>
                     </div>
                   )}

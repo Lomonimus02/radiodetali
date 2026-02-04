@@ -19,6 +19,11 @@ export interface ProductFilters {
 }
 
 /**
+ * Единица измерения товара
+ */
+export type UnitType = "PIECE" | "GRAM" | "KG";
+
+/**
  * Товар с рассчитанными ценами для API
  */
 export interface ProductWithPrice {
@@ -30,6 +35,12 @@ export interface ProductWithPrice {
   categoryName: string;
   categorySlug: string;
   sortOrder: number;
+  // Единица измерения (PIECE = шт, GRAM = г, KG = кг)
+  unitType: UnitType;
+  // Наценка на товар (коэффициент)
+  priceMarkup: number;
+  // Тип товара: true = одна цена (без разделения Новое/Б/У)
+  isSingleType: boolean;
   // Содержание металлов для НОВЫХ
   contentGold: number;
   contentSilver: number;
@@ -48,7 +59,7 @@ export interface ProductWithPrice {
   manualPriceUsed: number | null;
   // Рассчитанные актуальные цены
   priceNew: number | null; // null если isNewAvailable = false
-  priceUsed: number | null; // null если isUsedAvailable = false
+  priceUsed: number | null; // null если isUsedAvailable = false или isSingleType = true
   createdAt: Date;
   updatedAt: Date;
 }
@@ -62,6 +73,11 @@ export interface CreateProductInput {
   image?: string | null;
   categoryId: string;
   sortOrder?: number;
+  // Единица измерения
+  unitType?: UnitType;
+  // Наценка и тип товара
+  priceMarkup?: number;
+  isSingleType?: boolean;
   // Содержание металлов для НОВЫХ
   contentGold?: number;
   contentSilver?: number;
@@ -88,6 +104,11 @@ export interface UpdateProductInput {
   image?: string | null;
   categoryId?: string;
   sortOrder?: number;
+  // Единица измерения
+  unitType?: UnitType;
+  // Наценка и тип товара
+  priceMarkup?: number;
+  isSingleType?: boolean;
   // Содержание металлов для НОВЫХ
   contentGold?: number;
   contentSilver?: number;
@@ -136,8 +157,21 @@ interface DbProductWithCategory {
   slug: string;
   image: string | null;
   categoryId: string;
-  category: { name: string; slug: string };
+  category: {
+    name: string;
+    slug: string;
+    // Кастомные курсы категории
+    customRateAu: number | null;
+    customRateAg: number | null;
+    customRatePt: number | null;
+    customRatePd: number | null;
+  };
   sortOrder: number;
+  // Единица измерения
+  unitType: UnitType;
+  // Наценка и тип товара
+  priceMarkup: number;
+  isSingleType: boolean;
   // Содержание металлов для НОВЫХ
   contentGold: unknown; // Prisma Decimal
   contentSilver: unknown;
@@ -188,8 +222,19 @@ function toNumberOrNull(value: unknown): number | null {
 function serializeProduct(
   product: DbProductWithCategory,
   rates: RatesForCalculation,
-  priceMarkup: number
+  globalPriceMarkup: number
 ): ProductWithPrice {
+  // Наценка товара умножается на глобальную наценку (внутри priceMarkup товара)
+  const effectiveMarkup = product.priceMarkup * globalPriceMarkup;
+  
+  // Получаем кастомные курсы категории
+  const categoryRates = {
+    customRateAu: product.category.customRateAu,
+    customRateAg: product.category.customRateAg,
+    customRatePt: product.category.customRatePt,
+    customRatePd: product.category.customRatePd,
+  };
+  
   const { priceNew, priceUsed } = calculateProductPrices(
     {
       contentGold: product.contentGold,
@@ -204,9 +249,11 @@ function serializeProduct(
       isUsedAvailable: product.isUsedAvailable,
       manualPriceNew: product.manualPriceNew,
       manualPriceUsed: product.manualPriceUsed,
+      priceMarkup: effectiveMarkup, // Используем эффективную наценку
+      isSingleType: product.isSingleType,
     },
     rates,
-    priceMarkup
+    categoryRates // Передаём кастомные курсы категории
   );
 
   return {
@@ -218,6 +265,9 @@ function serializeProduct(
     categoryName: product.category.name,
     categorySlug: product.category.slug,
     sortOrder: product.sortOrder,
+    unitType: product.unitType,
+    priceMarkup: product.priceMarkup,
+    isSingleType: product.isSingleType,
     contentGold: toNumber(product.contentGold),
     contentSilver: toNumber(product.contentSilver),
     contentPlatinum: toNumber(product.contentPlatinum),
@@ -231,7 +281,7 @@ function serializeProduct(
     manualPriceNew: toNumberOrNull(product.manualPriceNew),
     manualPriceUsed: toNumberOrNull(product.manualPriceUsed),
     priceNew,
-    priceUsed,
+    priceUsed: product.isSingleType ? null : priceUsed, // Для единого типа Б/У цена не нужна
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
   };
@@ -363,7 +413,16 @@ export async function getProducts(
       prisma.product.findMany({
         where,
         include: {
-          category: { select: { name: true, slug: true } },
+          category: {
+            select: {
+              name: true,
+              slug: true,
+              customRateAu: true,
+              customRateAg: true,
+              customRatePt: true,
+              customRatePd: true,
+            },
+          },
         },
         orderBy: { sortOrder: "asc" },
         take: limit,
@@ -402,7 +461,16 @@ export async function getProductById(id: string): Promise<ProductResult> {
       prisma.product.findUnique({
         where: { id },
         include: {
-          category: { select: { name: true, slug: true } },
+          category: {
+            select: {
+              name: true,
+              slug: true,
+              customRateAu: true,
+              customRateAg: true,
+              customRatePt: true,
+              customRatePd: true,
+            },
+          },
         },
       }),
       getCurrentRates(),
@@ -438,7 +506,16 @@ export async function getProductBySlug(slug: string): Promise<ProductResult> {
       prisma.product.findUnique({
         where: { slug },
         include: {
-          category: { select: { name: true, slug: true } },
+          category: {
+            select: {
+              name: true,
+              slug: true,
+              customRateAu: true,
+              customRateAg: true,
+              customRatePt: true,
+              customRatePd: true,
+            },
+          },
         },
       }),
       getCurrentRates(),
@@ -472,6 +549,7 @@ export async function createProduct(
   input: CreateProductInput
 ): Promise<ProductResult> {
   try {
+    console.log("=== createProduct input ===", JSON.stringify(input, null, 2));
     // Валидация обязательных полей
     if (!input.name?.trim()) {
       return { success: false, error: "Название товара обязательно" };
@@ -521,8 +599,13 @@ export async function createProduct(
         name: input.name.trim(),
         slug: input.slug.trim(),
         image: input.image ?? null,
-        categoryId: input.categoryId,
+        category: { connect: { id: input.categoryId } },
         sortOrder,
+        // Единица измерения
+        unitType: input.unitType ?? "PIECE",
+        // Наценка и тип товара
+        priceMarkup: input.priceMarkup ?? 1.0,
+        isSingleType: input.isSingleType ?? false,
         // Содержание металлов для НОВЫХ
         contentGold: input.contentGold ?? 0,
         contentSilver: input.contentSilver ?? 0,
@@ -539,7 +622,16 @@ export async function createProduct(
         manualPriceUsed: input.manualPriceUsed ?? null,
       },
       include: {
-        category: { select: { name: true, slug: true } },
+        category: {
+          select: {
+            name: true,
+            slug: true,
+            customRateAu: true,
+            customRateAg: true,
+            customRatePt: true,
+            customRatePd: true,
+          },
+        },
       },
     });
 
@@ -573,6 +665,7 @@ export async function updateProduct(
   input: UpdateProductInput
 ): Promise<ProductResult> {
   try {
+    console.log("=== updateProduct input ===", JSON.stringify(input, null, 2));
     if (!input.id) {
       return { success: false, error: "ID товара обязателен" };
     }
@@ -613,8 +706,13 @@ export async function updateProduct(
       name?: string;
       slug?: string;
       image?: string | null;
-      categoryId?: string;
+      category?: { connect: { id: string } };
       sortOrder?: number;
+      // Единица измерения
+      unitType?: UnitType;
+      // Наценка и тип товара
+      priceMarkup?: number;
+      isSingleType?: boolean;
       // Содержание металлов для НОВЫХ
       contentGold?: number;
       contentSilver?: number;
@@ -634,7 +732,12 @@ export async function updateProduct(
     if (input.name !== undefined) updateData.name = input.name.trim();
     if (input.slug !== undefined) updateData.slug = input.slug.trim();
     if (input.image !== undefined) updateData.image = input.image;
-    if (input.categoryId !== undefined) updateData.categoryId = input.categoryId;
+    if (input.categoryId !== undefined) updateData.category = { connect: { id: input.categoryId } };
+    // Единица измерения
+    if (input.unitType !== undefined) updateData.unitType = input.unitType;
+    // Наценка и тип товара
+    if (input.priceMarkup !== undefined) updateData.priceMarkup = input.priceMarkup;
+    if (input.isSingleType !== undefined) updateData.isSingleType = input.isSingleType;
     // sortOrder обрабатывается отдельно через reorder
     // НОВЫЕ
     if (input.contentGold !== undefined) updateData.contentGold = input.contentGold;
@@ -656,7 +759,16 @@ export async function updateProduct(
       where: { id: input.id },
       data: updateData,
       include: {
-        category: { select: { name: true, slug: true } },
+        category: {
+          select: {
+            name: true,
+            slug: true,
+            customRateAu: true,
+            customRateAg: true,
+            customRatePt: true,
+            customRatePd: true,
+          },
+        },
       },
     });
 
@@ -671,6 +783,9 @@ export async function updateProduct(
       getPriceMarkup(),
     ]);
 
+    const serialized = serializeProduct(product, rates, priceMarkup);
+    console.log("=== updateProduct result ===", JSON.stringify({ isSingleType: serialized.isSingleType, priceNew: serialized.priceNew, priceUsed: serialized.priceUsed }, null, 2));
+
     // Инвалидируем кеш
     revalidatePath("/");
     revalidatePath("/products");
@@ -681,7 +796,7 @@ export async function updateProduct(
 
     return {
       success: true,
-      data: serializeProduct(product, rates, priceMarkup),
+      data: serialized,
     };
   } catch (error) {
     console.error("Ошибка при обновлении товара:", error);
@@ -746,7 +861,16 @@ export async function getProductsByIds(ids: string[]): Promise<ProductsResult> {
           id: { in: ids },
         },
         include: {
-          category: { select: { name: true, slug: true } },
+          category: {
+            select: {
+              name: true,
+              slug: true,
+              customRateAu: true,
+              customRateAg: true,
+              customRatePt: true,
+              customRatePd: true,
+            },
+          },
         },
       }),
       getCurrentRates(),

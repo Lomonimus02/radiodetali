@@ -126,7 +126,7 @@ export function Header() {
                 <Home className="w-6 h-6 text-white" />
               </div>
               <span className="hidden lg:block font-bold text-xl">
-                Драг Союз
+                ДРАГСОЮЗ
               </span>
             </Link>
 

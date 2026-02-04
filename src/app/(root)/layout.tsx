@@ -27,11 +27,11 @@ export default function RootLayout({
 }) {
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="sticky top-0 z-50">
+      <div className="fixed top-0 left-0 right-0 z-50">
         <TopAlert />
         <Header />
       </div>
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 pt-[104px]">{children}</main>
       <Footer />
     </div>
   );

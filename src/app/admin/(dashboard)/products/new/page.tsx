@@ -1,4 +1,4 @@
-import { getCategories } from "@/app/actions";
+import { getCategories, getMetalRates } from "@/app/actions";
 import { ProductForm } from "../components/ProductForm";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -6,8 +6,25 @@ import Link from "next/link";
 // Отключаем статический пререндеринг (требуется БД)
 export const dynamic = "force-dynamic";
 
-export default async function NewProductPage() {
-  const categoriesResult = await getCategories();
+interface PageProps {
+  searchParams: Promise<{ categoryId?: string }>;
+}
+
+export default async function NewProductPage({ searchParams }: PageProps) {
+  const { categoryId } = await searchParams;
+  
+  const [categoriesResult, metalRatesResult] = await Promise.all([
+    getCategories(),
+    getMetalRates(),
+  ]);
+
+  // Находим категорию если передан categoryId
+  const selectedCategory = categoryId && categoriesResult.success
+    ? categoriesResult.data.find((c) => c.id === categoryId)
+    : null;
+
+  // URL для возврата - в папку каталога или общий список
+  const backUrl = categoryId ? `/admin/catalog/${categoryId}` : "/admin/catalog";
 
   if (!categoriesResult.success) {
     return (
@@ -16,11 +33,28 @@ export default async function NewProductPage() {
           Ошибка загрузки категорий: {categoriesResult.error}
         </p>
         <Link
-          href="/admin/products"
+          href={backUrl}
           className="inline-flex items-center gap-2 mt-4 text-indigo-600 hover:text-indigo-700"
         >
           <ArrowLeft className="w-4 h-4" />
-          Назад к списку
+          Назад в каталог
+        </Link>
+      </div>
+    );
+  }
+
+  if (!metalRatesResult.success) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-500">
+          Ошибка загрузки курсов металлов: {metalRatesResult.error}
+        </p>
+        <Link
+          href={backUrl}
+          className="inline-flex items-center gap-2 mt-4 text-indigo-600 hover:text-indigo-700"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Назад в каталог
         </Link>
       </div>
     );
@@ -31,7 +65,7 @@ export default async function NewProductPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
-          href="/admin/products"
+          href={backUrl}
           className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-slate-600" />
@@ -40,14 +74,25 @@ export default async function NewProductPage() {
           <h1 className="text-2xl lg:text-3xl font-bold text-slate-800">
             Новый товар
           </h1>
-          <p className="text-slate-500 mt-1">
-            Заполните информацию о товаре
-          </p>
+          {selectedCategory ? (
+            <p className="text-slate-500 mt-1">
+              В категории: {selectedCategory.name}
+            </p>
+          ) : (
+            <p className="text-slate-500 mt-1">
+              Заполните информацию о товаре
+            </p>
+          )}
         </div>
       </div>
 
       {/* Form */}
-      <ProductForm categories={categoriesResult.data} />
+      <ProductForm 
+        categories={categoriesResult.data} 
+        metalRates={metalRatesResult.data}
+        defaultCategoryId={categoryId}
+        redirectPath={backUrl}
+      />
     </div>
   );
 }

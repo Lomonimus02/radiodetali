@@ -1,7 +1,11 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Package, Sparkles, Recycle, ArrowRight } from "lucide-react";
-import type { ProductWithPrice } from "@/app/actions";
+import type { ProductWithPrice, UnitType } from "@/app/actions";
+import { ImageModal } from "./ImageModal";
 
 type ProductCardVariant = "default" | "showcase";
 
@@ -12,18 +16,31 @@ interface ProductCardProps {
   variant?: ProductCardVariant; // default - with buttons; showcase - navigation tile for home page
 }
 
+// Получить суффикс единицы измерения для цены
+function getPriceUnitSuffix(unitType: UnitType): string {
+  switch (unitType) {
+    case "GRAM": return "/г.";
+    case "KG": return "/кг.";
+    default: return "/шт.";
+  }
+}
+
 // Форматирование цены
 function formatPrice(price: number): string {
   return new Intl.NumberFormat("ru-RU", {
     style: "currency",
     currency: "RUB",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 3,
   }).format(price);
 }
 
 export function ProductCard({ product, categorySlug, categoryName, variant = "default" }: ProductCardProps) {
   const hasNewPrice = product.priceNew !== null;
   const hasUsedPrice = product.priceUsed !== null;
+  
+  // Стейт для модального окна с изображением (должен быть ДО любых условных return)
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   
   // For showcase variant - link to category; for default - link to product
   const cardUrl = variant === "showcase" && categorySlug
@@ -78,29 +95,49 @@ export function ProductCard({ product, categorySlug, categoryName, variant = "de
   const productUrl = cardUrl;
 
   return (
-    <div className="group block bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-lg transition-all duration-300 overflow-hidden">
-      {/* Image */}
-      <Link href={productUrl}>
-        <div className="relative aspect-square bg-[var(--gray-100)] overflow-hidden">
-          {product.image ? (
-            <Image
-              src={product.image}
-              alt={product.name}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Package className="w-16 h-16 text-[var(--gray-300)]" />
-            </div>
-          )}
-          {/* Category badge */}
-          <span className="absolute top-2 left-2 px-2 py-1 bg-[var(--primary-900)]/80 text-white text-xs rounded-md backdrop-blur-sm">
-            {product.categoryName}
-          </span>
-        </div>
-      </Link>
+    <>
+      {/* Модальное окно для просмотра изображения */}
+      {product.image && (
+        <ImageModal
+          isOpen={isImageModalOpen}
+          onClose={() => setIsImageModalOpen(false)}
+          imageUrl={product.image}
+          alt={product.name}
+        />
+      )}
+      
+      <div className="group block bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-lg transition-all duration-300 overflow-hidden">
+        {/* Image - клик открывает модалку */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (product.image) setIsImageModalOpen(true);
+          }}
+          className="w-full cursor-zoom-in"
+          aria-label={`Увеличить изображение ${product.name}`}
+        >
+          <div className="relative aspect-square bg-[var(--gray-100)] overflow-hidden">
+            {product.image ? (
+              <Image
+                src={product.image}
+                alt={product.name}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Package className="w-16 h-16 text-[var(--gray-300)]" />
+              </div>
+            )}
+            {/* Category badge */}
+            <span className="absolute top-2 left-2 px-2 py-1 bg-[var(--primary-900)]/80 text-white text-xs rounded-md backdrop-blur-sm">
+              {product.categoryName}
+            </span>
+          </div>
+        </button>
 
       {/* Content */}
       <div className="p-4">
@@ -119,31 +156,37 @@ export function ProductCard({ product, categorySlug, categoryName, variant = "de
         {/* Prices - показываем обе цены */}
         <div className="mb-3 space-y-1">
           <p className="text-xs text-[var(--gray-500)] uppercase tracking-wide mb-1">
-            Цена за шт.
+            Цена{getPriceUnitSuffix(product.unitType)}
           </p>
           
-          {/* Цена за Новый */}
+          {/* Цена за Новый / Единая цена */}
           {hasNewPrice && (
-            <div className="flex items-center justify-between bg-green-50 px-2 py-1.5 rounded-md">
+            <div className={`flex items-center justify-between px-2 py-1.5 rounded-md ${product.isSingleType ? 'bg-blue-50' : 'bg-green-50'}`}>
               <div className="flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-green-600" />
-                <span className="text-xs font-medium text-green-700">Новый</span>
+                {product.isSingleType ? (
+                  <Package className="w-3 h-3 text-blue-600" />
+                ) : (
+                  <Sparkles className="w-3 h-3 text-green-600" />
+                )}
+                <span className={`text-xs font-medium ${product.isSingleType ? 'text-blue-700' : 'text-green-700'}`}>
+                  {product.isSingleType ? 'Цена' : 'Новый'}
+                </span>
               </div>
-              <span className="font-bold text-green-700">
-                {formatPrice(product.priceNew!)}
+              <span className={`font-bold ${product.isSingleType ? 'text-blue-700' : 'text-green-700'}`}>
+                {formatPrice(product.priceNew!)}{getPriceUnitSuffix(product.unitType)}
               </span>
             </div>
           )}
           
-          {/* Цена за Б/У */}
-          {hasUsedPrice && (
+          {/* Цена за Б/У (скрываем для единой цены) */}
+          {hasUsedPrice && !product.isSingleType && (
             <div className="flex items-center justify-between bg-amber-50 px-2 py-1.5 rounded-md">
               <div className="flex items-center gap-1">
                 <Recycle className="w-3 h-3 text-amber-600" />
                 <span className="text-xs font-medium text-amber-700">Б/У</span>
               </div>
               <span className="font-bold text-amber-700">
-                {formatPrice(product.priceUsed!)}
+                {formatPrice(product.priceUsed!)}{getPriceUnitSuffix(product.unitType)}
               </span>
             </div>
           )}
@@ -157,5 +200,6 @@ export function ProductCard({ product, categorySlug, categoryName, variant = "de
         </div>
       </div>
     </div>
+    </>
   );
 }

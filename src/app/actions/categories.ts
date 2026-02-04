@@ -18,7 +18,13 @@ export interface CategoryData {
   parentName: string | null;
   sortOrder: number;
   warningMessage: string | null;
+  // Кастомные курсы металлов (null = использовать глобальные)
+  customRateAu: number | null;
+  customRateAg: number | null;
+  customRatePt: number | null;
+  customRatePd: number | null;
   productCount: number;
+  childrenCount?: number; // Количество подкатегорий
   createdAt: Date;
   updatedAt: Date;
 }
@@ -32,6 +38,11 @@ export interface CreateCategoryInput {
   parentId?: string | null;
   sortOrder?: number;
   warningMessage?: string | null;
+  // Кастомные курсы металлов (null/undefined = использовать глобальные)
+  customRateAu?: number | null;
+  customRateAg?: number | null;
+  customRatePt?: number | null;
+  customRatePd?: number | null;
 }
 
 /**
@@ -44,6 +55,11 @@ export interface UpdateCategoryInput {
   parentId?: string | null;
   sortOrder?: number;
   warningMessage?: string | null;
+  // Кастомные курсы металлов (null = использовать глобальные)
+  customRateAu?: number | null;
+  customRateAg?: number | null;
+  customRatePt?: number | null;
+  customRatePd?: number | null;
 }
 
 /**
@@ -152,6 +168,10 @@ export async function getCategories(rootOnly: boolean = false): Promise<Categori
         parentName: cat.parent?.name ?? null,
         sortOrder: cat.sortOrder,
         warningMessage: cat.warningMessage,
+        customRateAu: cat.customRateAu,
+        customRateAg: cat.customRateAg,
+        customRatePt: cat.customRatePt,
+        customRatePd: cat.customRatePd,
         productCount: ownProducts + childrenProducts,
         createdAt: cat.createdAt,
         updatedAt: cat.updatedAt,
@@ -199,6 +219,10 @@ export async function getCategoryBySlug(slug: string): Promise<CategoryResult> {
         parentName: category.parent?.name ?? null,
         sortOrder: category.sortOrder,
         warningMessage: category.warningMessage,
+        customRateAu: category.customRateAu,
+        customRateAg: category.customRateAg,
+        customRatePt: category.customRatePt,
+        customRatePd: category.customRatePd,
         productCount: category._count.products,
         createdAt: category.createdAt,
         updatedAt: category.updatedAt,
@@ -240,6 +264,10 @@ export async function getCategoryById(id: string): Promise<CategoryResult> {
         parentName: category.parent?.name ?? null,
         sortOrder: category.sortOrder,
         warningMessage: category.warningMessage,
+        customRateAu: category.customRateAu,
+        customRateAg: category.customRateAg,
+        customRatePt: category.customRatePt,
+        customRatePd: category.customRatePd,
         productCount: category._count.products,
         createdAt: category.createdAt,
         updatedAt: category.updatedAt,
@@ -307,6 +335,11 @@ export async function createCategory(
         parentId: input.parentId ?? null,
         sortOrder,
         warningMessage: input.warningMessage?.trim() || null,
+        // Кастомные курсы: если пустое/undefined — пишем null
+        customRateAu: input.customRateAu ?? null,
+        customRateAg: input.customRateAg ?? null,
+        customRatePt: input.customRatePt ?? null,
+        customRatePd: input.customRatePd ?? null,
       },
       include: {
         parent: { select: { name: true } },
@@ -327,6 +360,10 @@ export async function createCategory(
         parentName: category.parent?.name ?? null,
         sortOrder: category.sortOrder,
         warningMessage: category.warningMessage,
+        customRateAu: category.customRateAu,
+        customRateAg: category.customRateAg,
+        customRatePt: category.customRatePt,
+        customRatePd: category.customRatePd,
         productCount: category._count.products,
         createdAt: category.createdAt,
         updatedAt: category.updatedAt,
@@ -388,12 +425,21 @@ export async function updateCategory(
       name?: string;
       slug?: string;
       warningMessage?: string | null;
+      customRateAu?: number | null;
+      customRateAg?: number | null;
+      customRatePt?: number | null;
+      customRatePd?: number | null;
       parent?: { connect: { id: string } } | { disconnect: true };
     } = {};
     
     if (input.name !== undefined) updateData.name = input.name.trim();
     if (input.slug !== undefined) updateData.slug = input.slug.trim();
     if (input.warningMessage !== undefined) updateData.warningMessage = input.warningMessage?.trim() || null;
+    // Кастомные курсы: если поле передано — обновляем (включая null для сброса)
+    if (input.customRateAu !== undefined) updateData.customRateAu = input.customRateAu;
+    if (input.customRateAg !== undefined) updateData.customRateAg = input.customRateAg;
+    if (input.customRatePt !== undefined) updateData.customRatePt = input.customRatePt;
+    if (input.customRatePd !== undefined) updateData.customRatePd = input.customRatePd;
     
     // Обработка родительской категории через relation syntax
     if (input.parentId !== undefined) {
@@ -433,6 +479,10 @@ export async function updateCategory(
         parentName: category.parent?.name ?? null,
         sortOrder: category.sortOrder,
         warningMessage: category.warningMessage,
+        customRateAu: category.customRateAu,
+        customRateAg: category.customRateAg,
+        customRatePt: category.customRatePt,
+        customRatePd: category.customRatePd,
         productCount: category._count.products,
         createdAt: category.createdAt,
         updatedAt: category.updatedAt,
@@ -505,6 +555,8 @@ export interface CategoryShowcaseItem {
   priceUsed: number | null;// цена товара (Б/У)
   isNewAvailable: boolean;
   isUsedAvailable: boolean;
+  isSingleType: boolean;   // Единая цена (без разделения на Б/У)
+  unitType: "PIECE" | "GRAM" | "KG"; // Единица измерения
   // Данные категории для ссылки
   categorySlug: string;    // slug категории
   categoryName: string;    // название категории
@@ -556,6 +608,7 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
             name: true,
             slug: true,
             image: true,
+            unitType: true,
             // Содержание металлов для Новых
             contentGold: true,
             contentSilver: true,
@@ -569,6 +622,8 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
             // Доступность
             isNewAvailable: true,
             isUsedAvailable: true,
+            isSingleType: true,
+            priceMarkup: true,
             // Ручные цены
             manualPriceNew: true,
             manualPriceUsed: true,
@@ -583,6 +638,7 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
                 name: true,
                 slug: true,
                 image: true,
+                unitType: true,
                 contentGold: true,
                 contentSilver: true,
                 contentPlatinum: true,
@@ -593,6 +649,8 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
                 contentPalladiumUsed: true,
                 isNewAvailable: true,
                 isUsedAvailable: true,
+                isSingleType: true,
+                priceMarkup: true,
                 manualPriceNew: true,
                 manualPriceUsed: true,
               },
@@ -602,8 +660,11 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
       },
     });
 
-    // Импортируем функцию расчёта цен
-    const { calculateBasePrice } = await import("@/lib/price-calculator");
+    // Импортируем функции расчёта цен
+    const { calculateBasePrice, resolveRates } = await import("@/lib/price-calculator");
+    
+    // Преобразуем курсы металлов в числа
+    const rates = resolveRates(metalRates);
 
     const showcaseItems: CategoryShowcaseItem[] = [];
 
@@ -626,6 +687,9 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
       let bestPriceUsed: number | null = null;
 
       for (const product of allProducts) {
+        // Эффективная наценка = наценка товара * глобальная наценка
+        const effectiveMarkup = (product.priceMarkup ?? 1) * markup;
+        
         // Рассчитываем priceNew
         let priceNew: number | null = null;
         if (product.isNewAvailable) {
@@ -637,9 +701,9 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
               product.contentSilver,
               product.contentPlatinum,
               product.contentPalladium,
-              metalRates
+              rates
             );
-            priceNew = Math.round(basePrice * markup * 100) / 100;
+            priceNew = Math.round(basePrice * effectiveMarkup * 100) / 100;
           }
         }
 
@@ -654,9 +718,9 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
               product.contentSilverUsed,
               product.contentPlatinumUsed,
               product.contentPalladiumUsed,
-              metalRates
+              rates
             );
-            priceUsed = Math.round(basePriceUsed * markupUsed * 100) / 100;
+            priceUsed = Math.round(basePriceUsed * effectiveMarkup * 100) / 100;
           }
         }
 
@@ -682,6 +746,8 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
           priceUsed: bestPriceUsed,
           isNewAvailable: mostExpensiveProduct.isNewAvailable,
           isUsedAvailable: mostExpensiveProduct.isUsedAvailable,
+          isSingleType: mostExpensiveProduct.isSingleType,
+          unitType: mostExpensiveProduct.unitType,
           // Данные категории
           categorySlug: category.slug,
           categoryName: category.name,
@@ -697,6 +763,89 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
     return { success: true, data: showcaseItems };
   } catch (error) {
     console.error("Ошибка при получении витрины категорий:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Неизвестная ошибка",
+    };
+  }
+}
+
+/**
+ * Получить подкатегории по ID родительской категории
+ * Если parentId = null, возвращает корневые категории
+ */
+export async function getSubcategories(parentId: string | null): Promise<CategoriesResult> {
+  try {
+    const categories = await prisma.category.findMany({
+      where: { parentId },
+      include: {
+        parent: { select: { name: true } },
+        _count: { select: { products: true, children: true } },
+      },
+      orderBy: { sortOrder: "asc" },
+    });
+
+    const data: CategoryData[] = categories.map((cat) => ({
+      id: cat.id,
+      name: cat.name,
+      slug: cat.slug,
+      parentId: cat.parentId,
+      parentName: cat.parent?.name ?? null,
+      sortOrder: cat.sortOrder,
+      warningMessage: cat.warningMessage,
+      customRateAu: cat.customRateAu,
+      customRateAg: cat.customRateAg,
+      customRatePt: cat.customRatePt,
+      customRatePd: cat.customRatePd,
+      productCount: cat._count.products,
+      childrenCount: cat._count.children,
+      createdAt: cat.createdAt,
+      updatedAt: cat.updatedAt,
+    }));
+
+    return {
+      success: true,
+      data,
+      total: categories.length,
+    };
+  } catch (error) {
+    console.error("Ошибка при получении подкатегорий:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Неизвестная ошибка",
+    };
+  }
+}
+
+/**
+ * Получить цепочку категорий от корня до текущей (для хлебных крошек)
+ */
+export async function getCategoryBreadcrumbs(categoryId: string): Promise<{ success: true; data: Array<{ id: string; name: string; slug: string }> } | { success: false; error: string }> {
+  try {
+    const breadcrumbs: Array<{ id: string; name: string; slug: string }> = [];
+    let currentId: string | null = categoryId;
+
+    // Поднимаемся вверх по дереву категорий
+    while (currentId) {
+      const category: { id: string; name: string; slug: string; parentId: string | null } | null = await prisma.category.findUnique({
+        where: { id: currentId },
+        select: { id: true, name: true, slug: true, parentId: true },
+      });
+
+      if (!category) break;
+
+      breadcrumbs.unshift({
+        id: category.id,
+        name: category.name,
+        slug: category.slug,
+      });
+
+      currentId = category.parentId;
+    }
+
+    return { success: true, data: breadcrumbs };
+  } catch (error) {
+    console.error("Ошибка при получении хлебных крошек:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Неизвестная ошибка",

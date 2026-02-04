@@ -28,6 +28,11 @@ interface FormData {
   parentId: string;
   sortOrder: number;
   warningMessage: string;
+  // Кастомные курсы металлов (цена за 1 мг в рублях)
+  customRateAu: string;
+  customRateAg: string;
+  customRatePt: string;
+  customRatePd: string;
 }
 
 type NotificationType = "success" | "error" | null;
@@ -75,6 +80,10 @@ export function CategoryFormDialog({
       parentId: editCategory?.parentId || "",
       sortOrder: editCategory?.sortOrder ?? 0,
       warningMessage: editCategory?.warningMessage || "",
+      customRateAu: editCategory?.customRateAu?.toString() || "",
+      customRateAg: editCategory?.customRateAg?.toString() || "",
+      customRatePt: editCategory?.customRatePt?.toString() || "",
+      customRatePd: editCategory?.customRatePd?.toString() || "",
     },
   });
 
@@ -87,6 +96,10 @@ export function CategoryFormDialog({
       parentId: editCategory?.parentId || "",
       sortOrder: editCategory?.sortOrder ?? 0,
       warningMessage: editCategory?.warningMessage || "",
+      customRateAu: editCategory?.customRateAu?.toString() || "",
+      customRateAg: editCategory?.customRateAg?.toString() || "",
+      customRatePt: editCategory?.customRatePt?.toString() || "",
+      customRatePd: editCategory?.customRatePd?.toString() || "",
     });
   };
 
@@ -105,6 +118,14 @@ export function CategoryFormDialog({
   const onSubmit = (data: FormData) => {
     setNotification(null);
 
+    // Преобразуем кастомные курсы: пустая строка -> null, иначе число
+    const parseRate = (value: string): number | null => {
+      const trimmed = value.trim();
+      if (!trimmed) return null;
+      const num = parseFloat(trimmed);
+      return isNaN(num) ? null : num;
+    };
+
     startTransition(async () => {
       let result;
 
@@ -116,6 +137,10 @@ export function CategoryFormDialog({
           parentId: data.parentId || null,
           sortOrder: data.sortOrder,
           warningMessage: data.warningMessage || null,
+          customRateAu: parseRate(data.customRateAu),
+          customRateAg: parseRate(data.customRateAg),
+          customRatePt: parseRate(data.customRatePt),
+          customRatePd: parseRate(data.customRatePd),
         });
       } else {
         result = await createCategory({
@@ -124,6 +149,10 @@ export function CategoryFormDialog({
           parentId: data.parentId || null,
           sortOrder: data.sortOrder,
           warningMessage: data.warningMessage || null,
+          customRateAu: parseRate(data.customRateAu),
+          customRateAg: parseRate(data.customRateAg),
+          customRatePt: parseRate(data.customRatePt),
+          customRatePd: parseRate(data.customRatePd),
         });
       }
 
@@ -179,9 +208,9 @@ export function CategoryFormDialog({
           />
 
           {/* Modal */}
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md">
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-200">
+            <div className="flex items-center justify-between p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
               <h2 className="text-xl font-semibold text-slate-800">
                 {isEditing ? "Редактировать категорию" : "Новая категория"}
               </h2>
@@ -330,6 +359,113 @@ export function CategoryFormDialog({
                 <p className="mt-1 text-xs text-slate-500">
                   Если оставить пустым — блок не будет отображаться на сайте
                 </p>
+              </div>
+
+              {/* Custom Metal Rates Section */}
+              <div className="border-t border-slate-200 pt-4 mt-4">
+                <h3 className="text-sm font-semibold text-slate-800 mb-1">
+                  Специальные курсы (Опционально)
+                </h3>
+                <p className="text-xs text-amber-600 mb-4">
+                  ⚠️ Заполнять, ТОЛЬКО если для этой категории цена металла отличается от биржевой. Иначе оставить пустым.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Au - Золото */}
+                  <div>
+                    <label
+                      htmlFor="cat-customRateAu"
+                      className="block text-sm font-medium text-slate-700 mb-1"
+                    >
+                      Au (Золото)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        id="cat-customRateAu"
+                        step="0.01"
+                        min="0"
+                        {...register("customRateAu")}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 pr-16"
+                        placeholder="—"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                        ₽/мг
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Ag - Серебро */}
+                  <div>
+                    <label
+                      htmlFor="cat-customRateAg"
+                      className="block text-sm font-medium text-slate-700 mb-1"
+                    >
+                      Ag (Серебро)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        id="cat-customRateAg"
+                        step="0.01"
+                        min="0"
+                        {...register("customRateAg")}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 pr-16"
+                        placeholder="—"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                        ₽/мг
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Pt - Платина */}
+                  <div>
+                    <label
+                      htmlFor="cat-customRatePt"
+                      className="block text-sm font-medium text-slate-700 mb-1"
+                    >
+                      Pt (Платина)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        id="cat-customRatePt"
+                        step="0.01"
+                        min="0"
+                        {...register("customRatePt")}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 pr-16"
+                        placeholder="—"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                        ₽/мг
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Pd - Палладий */}
+                  <div>
+                    <label
+                      htmlFor="cat-customRatePd"
+                      className="block text-sm font-medium text-slate-700 mb-1"
+                    >
+                      Pd (Палладий)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        id="cat-customRatePd"
+                        step="0.01"
+                        min="0"
+                        {...register("customRatePd")}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 pr-16"
+                        placeholder="—"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                        ₽/мг
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Actions */}

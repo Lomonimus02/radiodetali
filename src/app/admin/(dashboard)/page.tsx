@@ -1,20 +1,17 @@
-import { getMetalRates, getProducts, getGlobalSettings } from "@/app/actions";
+import { getMetalRates, getProducts } from "@/app/actions";
 import { MetalRatesForm } from "./components/MetalRatesForm";
-import { MarkupForm } from "./components/MarkupForm";
-import { Package, TrendingUp, Percent } from "lucide-react";
+import { Package, TrendingUp } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const [ratesResult, productsResult, settingsResult] = await Promise.all([
+  const [ratesResult, productsResult] = await Promise.all([
     getMetalRates(),
     getProducts({ limit: 1 }),
-    getGlobalSettings(),
   ]);
 
   const rates = ratesResult.success ? ratesResult.data : null;
   const totalProducts = productsResult.success ? productsResult.total : 0;
-  const settings = settingsResult.success ? settingsResult.data : null;
 
   return (
     <div className="space-y-8">
@@ -29,7 +26,7 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={<Package className="w-6 h-6" />}
           label="Всего товаров"
@@ -37,27 +34,21 @@ export default async function AdminDashboard() {
           color="indigo"
         />
         <StatCard
-          icon={<Percent className="w-6 h-6" />}
-          label="Наценка"
-          value={settings ? `${((settings.priceMarkup - 1) * 100).toFixed(0)}%` : "—"}
-          color="green"
-        />
-        <StatCard
           icon={<TrendingUp className="w-6 h-6" />}
           label="Золото (Au)"
-          value={rates ? `${rates.gold.toLocaleString("ru-RU")} ₽/г` : "—"}
+          value={rates ? `${rates.gold.toLocaleString("ru-RU")} ₽/мг` : "—"}
           color="amber"
         />
         <StatCard
           icon={<TrendingUp className="w-6 h-6" />}
           label="Серебро (Ag)"
-          value={rates ? `${rates.silver.toLocaleString("ru-RU")} ₽/г` : "—"}
+          value={rates ? `${rates.silver.toLocaleString("ru-RU")} ₽/мг` : "—"}
           color="slate"
         />
         <StatCard
           icon={<TrendingUp className="w-6 h-6" />}
           label="Платина (Pt)"
-          value={rates ? `${rates.platinum.toLocaleString("ru-RU")} ₽/г` : "—"}
+          value={rates ? `${rates.platinum.toLocaleString("ru-RU")} ₽/мг` : "—"}
           color="cyan"
         />
       </div>
@@ -73,21 +64,6 @@ export default async function AdminDashboard() {
           <div className="text-red-500">
             Ошибка загрузки курсов:{" "}
             {!ratesResult.success && ratesResult.error}
-          </div>
-        )}
-      </div>
-
-      {/* Markup Form */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <h2 className="text-xl font-semibold text-slate-800 mb-6">
-          Глобальная наценка
-        </h2>
-        {settings ? (
-          <MarkupForm initialSettings={settings} />
-        ) : (
-          <div className="text-red-500">
-            Ошибка загрузки настроек:{" "}
-            {!settingsResult.success && settingsResult.error}
           </div>
         )}
       </div>

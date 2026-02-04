@@ -43,6 +43,12 @@ model Category {
   sortOrder      Int     @default(0) // Поле для ручной сортировки (меньше = выше)
   warningMessage String? @db.Text // Информационное предупреждение для категории (отображается на странице каталога)
 
+  // Кастомные курсы металлов для категории (если не заданы — используются глобальные)
+  customRateAu Float? // Курс золота для этой категории (руб/г)
+  customRateAg Float? // Курс серебра для этой категории (руб/г)
+  customRatePt Float? // Курс платины для этой категории (руб/г)
+  customRatePd Float? // Курс палладия для этой категории (руб/г)
+
   // Связи для древовидной структуры
   parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
   children Category[] @relation("CategoryTree")
@@ -57,14 +63,27 @@ model Category {
   @@map("categories")
 }
 
+// Единица измерения товара
+enum UnitType {
+  PIECE // Штука (шт)
+  GRAM  // Грамм (г)
+  KG    // Килограмм (кг)
+}
+
 // Модель товара (радиодеталь)
 model Product {
-  id         String  @id @default(cuid())
+  id         String   @id @default(cuid())
   name       String
-  slug       String  @unique
-  image      String? // URL изображения
+  slug       String   @unique
+  image      String?  // URL изображения
   categoryId String
-  sortOrder  Int     @default(0) // Поле для ручной сортировки (меньше = выше)
+  sortOrder  Int      @default(0) // Поле для ручной сортировки (меньше = выше)
+  unitType   UnitType @default(PIECE) // Единица измерения (PIECE = шт, GRAM = г, KG = кг)
+
+  // Наценка на товар (коэффициент: 0.9 = -10%, 1.0 = без наценки, 1.15 = +15%)
+  priceMarkup  Float   @default(1.0)
+  // Тип товара: true = одна цена (без разделения Новое/Б/У), false = две цены
+  isSingleType Boolean @default(false)
 
   // Содержание металлов в граммах для НОВЫХ товаров
   contentGold      Decimal @default(0) @db.Decimal(10, 6) // до 0.000001 г

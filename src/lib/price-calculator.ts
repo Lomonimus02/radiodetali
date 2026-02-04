@@ -1,188 +1,271 @@
 /**
- * Интерфейс для курсов металлов
- * Поддерживает как Prisma Decimal, так и обычные числа
+ * Price Calculator — расчёт цен на товары по содержанию драгоценных металлов
+ * 
+ * Система единиц измерения:
+ * - Содержание металлов (content) — в миллиграммах (мг)
+ * - Курсы металлов (rates) — цена за 1 мг
+ * - Формула: Price = Content_MG * Rate_Per_MG (без деления на 1000)
+ */
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+/**
+ * Глобальные курсы металлов (из таблицы MetalRate)
+ * Курсы хранятся как цена за 1 мг
  */
 export interface MetalRates {
-  gold: unknown;
+  gold: unknown;      // Prisma Decimal | number
   silver: unknown;
   platinum: unknown;
   palladium: unknown;
 }
 
 /**
- * Интерфейс для содержания металлов в товаре
+ * Кастомные курсы категории
+ * Если курс задан (не null) — используется вместо глобального
+ */
+export interface CategoryCustomRates {
+  customRateAu?: number | null;
+  customRateAg?: number | null;
+  customRatePt?: number | null;
+  customRatePd?: number | null;
+}
+
+/**
+ * Содержание металлов в товаре (в мг)
  */
 export interface MetalContent {
-  // Содержание металлов для НОВЫХ товаров
+  // Содержание для НОВЫХ товаров (мг)
   contentGold: unknown;
   contentSilver: unknown;
   contentPlatinum: unknown;
   contentPalladium: unknown;
-  // Содержание металлов для Б/У товаров (меньше из-за скушенных ножек и т.д.)
+  
+  // Содержание для Б/У товаров (мг)
   contentGoldUsed: unknown;
   contentSilverUsed: unknown;
   contentPlatinumUsed: unknown;
   contentPalladiumUsed: unknown;
-  // Флаги доступности по состоянию
+  
+  // Флаги доступности
   isNewAvailable: boolean;
   isUsedAvailable: boolean;
-  // Ручные цены для каждого состояния
+  
+  // Ручные цены (перебивают расчётные)
   manualPriceNew?: unknown | null;
   manualPriceUsed?: unknown | null;
+  
+  // Наценка товара (коэффициент: 0.9 = -10%, 1.0 = без наценки, 1.15 = +15%)
+  priceMarkup?: number;
+  
+  // Тип товара: true = одна цена (без разделения Новое/Б/У)
+  isSingleType?: boolean;
 }
 
 /**
  * Результат расчёта цены товара
  */
 export interface ProductPrices {
-  priceNew: number | null; // null если isNewAvailable = false
-  priceUsed: number | null; // null если isUsedAvailable = false
+  priceNew: number | null;   // null если isNewAvailable = false
+  priceUsed: number | null;  // Для isSingleType = true: равен priceNew
+  isSingleType: boolean;
 }
 
 /**
- * Рассчитывает базовую стоимость товара по содержанию металлов
+ * Разрешённые курсы металлов (после применения кастомных курсов категории)
+ * Все курсы — цена за 1 мг
+ */
+export interface ResolvedRates {
+  gold: number;
+  silver: number;
+  platinum: number;
+  palladium: number;
+}
+
+// ============================================================================
+// RATE RESOLUTION
+// ============================================================================
+
+/**
+ * Определяет итоговые курсы металлов для расчёта
  * 
- * Формула: Цена = (Содержание_Au_МГ * Курс_Au_МГ) + (Содержание_Ag_МГ * Курс_Ag_МГ) + 
- *                 (Содержание_Pt_МГ * Курс_Pt_МГ) + (Содержание_Pd_МГ * Курс_Pd_МГ)
+ * Приоритет:
+ * 1. Кастомный курс категории (customRateXx)
+ * 2. Глобальный курс из MetalRate
  * 
- * @param contentGold - Содержание золота в миллиграммах (мг)
- * @param contentSilver - Содержание серебра в миллиграммах (мг)
- * @param contentPlatinum - Содержание платины в миллиграммах (мг)
- * @param contentPalladium - Содержание палладия в миллиграммах (мг)
- * @param rates - Текущие курсы металлов (цена за 1 мг)
- * @returns Базовая стоимость в рублях (без наценки)
+ * @param globalRates - Глобальные курсы металлов
+ * @param categoryRates - Кастомные курсы категории (опционально)
+ * @returns Итоговые курсы для расчёта (цена за 1 мг)
+ */
+export function resolveRates(
+  globalRates: MetalRates,
+  categoryRates?: CategoryCustomRates | null
+): ResolvedRates {
+  return {
+    gold: categoryRates?.customRateAu ?? Number(globalRates.gold),
+    silver: categoryRates?.customRateAg ?? Number(globalRates.silver),
+    platinum: categoryRates?.customRatePt ?? Number(globalRates.platinum),
+    palladium: categoryRates?.customRatePd ?? Number(globalRates.palladium),
+  };
+}
+
+// ============================================================================
+// PRICE CALCULATION
+// ============================================================================
+
+/**
+ * Рассчитывает базовую стоимость по содержанию металлов
+ * 
+ * Формула: Price = (Content_Au_MG * Rate_Au) + (Content_Ag_MG * Rate_Ag) + 
+ *                  (Content_Pt_MG * Rate_Pt) + (Content_Pd_MG * Rate_Pd)
+ * 
+ * @param contentAu - Содержание золота (мг)
+ * @param contentAg - Содержание серебра (мг)
+ * @param contentPt - Содержание платины (мг)
+ * @param contentPd - Содержание палладия (мг)
+ * @param rates - Разрешённые курсы (цена за 1 мг)
+ * @returns Базовая стоимость в рублях
  */
 export function calculateBasePrice(
-  contentGold: unknown,
-  contentSilver: unknown,
-  contentPlatinum: unknown,
-  contentPalladium: unknown,
-  rates: MetalRates
+  contentAu: unknown,
+  contentAg: unknown,
+  contentPt: unknown,
+  contentPd: unknown,
+  rates: ResolvedRates
 ): number {
-  // Конвертируем Decimal в number для расчётов
-  const gold = Number(contentGold);
-  const silver = Number(contentSilver);
-  const platinum = Number(contentPlatinum);
-  const palladium = Number(contentPalladium);
+  const au = Number(contentAu) || 0;
+  const ag = Number(contentAg) || 0;
+  const pt = Number(contentPt) || 0;
+  const pd = Number(contentPd) || 0;
 
-  const rateGold = Number(rates.gold);
-  const rateSilver = Number(rates.silver);
-  const ratePlatinum = Number(rates.platinum);
-  const ratePalladium = Number(rates.palladium);
-
-  // Формула расчёта цены
+  // Формула: Content_MG * Rate_Per_MG (без деления на 1000)
   const price =
-    gold * rateGold +
-    silver * rateSilver +
-    platinum * ratePlatinum +
-    palladium * ratePalladium;
+    au * rates.gold +
+    ag * rates.silver +
+    pt * rates.platinum +
+    pd * rates.palladium;
 
-  // Округляем до 2 знаков после запятой
   return Math.round(price * 100) / 100;
 }
 
 /**
- * Рассчитывает цены товара для обоих состояний (Новое / Б/У)
+ * Рассчитывает цены товара
  * 
- * Алгоритм расчёта:
- * 1. Для НОВОГО: Рассчитать стоимость по contentGold/Silver/Platinum/Palladium
- * 2. Для Б/У: Рассчитать стоимость по contentGoldUsed/SilverUsed/PlatinumUsed/PalladiumUsed
- * 3. Применить priceMarkup к обеим стоимостям
- * 4. Если есть ручная цена (manualPriceNew/manualPriceUsed) — использовать её
+ * Алгоритм:
+ * 1. Определяем курсы (customRate категории > глобальный курс)
+ * 2. Рассчитываем базовую цену: Content_MG * Rate_Per_MG
+ * 3. Применяем наценку товара: Base * priceMarkup
+ * 4. Для isSingleType: считаем только по полям New, возвращаем одинаковую цену
  * 
- * @param product - Товар с содержанием металлов и настройками
- * @param rates - Текущие курсы металлов
- * @param priceMarkup - Глобальный коэффициент наценки (по умолчанию 1.0)
- * @returns Объект с ценами для каждого состояния
+ * @param product - Товар с содержанием металлов
+ * @param globalRates - Глобальные курсы из MetalRate
+ * @param categoryRates - Кастомные курсы категории
+ * @returns Объект с ценами
  */
 export function calculateProductPrices(
   product: MetalContent,
-  rates: MetalRates,
-  priceMarkup: number = 1.0
+  globalRates: MetalRates,
+  categoryRates?: CategoryCustomRates | null
 ): ProductPrices {
-  // Расчёт цены для "Нового"
+  const rates = resolveRates(globalRates, categoryRates);
+  const markup = product.priceMarkup ?? 1.0;
+  const isSingleType = product.isSingleType ?? false;
+
+  // ========================================
+  // Расчёт цены для "Новых"
+  // ========================================
   let priceNew: number | null = null;
-  if (product.isNewAvailable) {
+  
+  // Для isSingleType всегда рассчитываем цену (игнорируем isNewAvailable)
+  if (isSingleType || product.isNewAvailable) {
     if (product.manualPriceNew != null) {
       priceNew = Number(product.manualPriceNew);
     } else {
-      // Рассчитываем базовую стоимость для НОВЫХ по содержанию металлов
-      const basePriceNew = calculateBasePrice(
+      const basePrice = calculateBasePrice(
         product.contentGold,
         product.contentSilver,
         product.contentPlatinum,
         product.contentPalladium,
         rates
       );
-      priceNew = Math.round(basePriceNew * priceMarkup * 100) / 100;
+      priceNew = Math.round(basePrice * markup * 100) / 100;
     }
   }
 
+  // ========================================
   // Расчёт цены для "Б/У"
+  // ========================================
   let priceUsed: number | null = null;
-  if (product.isUsedAvailable) {
+
+  if (isSingleType) {
+    // Для isSingleType: цена одинаковая (используем поля New)
+    priceUsed = priceNew;
+  } else if (product.isUsedAvailable) {
     if (product.manualPriceUsed != null) {
       priceUsed = Number(product.manualPriceUsed);
     } else {
-      // Рассчитываем базовую стоимость для Б/У по содержанию металлов Used
-      const basePriceUsed = calculateBasePrice(
+      const basePrice = calculateBasePrice(
         product.contentGoldUsed,
         product.contentSilverUsed,
         product.contentPlatinumUsed,
         product.contentPalladiumUsed,
         rates
       );
-      priceUsed = Math.round(basePriceUsed * priceMarkup * 100) / 100;
+      priceUsed = Math.round(basePrice * markup * 100) / 100;
     }
   }
 
-  return { priceNew, priceUsed };
+  return { priceNew, priceUsed, isSingleType };
 }
 
 /**
- * @deprecated Используйте calculateProductPrices для новой логики с двумя состояниями
- * Оставлено для обратной совместимости
+ * @deprecated Используйте calculateProductPrices
  */
 export function calculateProductPrice(
   product: MetalContent,
   rates: MetalRates,
-  priceMarkup: number = 1.0
+  categoryRates?: CategoryCustomRates | null
 ): number {
-  const { priceNew, priceUsed } = calculateProductPrices(product, rates, priceMarkup);
-  // Возвращаем первую доступную цену или 0
+  const { priceNew, priceUsed } = calculateProductPrices(product, rates, categoryRates);
   return priceNew ?? priceUsed ?? 0;
 }
 
+// ============================================================================
+// FORMATTING
+// ============================================================================
+
 /**
  * Форматирует цену для отображения
- * @param price - Цена в рублях
- * @returns Отформатированная строка с ценой
  */
 export function formatPrice(price: number): string {
   return new Intl.NumberFormat("ru-RU", {
     style: "currency",
     currency: "RUB",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 3,
   }).format(price);
 }
 
 /**
  * Форматирует содержание металла для отображения
- * @param content - Содержание в граммах
+ * @param content - Содержание в мг
  * @returns Отформатированная строка
  */
 export function formatMetalContent(content: unknown): string {
   const value = Number(content);
   if (value === 0) return "—";
   
-  // Для очень маленьких значений показываем больше знаков
-  if (value < 0.001) {
-    return `${value.toFixed(6)} г`;
-  } else if (value < 0.01) {
-    return `${value.toFixed(4)} г`;
-  } else if (value < 1) {
-    return `${value.toFixed(3)} г`;
+  // Форматируем в зависимости от величины
+  if (value < 1) {
+    return `${value.toFixed(4)} мг`;
+  } else if (value < 10) {
+    return `${value.toFixed(3)} мг`;
+  } else if (value < 1000) {
+    return `${value.toFixed(2)} мг`;
   }
-  return `${value.toFixed(2)} г`;
+  // Для значений >= 1000 мг показываем в граммах
+  const grams = value / 1000;
+  return `${grams.toFixed(3)} г`;
 }

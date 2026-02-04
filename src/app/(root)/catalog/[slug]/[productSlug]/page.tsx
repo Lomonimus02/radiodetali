@@ -11,11 +11,38 @@ import {
   Info,
   Phone,
 } from "lucide-react";
-import { getProductBySlug, getProducts, getCategoryBySlug } from "@/app/actions";
+import { getProductBySlug, getProducts, getCategoryBySlug, type UnitType } from "@/app/actions";
 import { ProductCard, ProductGridSkeleton } from "../../../components";
 
 interface ProductPageProps {
   params: Promise<{ slug: string; productSlug: string }>;
+}
+
+// Получить суффикс единицы измерения для цены
+function getPriceUnitSuffix(unitType: UnitType): string {
+  switch (unitType) {
+    case "GRAM": return "/г.";
+    case "KG": return "/кг.";
+    default: return "/шт.";
+  }
+}
+
+// Получить единицу измерения для описания
+function getUnitLabel(unitType: UnitType): string {
+  switch (unitType) {
+    case "GRAM": return "грамм";
+    case "KG": return "килограмм";
+    default: return "штуку";
+  }
+}
+
+// Получить краткое название единицы
+function getUnitShort(unitType: UnitType): string {
+  switch (unitType) {
+    case "GRAM": return "1 г";
+    case "KG": return "1 кг";
+    default: return "1 шт";
+  }
 }
 
 // Получить основную цену товара (первую доступную)
@@ -39,12 +66,14 @@ export async function generateMetadata({
   const formattedPrice = new Intl.NumberFormat("ru-RU", {
     style: "currency",
     currency: "RUB",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 3,
   }).format(getDisplayPrice(product));
+  const unitLabel = getUnitLabel(product.unitType);
 
   return {
     title: `Продать ${product.name} - цена ${formattedPrice}`,
-    description: `Актуальная цена на ${product.name} (${product.slug.toUpperCase()}) — ${formattedPrice} за штуку. Скупка радиодеталей с драгметаллами: золото, серебро, платина, палладий. Быстрая оценка, оплата на месте.`,
+    description: `Актуальная цена на ${product.name} (${product.slug.toUpperCase()}) — ${formattedPrice} за ${unitLabel}. Скупка радиодеталей с драгметаллами: золото, серебро, платина, палладий. Быстрая оценка, оплата на месте.`,
     keywords: [
       product.name,
       product.slug,
@@ -55,63 +84,11 @@ export async function generateMetadata({
     ],
     openGraph: {
       title: `Продать ${product.name} - ${formattedPrice}`,
-      description: `Скупаем ${product.name} по цене ${formattedPrice} за штуку. Оценка драгметаллов, быстрая оплата.`,
+      description: `Скупаем ${product.name} по цене ${formattedPrice} за ${unitLabel}. Оценка драгметаллов, быстрая оплата.`,
       type: "website",
       images: product.image ? [{ url: product.image }] : undefined,
     },
   };
-}
-
-// Metal content table component
-function MetalContentTable({
-  gold,
-  silver,
-  platinum,
-  palladium,
-}: {
-  gold: number;
-  silver: number;
-  platinum: number;
-  palladium: number;
-}) {
-  const metals = [
-    { name: "Золото (Au)", value: gold, color: "bg-yellow-500" },
-    { name: "Серебро (Ag)", value: silver, color: "bg-gray-400" },
-    { name: "Платина (Pt)", value: platinum, color: "bg-blue-300" },
-    { name: "Палладий (Pd)", value: palladium, color: "bg-cyan-400" },
-  ];
-
-  const hasContent = gold > 0 || silver > 0 || platinum > 0 || palladium > 0;
-
-  if (!hasContent) {
-    return (
-      <div className="text-[var(--gray-500)] text-sm py-4">
-        Данные о содержании драгметаллов отсутствуют
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {metals.map(
-        (metal) =>
-          metal.value > 0 && (
-            <div
-              key={metal.name}
-              className="flex items-center justify-between py-2 border-b border-[var(--gray-100)] last:border-0"
-            >
-              <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${metal.color}`} />
-                <span className="text-[var(--gray-700)]">{metal.name}</span>
-              </div>
-              <span className="font-mono text-[var(--gray-900)] font-medium">
-                {metal.value.toFixed(6)} г
-              </span>
-            </div>
-          )
-      )}
-    </div>
-  );
 }
 
 // Related products
@@ -171,7 +148,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const formattedPrice = new Intl.NumberFormat("ru-RU", {
     style: "currency",
     currency: "RUB",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 3,
   }).format(getDisplayPrice(product));
 
   return (
@@ -257,10 +235,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm text-[var(--gray-600)] mb-1">
-                    Цена скупки за 1 шт.
+                    Цена скупки за {getUnitShort(product.unitType)}
                   </p>
                   <p className="text-3xl md:text-4xl font-bold text-[var(--accent-700)] price-highlight">
-                    {formattedPrice}
+                    {formattedPrice}{getPriceUnitSuffix(product.unitType)}
                   </p>
                   <p className="text-xs text-[var(--gray-500)] mt-2 flex items-center gap-1">
                     <Info className="w-3 h-3" />
@@ -288,26 +266,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   Все контакты
                 </Link>
               </div>
-            </div>
-
-            {/* Metal content */}
-            <div className="bg-white rounded-xl border border-[var(--gray-200)] overflow-hidden">
-              <details className="group">
-                <summary className="flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--gray-50)] transition-colors">
-                  <span className="font-semibold text-[var(--gray-900)]">
-                    Содержание драгметаллов
-                  </span>
-                  <ChevronRight className="w-5 h-5 text-[var(--gray-400)] group-open:rotate-90 transition-transform" />
-                </summary>
-                <div className="px-4 pb-4">
-                  <MetalContentTable
-                    gold={product.contentGold}
-                    silver={product.contentSilver}
-                    platinum={product.contentPlatinum}
-                    palladium={product.contentPalladium}
-                  />
-                </div>
-              </details>
             </div>
 
             {/* Additional info */}

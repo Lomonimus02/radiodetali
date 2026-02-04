@@ -1,11 +1,24 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Package, Sparkles, Recycle } from "lucide-react";
-import type { ProductWithPrice } from "@/app/actions";
+import { Package, Sparkles, Recycle, Tag, ZoomIn } from "lucide-react";
+import type { ProductWithPrice, UnitType } from "@/app/actions";
+import { ImageModal } from "./ImageModal";
 
 interface ProductCardCompactProps {
   product: ProductWithPrice;
   categorySlug: string;
+}
+
+// Получить суффикс единицы измерения для цены
+function getPriceUnitSuffix(unitType: UnitType): string {
+  switch (unitType) {
+    case "GRAM": return "/г.";
+    case "KG": return "/кг.";
+    default: return "/шт.";
+  }
 }
 
 // Форматирование цены
@@ -13,69 +26,100 @@ function formatPrice(price: number): string {
   return new Intl.NumberFormat("ru-RU", {
     style: "currency",
     currency: "RUB",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 3,
   }).format(price);
 }
 
 export function ProductCardCompact({ product, categorySlug }: ProductCardCompactProps) {
   const hasNewPrice = product.priceNew !== null;
   const hasUsedPrice = product.priceUsed !== null;
+  
+  // Стейт для модального окна с изображением
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   const productUrl = `/catalog/${categorySlug}/${product.slug}`;
 
   return (
-    <Link 
-      href={productUrl}
-      className="group block bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-lg transition-all duration-300 overflow-hidden"
-    >
-      {/* Image */}
-      <div className="relative aspect-square bg-[var(--gray-100)] overflow-hidden">
-        {product.image ? (
-          <Image
-            src={product.image}
-            alt={product.name}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1280px) 33vw, 20vw"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Package className="w-16 h-16 text-[var(--gray-300)]" />
-          </div>
-        )}
-      </div>
+    <>
+      {/* Модальное окно для просмотра изображения */}
+      {product.image && (
+        <ImageModal
+          isOpen={isImageModalOpen}
+          onClose={() => setIsImageModalOpen(false)}
+          imageUrl={product.image}
+          alt={product.name}
+        />
+      )}
+      
+      <div className="group bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-lg transition-all duration-300 overflow-hidden">
+        {/* Image - клик открывает модалку */}
+        <button
+          type="button"
+          onClick={() => product.image && setIsImageModalOpen(true)}
+          className="relative w-full aspect-square bg-[var(--gray-100)] overflow-hidden cursor-zoom-in"
+          aria-label={`Увеличить изображение ${product.name}`}
+        >
+          {product.image ? (
+            <>
+              <Image
+                src={product.image}
+                alt={product.name}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1280px) 33vw, 20vw"
+              />
+              {/* Иконка зума */}
+              <div className="absolute bottom-2 right-2 p-1.5 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                <ZoomIn className="w-4 h-4 text-white" />
+              </div>
+            </>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Package className="w-16 h-16 text-[var(--gray-300)]" />
+            </div>
+          )}
+        </button>
 
-      {/* Content */}
-      <div className="p-4">
-        {/* Name */}
-        <h3 className="font-semibold text-[var(--gray-800)] group-hover:text-[var(--primary-600)] transition-colors line-clamp-2 mb-3 min-h-[2.5rem]">
-          {product.name}
-        </h3>
+        {/* Content */}
+        <div className="p-4">
+          {/* Name - клик ведет на страницу товара */}
+          <Link href={productUrl}>
+            <h3 className="font-semibold text-[var(--gray-800)] hover:text-[var(--primary-600)] transition-colors line-clamp-2 mb-3 min-h-[2.5rem] cursor-pointer">
+              {product.name}
+            </h3>
+          </Link>
 
         {/* Prices */}
         <div className="space-y-1">
-          {/* Цена за Новый */}
+          {/* Цена за Новый / Единая цена */}
           {hasNewPrice && (
-            <div className="flex items-center justify-between bg-green-50 px-2 py-1.5 rounded-md">
+            <div className={`flex items-center justify-between px-2 py-1.5 rounded-md ${product.isSingleType ? 'bg-blue-50' : 'bg-green-50'}`}>
               <div className="flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-green-600" />
-                <span className="text-xs font-medium text-green-700">Новый</span>
+                {product.isSingleType ? (
+                  <Tag className="w-3 h-3 text-blue-600" />
+                ) : (
+                  <Sparkles className="w-3 h-3 text-green-600" />
+                )}
+                <span className={`text-xs font-medium ${product.isSingleType ? 'text-blue-700' : 'text-green-700'}`}>
+                  {product.isSingleType ? 'Цена' : 'Новый'}
+                </span>
               </div>
-              <span className="font-bold text-green-700">
-                {formatPrice(product.priceNew!)}
+              <span className={`font-bold ${product.isSingleType ? 'text-blue-700' : 'text-green-700'}`}>
+                {formatPrice(product.priceNew!)}{getPriceUnitSuffix(product.unitType)}
               </span>
             </div>
           )}
           
-          {/* Цена за Б/У */}
-          {hasUsedPrice && (
+          {/* Цена за Б/У (скрываем для единой цены) */}
+          {hasUsedPrice && !product.isSingleType && (
             <div className="flex items-center justify-between bg-amber-50 px-2 py-1.5 rounded-md">
               <div className="flex items-center gap-1">
                 <Recycle className="w-3 h-3 text-amber-600" />
                 <span className="text-xs font-medium text-amber-700">Б/У</span>
               </div>
               <span className="font-bold text-amber-700">
-                {formatPrice(product.priceUsed!)}
+                {formatPrice(product.priceUsed!)}{getPriceUnitSuffix(product.unitType)}
               </span>
             </div>
           )}
@@ -88,6 +132,7 @@ export function ProductCardCompact({ product, categorySlug }: ProductCardCompact
           )}
         </div>
       </div>
-    </Link>
+    </div>
+    </>
   );
 }

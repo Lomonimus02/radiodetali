@@ -152,27 +152,44 @@ export function ProductsTable({ products }: ProductsTableProps) {
                 {/* Price */}
                 <td className="px-4 py-4 text-right">
                   <div className="space-y-1">
-                    {product.priceNew !== null && (
-                      <div className="flex items-center justify-end gap-1">
-                        <span className="text-xs px-1.5 py-0.5 bg-green-100 text-green-700 rounded">Новое</span>
-                        <span className="font-semibold text-slate-800">
-                          {product.priceNew.toLocaleString("ru-RU")} ₽
-                        </span>
-                        {product.manualPriceNew && (
-                          <span className="text-xs text-amber-600">Фикс.</span>
+                    {/* Единый тип товара - показываем одну цену */}
+                    {product.isSingleType ? (
+                      product.priceNew !== null && (
+                        <div className="flex items-center justify-end gap-1">
+                          <span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded">Единая</span>
+                          <span className="font-semibold text-slate-800">
+                            {product.priceNew.toLocaleString("ru-RU")} ₽
+                          </span>
+                          {product.manualPriceNew && (
+                            <span className="text-xs text-amber-600">Фикс.</span>
+                          )}
+                        </div>
+                      )
+                    ) : (
+                      <>
+                        {product.priceNew !== null && (
+                          <div className="flex items-center justify-end gap-1">
+                            <span className="text-xs px-1.5 py-0.5 bg-green-100 text-green-700 rounded">Новое</span>
+                            <span className="font-semibold text-slate-800">
+                              {product.priceNew.toLocaleString("ru-RU")} ₽
+                            </span>
+                            {product.manualPriceNew && (
+                              <span className="text-xs text-amber-600">Фикс.</span>
+                            )}
+                          </div>
                         )}
-                      </div>
-                    )}
-                    {product.priceUsed !== null && (
-                      <div className="flex items-center justify-end gap-1">
-                        <span className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded">Б/У</span>
-                        <span className="font-semibold text-slate-800">
-                          {product.priceUsed.toLocaleString("ru-RU")} ₽
-                        </span>
-                        {product.manualPriceUsed && (
-                          <span className="text-xs text-amber-600">Фикс.</span>
+                        {product.priceUsed !== null && (
+                          <div className="flex items-center justify-end gap-1">
+                            <span className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded">Б/У</span>
+                            <span className="font-semibold text-slate-800">
+                              {product.priceUsed.toLocaleString("ru-RU")} ₽
+                            </span>
+                            {product.manualPriceUsed && (
+                              <span className="text-xs text-amber-600">Фикс.</span>
+                            )}
+                          </div>
                         )}
-                      </div>
+                      </>
                     )}
                   </div>
                 </td>

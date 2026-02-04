@@ -1,5 +1,5 @@
 import { getProductById, getCategories, getMetalRates } from "@/app/actions";
-import { ProductForm } from "../components/ProductForm";
+import { ProductForm } from "../../components/ProductForm";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,10 +8,12 @@ export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ categoryId?: string }>;
 }
 
-export default async function EditProductPage({ params }: PageProps) {
+export default async function EditProductPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const { categoryId: categoryIdFromUrl } = await searchParams;
   
   const [productResult, categoriesResult, metalRatesResult] = await Promise.all([
     getProductById(id),
@@ -25,8 +27,14 @@ export default async function EditProductPage({ params }: PageProps) {
 
   const product = productResult.data;
   
-  // URL для возврата - в папку каталога товара
-  const backUrl = `/admin/catalog/${product.categoryId}`;
+  // Используем categoryId из URL параметров или из самого товара
+  const categoryId = categoryIdFromUrl || product.categoryId;
+  
+  // URL для возврата - в папку каталога
+  const backUrl = `/admin/catalog/${categoryId}`;
+  
+  // Путь редиректа после сохранения - в ту же папку
+  const redirectPath = backUrl;
 
   if (!categoriesResult.success) {
     return (
@@ -85,7 +93,7 @@ export default async function EditProductPage({ params }: PageProps) {
         product={product}
         categories={categoriesResult.data}
         metalRates={metalRatesResult.data}
-        redirectPath={backUrl}
+        redirectPath={redirectPath}
       />
     </div>
   );

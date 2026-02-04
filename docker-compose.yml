@@ -41,6 +41,24 @@ services:
     networks:
       - radiodetali_network
 
+  # Сервис для запуска миграций
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: radiodetali_migrate
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-radiodetali}:${POSTGRES_PASSWORD:-radiodetali_secret}@db:5432/${POSTGRES_DB:-radiodetali}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - radiodetali_network
+    command: npx prisma migrate deploy --config prisma.config.ts
+    profiles:
+      - tools
+
 volumes:
   postgres_data:
     driver: local

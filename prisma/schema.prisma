@@ -89,16 +89,16 @@ model Product {
   isSingleType Boolean @default(false)
 
   // Содержание металлов в граммах для НОВЫХ товаров
-  contentGold      Decimal @default(0) @db.Decimal(10, 6) // до 0.000001 г
-  contentSilver    Decimal @default(0) @db.Decimal(10, 6)
-  contentPlatinum  Decimal @default(0) @db.Decimal(10, 6)
-  contentPalladium Decimal @default(0) @db.Decimal(10, 6)
+  contentGold      Decimal @default(0) @db.Decimal(14, 6) // до 0.000001 г
+  contentSilver    Decimal @default(0) @db.Decimal(14, 6)
+  contentPlatinum  Decimal @default(0) @db.Decimal(14, 6)
+  contentPalladium Decimal @default(0) @db.Decimal(14, 6)
 
   // Содержание металлов в граммах для Б/У товаров (меньше из-за скушенных ножек и т.д.)
-  contentGoldUsed      Decimal @default(0) @db.Decimal(10, 6)
-  contentSilverUsed    Decimal @default(0) @db.Decimal(10, 6)
-  contentPlatinumUsed  Decimal @default(0) @db.Decimal(10, 6)
-  contentPalladiumUsed Decimal @default(0) @db.Decimal(10, 6)
+  contentGoldUsed      Decimal @default(0) @db.Decimal(14, 6)
+  contentSilverUsed    Decimal @default(0) @db.Decimal(14, 6)
+  contentPlatinumUsed  Decimal @default(0) @db.Decimal(14, 6)
+  contentPalladiumUsed Decimal @default(0) @db.Decimal(14, 6)
 
   // Настройки доступности по состоянию (Новое / Б/У)
   isNewAvailable  Boolean @default(true) // Принимаем "Новое"

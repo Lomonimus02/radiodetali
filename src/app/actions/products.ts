@@ -599,23 +599,23 @@ export async function createProduct(
         name: input.name.trim(),
         slug: input.slug.trim(),
         image: input.image ?? null,
-        category: { connect: { id: input.categoryId } },
+        categoryId: input.categoryId,
         sortOrder,
         // Единица измерения
         unitType: input.unitType ?? "PIECE",
         // Наценка и тип товара
         priceMarkup: input.priceMarkup ?? 1.0,
         isSingleType: input.isSingleType ?? false,
-        // Содержание металлов для НОВЫХ
-        contentGold: input.contentGold ?? 0,
-        contentSilver: input.contentSilver ?? 0,
-        contentPlatinum: input.contentPlatinum ?? 0,
-        contentPalladium: input.contentPalladium ?? 0,
-        // Содержание металлов для Б/У
-        contentGoldUsed: input.contentGoldUsed ?? 0,
-        contentSilverUsed: input.contentSilverUsed ?? 0,
-        contentPlatinumUsed: input.contentPlatinumUsed ?? 0,
-        contentPalladiumUsed: input.contentPalladiumUsed ?? 0,
+        // Содержание металлов для НОВЫХ (обрабатываем null и NaN как 0)
+        contentGold: (input.contentGold == null || Number.isNaN(input.contentGold)) ? 0 : input.contentGold,
+        contentSilver: (input.contentSilver == null || Number.isNaN(input.contentSilver)) ? 0 : input.contentSilver,
+        contentPlatinum: (input.contentPlatinum == null || Number.isNaN(input.contentPlatinum)) ? 0 : input.contentPlatinum,
+        contentPalladium: (input.contentPalladium == null || Number.isNaN(input.contentPalladium)) ? 0 : input.contentPalladium,
+        // Содержание металлов для Б/У (обрабатываем null и NaN как 0)
+        contentGoldUsed: (input.contentGoldUsed == null || Number.isNaN(input.contentGoldUsed)) ? 0 : input.contentGoldUsed,
+        contentSilverUsed: (input.contentSilverUsed == null || Number.isNaN(input.contentSilverUsed)) ? 0 : input.contentSilverUsed,
+        contentPlatinumUsed: (input.contentPlatinumUsed == null || Number.isNaN(input.contentPlatinumUsed)) ? 0 : input.contentPlatinumUsed,
+        contentPalladiumUsed: (input.contentPalladiumUsed == null || Number.isNaN(input.contentPalladiumUsed)) ? 0 : input.contentPalladiumUsed,
         isNewAvailable: input.isNewAvailable ?? true,
         isUsedAvailable: input.isUsedAvailable ?? true,
         manualPriceNew: input.manualPriceNew ?? null,
@@ -706,7 +706,7 @@ export async function updateProduct(
       name?: string;
       slug?: string;
       image?: string | null;
-      category?: { connect: { id: string } };
+      categoryId?: string;
       sortOrder?: number;
       // Единица измерения
       unitType?: UnitType;
@@ -732,23 +732,23 @@ export async function updateProduct(
     if (input.name !== undefined) updateData.name = input.name.trim();
     if (input.slug !== undefined) updateData.slug = input.slug.trim();
     if (input.image !== undefined) updateData.image = input.image;
-    if (input.categoryId !== undefined) updateData.category = { connect: { id: input.categoryId } };
+    if (input.categoryId !== undefined) updateData.categoryId = input.categoryId;
     // Единица измерения
     if (input.unitType !== undefined) updateData.unitType = input.unitType;
     // Наценка и тип товара
     if (input.priceMarkup !== undefined) updateData.priceMarkup = input.priceMarkup;
     if (input.isSingleType !== undefined) updateData.isSingleType = input.isSingleType;
     // sortOrder обрабатывается отдельно через reorder
-    // НОВЫЕ
-    if (input.contentGold !== undefined) updateData.contentGold = input.contentGold;
-    if (input.contentSilver !== undefined) updateData.contentSilver = input.contentSilver;
-    if (input.contentPlatinum !== undefined) updateData.contentPlatinum = input.contentPlatinum;
-    if (input.contentPalladium !== undefined) updateData.contentPalladium = input.contentPalladium;
-    // Б/У
-    if (input.contentGoldUsed !== undefined) updateData.contentGoldUsed = input.contentGoldUsed;
-    if (input.contentSilverUsed !== undefined) updateData.contentSilverUsed = input.contentSilverUsed;
-    if (input.contentPlatinumUsed !== undefined) updateData.contentPlatinumUsed = input.contentPlatinumUsed;
-    if (input.contentPalladiumUsed !== undefined) updateData.contentPalladiumUsed = input.contentPalladiumUsed;
+    // НОВЫЕ - обрабатываем null и NaN как 0
+    if (input.contentGold !== undefined) updateData.contentGold = (input.contentGold == null || Number.isNaN(input.contentGold)) ? 0 : input.contentGold;
+    if (input.contentSilver !== undefined) updateData.contentSilver = (input.contentSilver == null || Number.isNaN(input.contentSilver)) ? 0 : input.contentSilver;
+    if (input.contentPlatinum !== undefined) updateData.contentPlatinum = (input.contentPlatinum == null || Number.isNaN(input.contentPlatinum)) ? 0 : input.contentPlatinum;
+    if (input.contentPalladium !== undefined) updateData.contentPalladium = (input.contentPalladium == null || Number.isNaN(input.contentPalladium)) ? 0 : input.contentPalladium;
+    // Б/У - обрабатываем null и NaN как 0
+    if (input.contentGoldUsed !== undefined) updateData.contentGoldUsed = (input.contentGoldUsed == null || Number.isNaN(input.contentGoldUsed)) ? 0 : input.contentGoldUsed;
+    if (input.contentSilverUsed !== undefined) updateData.contentSilverUsed = (input.contentSilverUsed == null || Number.isNaN(input.contentSilverUsed)) ? 0 : input.contentSilverUsed;
+    if (input.contentPlatinumUsed !== undefined) updateData.contentPlatinumUsed = (input.contentPlatinumUsed == null || Number.isNaN(input.contentPlatinumUsed)) ? 0 : input.contentPlatinumUsed;
+    if (input.contentPalladiumUsed !== undefined) updateData.contentPalladiumUsed = (input.contentPalladiumUsed == null || Number.isNaN(input.contentPalladiumUsed)) ? 0 : input.contentPalladiumUsed;
     if (input.isNewAvailable !== undefined) updateData.isNewAvailable = input.isNewAvailable;
     if (input.isUsedAvailable !== undefined) updateData.isUsedAvailable = input.isUsedAvailable;
     if (input.manualPriceNew !== undefined) updateData.manualPriceNew = input.manualPriceNew;

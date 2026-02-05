@@ -1,17 +1,20 @@
-import { getMetalRates, getProducts } from "@/app/actions";
+import { getMetalRates, getProducts, getPinnedCategories } from "@/app/actions";
 import { MetalRatesForm } from "./components/MetalRatesForm";
+import { PinnedCategoryRatesForm } from "./components/PinnedCategoryRatesForm";
 import { Package, TrendingUp } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const [ratesResult, productsResult] = await Promise.all([
+  const [ratesResult, productsResult, pinnedCategoriesResult] = await Promise.all([
     getMetalRates(),
     getProducts({ limit: 1 }),
+    getPinnedCategories(),
   ]);
 
   const rates = ratesResult.success ? ratesResult.data : null;
   const totalProducts = productsResult.success ? productsResult.total : 0;
+  const pinnedCategories = pinnedCategoriesResult.success ? pinnedCategoriesResult.data : [];
 
   return (
     <div className="space-y-8">
@@ -56,7 +59,7 @@ export default async function AdminDashboard() {
       {/* Metal Rates Form */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
         <h2 className="text-xl font-semibold text-slate-800 mb-6">
-          Курсы металлов
+          Глобальные курсы металлов
         </h2>
         {rates ? (
           <MetalRatesForm initialRates={rates} />
@@ -66,6 +69,17 @@ export default async function AdminDashboard() {
             {!ratesResult.success && ratesResult.error}
           </div>
         )}
+      </div>
+
+      {/* Pinned Category Rates */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <h2 className="text-xl font-semibold text-slate-800 mb-2">
+          Специальные курсы категорий
+        </h2>
+        <p className="text-sm text-slate-500 mb-6">
+          Курсы металлов для категорий, закреплённых на дашборде
+        </p>
+        <PinnedCategoryRatesForm categories={pinnedCategories} />
       </div>
     </div>
   );

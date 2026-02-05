@@ -18,6 +18,8 @@ export interface CategoryData {
   parentName: string | null;
   sortOrder: number;
   warningMessage: string | null;
+  // Закрепить управление курсом на Дашборде
+  isPinnedToDashboard: boolean;
   // Кастомные курсы металлов (null = использовать глобальные)
   customRateAu: number | null;
   customRateAg: number | null;
@@ -38,6 +40,8 @@ export interface CreateCategoryInput {
   parentId?: string | null;
   sortOrder?: number;
   warningMessage?: string | null;
+  // Закрепить управление курсом на Дашборде
+  isPinnedToDashboard?: boolean;
   // Кастомные курсы металлов (null/undefined = использовать глобальные)
   customRateAu?: number | null;
   customRateAg?: number | null;
@@ -55,6 +59,8 @@ export interface UpdateCategoryInput {
   parentId?: string | null;
   sortOrder?: number;
   warningMessage?: string | null;
+  // Закрепить управление курсом на Дашборде
+  isPinnedToDashboard?: boolean;
   // Кастомные курсы металлов (null = использовать глобальные)
   customRateAu?: number | null;
   customRateAg?: number | null;
@@ -168,6 +174,7 @@ export async function getCategories(rootOnly: boolean = false): Promise<Categori
         parentName: cat.parent?.name ?? null,
         sortOrder: cat.sortOrder,
         warningMessage: cat.warningMessage,
+        isPinnedToDashboard: cat.isPinnedToDashboard,
         customRateAu: cat.customRateAu,
         customRateAg: cat.customRateAg,
         customRatePt: cat.customRatePt,
@@ -219,6 +226,7 @@ export async function getCategoryBySlug(slug: string): Promise<CategoryResult> {
         parentName: category.parent?.name ?? null,
         sortOrder: category.sortOrder,
         warningMessage: category.warningMessage,
+        isPinnedToDashboard: category.isPinnedToDashboard,
         customRateAu: category.customRateAu,
         customRateAg: category.customRateAg,
         customRatePt: category.customRatePt,
@@ -264,6 +272,7 @@ export async function getCategoryById(id: string): Promise<CategoryResult> {
         parentName: category.parent?.name ?? null,
         sortOrder: category.sortOrder,
         warningMessage: category.warningMessage,
+        isPinnedToDashboard: category.isPinnedToDashboard,
         customRateAu: category.customRateAu,
         customRateAg: category.customRateAg,
         customRatePt: category.customRatePt,
@@ -335,6 +344,7 @@ export async function createCategory(
         parentId: input.parentId ?? null,
         sortOrder,
         warningMessage: input.warningMessage?.trim() || null,
+        isPinnedToDashboard: input.isPinnedToDashboard ?? false,
         // Кастомные курсы: если пустое/undefined — пишем null
         customRateAu: input.customRateAu ?? null,
         customRateAg: input.customRateAg ?? null,
@@ -360,6 +370,7 @@ export async function createCategory(
         parentName: category.parent?.name ?? null,
         sortOrder: category.sortOrder,
         warningMessage: category.warningMessage,
+        isPinnedToDashboard: category.isPinnedToDashboard,
         customRateAu: category.customRateAu,
         customRateAg: category.customRateAg,
         customRatePt: category.customRatePt,
@@ -425,6 +436,7 @@ export async function updateCategory(
       name?: string;
       slug?: string;
       warningMessage?: string | null;
+      isPinnedToDashboard?: boolean;
       customRateAu?: number | null;
       customRateAg?: number | null;
       customRatePt?: number | null;
@@ -435,6 +447,7 @@ export async function updateCategory(
     if (input.name !== undefined) updateData.name = input.name.trim();
     if (input.slug !== undefined) updateData.slug = input.slug.trim();
     if (input.warningMessage !== undefined) updateData.warningMessage = input.warningMessage?.trim() || null;
+    if (input.isPinnedToDashboard !== undefined) updateData.isPinnedToDashboard = input.isPinnedToDashboard;
     // Кастомные курсы: если поле передано — обновляем (включая null для сброса)
     if (input.customRateAu !== undefined) updateData.customRateAu = input.customRateAu;
     if (input.customRateAg !== undefined) updateData.customRateAg = input.customRateAg;
@@ -479,6 +492,7 @@ export async function updateCategory(
         parentName: category.parent?.name ?? null,
         sortOrder: category.sortOrder,
         warningMessage: category.warningMessage,
+        isPinnedToDashboard: category.isPinnedToDashboard,
         customRateAu: category.customRateAu,
         customRateAg: category.customRateAg,
         customRatePt: category.customRatePt,
@@ -793,6 +807,7 @@ export async function getSubcategories(parentId: string | null): Promise<Categor
       parentName: cat.parent?.name ?? null,
       sortOrder: cat.sortOrder,
       warningMessage: cat.warningMessage,
+      isPinnedToDashboard: cat.isPinnedToDashboard,
       customRateAu: cat.customRateAu,
       customRateAg: cat.customRateAg,
       customRatePt: cat.customRatePt,
@@ -846,6 +861,102 @@ export async function getCategoryBreadcrumbs(categoryId: string): Promise<{ succ
     return { success: true, data: breadcrumbs };
   } catch (error) {
     console.error("Ошибка при получении хлебных крошек:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Неизвестная ошибка",
+    };
+  }
+}
+
+// ============================================================================
+// ДАШБОРД: ЗАКРЕПЛЁННЫЕ КАТЕГОРИИ
+// ============================================================================
+
+/**
+ * Получить категории, закреплённые на дашборде (isPinnedToDashboard: true)
+ */
+export async function getPinnedCategories(): Promise<CategoriesResult> {
+  try {
+    const categories = await prisma.category.findMany({
+      where: { isPinnedToDashboard: true },
+      include: {
+        parent: { select: { name: true } },
+        _count: { select: { products: true } },
+      },
+      orderBy: { sortOrder: "asc" },
+    });
+
+    const data: CategoryData[] = categories.map((cat) => ({
+      id: cat.id,
+      name: cat.name,
+      slug: cat.slug,
+      parentId: cat.parentId,
+      parentName: cat.parent?.name ?? null,
+      sortOrder: cat.sortOrder,
+      warningMessage: cat.warningMessage,
+      isPinnedToDashboard: cat.isPinnedToDashboard,
+      customRateAu: cat.customRateAu,
+      customRateAg: cat.customRateAg,
+      customRatePt: cat.customRatePt,
+      customRatePd: cat.customRatePd,
+      productCount: cat._count.products,
+      createdAt: cat.createdAt,
+      updatedAt: cat.updatedAt,
+    }));
+
+    return {
+      success: true,
+      data,
+      total: categories.length,
+    };
+  } catch (error) {
+    console.error("Ошибка при получении закреплённых категорий:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Неизвестная ошибка",
+    };
+  }
+}
+
+/**
+ * Входные данные для обновления курсов категории с дашборда
+ */
+export interface UpdateCategoryRatesInput {
+  id: string;
+  customRateAu: number | null;
+  customRateAg: number | null;
+  customRatePt: number | null;
+  customRatePd: number | null;
+}
+
+/**
+ * Обновить курсы металлов для нескольких категорий (для дашборда)
+ */
+export async function updateCategoryRates(
+  inputs: UpdateCategoryRatesInput[]
+): Promise<{ success: true } | { success: false; error: string }> {
+  try {
+    // Обновляем все категории в транзакции
+    await prisma.$transaction(
+      inputs.map((input) =>
+        prisma.category.update({
+          where: { id: input.id },
+          data: {
+            customRateAu: input.customRateAu,
+            customRateAg: input.customRateAg,
+            customRatePt: input.customRatePt,
+            customRatePd: input.customRatePd,
+          },
+        })
+      )
+    );
+
+    revalidatePath("/admin");
+    revalidatePath("/");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Ошибка при обновлении курсов категорий:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Неизвестная ошибка",

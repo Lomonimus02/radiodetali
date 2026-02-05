@@ -28,6 +28,8 @@ interface FormData {
   parentId: string;
   sortOrder: number;
   warningMessage: string;
+  // Закрепить управление курсом на Дашборде
+  isPinnedToDashboard: boolean;
   // Кастомные курсы металлов (цена за 1 мг в рублях)
   customRateAu: string;
   customRateAg: string;
@@ -80,6 +82,7 @@ export function CategoryForm({
       parentId: editCategory?.parentId || defaultParentId || "",
       sortOrder: editCategory?.sortOrder ?? 0,
       warningMessage: editCategory?.warningMessage || "",
+      isPinnedToDashboard: editCategory?.isPinnedToDashboard ?? false,
       customRateAu: editCategory?.customRateAu?.toString() || "",
       customRateAg: editCategory?.customRateAg?.toString() || "",
       customRatePt: editCategory?.customRatePt?.toString() || "",
@@ -116,6 +119,7 @@ export function CategoryForm({
           parentId: data.parentId || null,
           sortOrder: data.sortOrder,
           warningMessage: data.warningMessage || null,
+          isPinnedToDashboard: data.isPinnedToDashboard,
           customRateAu: parseRate(data.customRateAu),
           customRateAg: parseRate(data.customRateAg),
           customRatePt: parseRate(data.customRatePt),
@@ -128,6 +132,7 @@ export function CategoryForm({
           parentId: data.parentId || null,
           sortOrder: data.sortOrder,
           warningMessage: data.warningMessage || null,
+          isPinnedToDashboard: data.isPinnedToDashboard,
           customRateAu: parseRate(data.customRateAu),
           customRateAg: parseRate(data.customRateAg),
           customRatePt: parseRate(data.customRatePt),
@@ -309,6 +314,25 @@ export function CategoryForm({
               Если оставить пустым — блок не будет отображаться на сайте
             </p>
           </div>
+
+          {/* Pin to Dashboard */}
+          <div className="flex items-center gap-3 pt-2">
+            <input
+              type="checkbox"
+              id="cat-isPinnedToDashboard"
+              {...register("isPinnedToDashboard")}
+              className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+            />
+            <label
+              htmlFor="cat-isPinnedToDashboard"
+              className="text-sm font-medium text-slate-700 cursor-pointer select-none"
+            >
+              Закрепить управление курсом на Дашборде
+            </label>
+          </div>
+          <p className="text-xs text-slate-500 -mt-2">
+            Если включено — поля специальных курсов этой категории будут отображаться на главной странице админки
+          </p>
         </div>
       </div>
 

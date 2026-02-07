@@ -564,6 +564,7 @@ export interface CategoryShowcaseItem {
   id: string;              // id товара
   name: string;            // название товара
   slug: string;            // slug товара
+  description: string | null; // описание товара
   image: string | null;    // фото товара
   priceNew: number | null; // цена товара (Новый)
   priceUsed: number | null;// цена товара (Б/У)
@@ -621,6 +622,7 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
             id: true,
             name: true,
             slug: true,
+            description: true,
             image: true,
             unitType: true,
             // Содержание металлов для Новых
@@ -643,14 +645,20 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
             manualPriceUsed: true,
           },
         },
-        // Подкатегории с их товарами
+        // Подкатегории с их товарами и кастомными курсами
         children: {
           select: {
+            // Кастомные курсы подкатегории
+            customRateAu: true,
+            customRateAg: true,
+            customRatePt: true,
+            customRatePd: true,
             products: {
               select: {
                 id: true,
                 name: true,
                 slug: true,
+                description: true,
                 image: true,
                 unitType: true,
                 contentGold: true,
@@ -676,18 +684,39 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
 
     // Импортируем функции расчёта цен
     const { calculateBasePrice, resolveRates } = await import("@/lib/price-calculator");
-    
-    // Преобразуем курсы металлов в числа
-    const rates = resolveRates(metalRates);
 
     const showcaseItems: CategoryShowcaseItem[] = [];
 
     for (const category of categories) {
-      // Объединяем товары из категории и всех её подкатегорий
-      const allProducts = [
-        ...category.products,
-        ...category.children.flatMap(child => child.products),
-      ];
+      // Кастомные курсы родительской категории
+      const parentCategoryRates = {
+        customRateAu: category.customRateAu,
+        customRateAg: category.customRateAg,
+        customRatePt: category.customRatePt,
+        customRatePd: category.customRatePd,
+      };
+      
+      // Товары из родительской категории + информация о курсах
+      const productsWithRates = category.products.map(p => ({
+        ...p,
+        categoryRates: parentCategoryRates,
+      }));
+      
+      // Товары из подкатегорий + их кастомные курсы
+      const childProductsWithRates = category.children.flatMap(child => 
+        child.products.map(p => ({
+          ...p,
+          categoryRates: {
+            customRateAu: child.customRateAu,
+            customRateAg: child.customRateAg,
+            customRatePt: child.customRatePt,
+            customRatePd: child.customRatePd,
+          },
+        }))
+      );
+      
+      // Объединяем все товары с привязкой к их курсам
+      const allProducts = [...productsWithRates, ...childProductsWithRates];
 
       // Пропускаем категории без товаров
       if (allProducts.length === 0) {
@@ -703,6 +732,9 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
       for (const product of allProducts) {
         // Эффективная наценка = наценка товара * глобальная наценка
         const effectiveMarkup = (product.priceMarkup ?? 1) * markup;
+        
+        // Получаем курсы с учётом кастомных курсов категории товара
+        const rates = resolveRates(metalRates, product.categoryRates);
         
         // Рассчитываем priceNew
         let priceNew: number | null = null;
@@ -755,6 +787,7 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
           id: mostExpensiveProduct.id,
           name: mostExpensiveProduct.name,
           slug: mostExpensiveProduct.slug,
+          description: mostExpensiveProduct.description,
           image: mostExpensiveProduct.image,
           priceNew: bestPriceNew,
           priceUsed: bestPriceUsed,

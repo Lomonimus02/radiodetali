@@ -3,13 +3,25 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Search, Menu, X, Zap, Package, Phone, MapPin, Loader2, ChevronRight, Home } from "lucide-react";
+import { Search, Menu, X, Zap, Package, Phone, MapPin, Loader2, ChevronRight, Home, Mail } from "lucide-react";
 import { findBestMatchProduct, getProducts, ProductWithPrice } from "@/app/actions";
 import { MobileSearchOverlay } from "./MobileSearchOverlay";
 
-const PHONE_NUMBER = "+7 (812) 983-49-76";
-const PHONE_HREF = "tel:+78129834976";
-const TELEGRAM_HREF = "https://t.me/dragsoyuz";
+// Тип контактных данных для Header
+export interface HeaderContactInfo {
+  phoneNumber: string;
+  phoneHref: string;
+  telegramHref: string;
+  workSchedule: string;
+}
+
+// Дефолтные значения на случай если данные не загружены
+const DEFAULT_CONTACTS: HeaderContactInfo = {
+  phoneNumber: "+7 (812) 983-49-76",
+  phoneHref: "tel:+78129834976",
+  telegramHref: "https://t.me/dragsoyuz",
+  workSchedule: "Ежедневно с 10:00 до 20:00",
+};
 
 // Custom Telegram icon component
 function TelegramIcon({ className }: { className?: string }) {
@@ -29,7 +41,12 @@ const POPULAR_SEARCHES = [
   "Резисторы",
 ];
 
-export function Header() {
+interface HeaderProps {
+  contactInfo?: HeaderContactInfo;
+}
+
+export function Header({ contactInfo }: HeaderProps) {
+  const contacts = contactInfo || DEFAULT_CONTACTS;
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -111,6 +128,7 @@ export function Header() {
   const menuItems = [
     { href: "/", label: "Главная", icon: Home },
     { href: "/catalog", label: "Каталог", icon: Package },
+    { href: "/postal", label: "Почтовые отправления", icon: Mail },
     { href: "/contacts", label: "Контакты", icon: MapPin },
   ];
 
@@ -259,6 +277,13 @@ export function Header() {
                 Каталог
               </Link>
               <Link
+                href="/postal"
+                className="flex items-center gap-2 hover:text-[var(--accent-400)] transition-colors"
+              >
+                <Mail className="w-5 h-5" />
+                Почтовые отправления
+              </Link>
+              <Link
                 href="/contacts"
                 className="flex items-center gap-2 hover:text-[var(--accent-400)] transition-colors"
               >
@@ -267,14 +292,14 @@ export function Header() {
               </Link>
               <div className="flex items-center gap-2">
                 <a
-                  href={PHONE_HREF}
+                  href={contacts.phoneHref}
                   className="flex items-center justify-center w-9 h-9 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
                   aria-label="Позвонить"
                 >
                   <Phone className="w-5 h-5 text-[var(--accent-400)]" />
                 </a>
                 <a
-                  href={TELEGRAM_HREF}
+                  href={contacts.telegramHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center w-9 h-9 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
@@ -283,10 +308,10 @@ export function Header() {
                   <TelegramIcon className="w-5 h-5 text-[var(--accent-400)]" />
                 </a>
                 <a
-                  href={PHONE_HREF}
+                  href={contacts.phoneHref}
                   className="text-lg font-bold text-[var(--accent-400)] hover:text-[var(--accent-300)] transition-colors"
                 >
-                  {PHONE_NUMBER}
+                  {contacts.phoneNumber}
                 </a>
               </div>
             </nav>
@@ -296,14 +321,14 @@ export function Header() {
               {/* Center: Phone icons and number */}
               <div className="flex items-center gap-1 flex-1 justify-center min-w-0">
                 <a
-                  href={PHONE_HREF}
+                  href={contacts.phoneHref}
                   className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-white/10 rounded-lg transition-colors"
                   aria-label="Позвонить"
                 >
                   <Phone className="w-5 h-5 text-[var(--accent-400)]" />
                 </a>
                 <a
-                  href={TELEGRAM_HREF}
+                  href={contacts.telegramHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-white/10 rounded-lg transition-colors"
@@ -312,10 +337,10 @@ export function Header() {
                   <TelegramIcon className="w-5 h-5 text-[var(--accent-400)]" />
                 </a>
                 <a
-                  href={PHONE_HREF}
+                  href={contacts.phoneHref}
                   className="text-sm sm:text-base font-bold text-[var(--accent-400)] hover:text-[var(--accent-300)] transition-colors whitespace-nowrap truncate"
                 >
-                  {PHONE_NUMBER}
+                  {contacts.phoneNumber}
                 </a>
               </div>
               {/* Right: Search and Menu */}
@@ -390,7 +415,7 @@ export function Header() {
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10 bg-[var(--primary-900)]/80 backdrop-blur">
             <div className="flex gap-3">
               <a
-                href={TELEGRAM_HREF}
+                href={contacts.telegramHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center w-14 py-4 bg-gradient-to-r from-[var(--accent-500)] to-[var(--accent-600)] hover:from-[var(--accent-600)] hover:to-[var(--accent-700)] rounded-xl transition-all shadow-lg shadow-amber-500/20"
@@ -399,16 +424,13 @@ export function Header() {
                 <TelegramIcon className="w-6 h-6 text-white" />
               </a>
               <a
-                href={PHONE_HREF}
+                href={contacts.phoneHref}
                 className="flex items-center justify-center gap-3 flex-1 py-4 bg-gradient-to-r from-[var(--accent-500)] to-[var(--accent-600)] hover:from-[var(--accent-600)] hover:to-[var(--accent-700)] rounded-xl font-bold text-lg text-white transition-all shadow-lg shadow-amber-500/20"
               >
                 <Phone className="w-5 h-5" />
-                {PHONE_NUMBER}
+                {contacts.phoneNumber}
               </a>
             </div>
-            <p className="text-center text-white/50 text-sm mt-3">
-              Ежедневно с 10:00 до 20:00
-            </p>
           </div>
         </div>
       </div>

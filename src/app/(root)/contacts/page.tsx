@@ -9,6 +9,7 @@ import {
   Send,
   ChevronRight,
 } from "lucide-react";
+import { getGlobalSettings } from "@/app/actions";
 
 export const metadata: Metadata = {
   title: "Контакты",
@@ -16,19 +17,14 @@ export const metadata: Metadata = {
     "Свяжитесь с нами для оценки радиодеталей. Телефон, WhatsApp, Telegram, адрес пункта приёма.",
 };
 
-// Контактные данные
-const CONTACTS = {
+// Дефолтные контактные данные
+const DEFAULT_CONTACTS = {
   phone: "+7 (812) 983-49-76",
   phoneRaw: "+78129834976",
   email: "info@dragsoyuz.ru",
   telegram: "@dragsoyuz",
-  whatsapp: "78129834976",
   address: "г. Санкт-Петербург",
-  workingHours: {
-    weekdays: "Пн-Пт: 10:00 - 18:00",
-    saturday: "Сб: по записи",
-    sunday: "Вс: выходной",
-  },
+  workSchedule: ["Пн-Пт: 10:00 - 18:00", "Сб: по записи", "Вс: выходной"],
   // Координаты для Яндекс Карт
   coordinates: {
     lat: 59.9343,
@@ -36,7 +32,26 @@ const CONTACTS = {
   },
 };
 
-export default function ContactsPage() {
+export default async function ContactsPage() {
+  // Получаем данные из БД
+  const settingsResult = await getGlobalSettings();
+  const settings = settingsResult.success ? settingsResult.data : null;
+
+  // Формируем контактные данные (с фолбеком на дефолты)
+  const CONTACTS = {
+    phone: settings?.phoneNumber || DEFAULT_CONTACTS.phone,
+    phoneRaw: (settings?.phoneNumber || DEFAULT_CONTACTS.phoneRaw).replace(/[^\d+]/g, ""),
+    email: settings?.email || DEFAULT_CONTACTS.email,
+    telegram: settings?.telegramUsername 
+      ? (settings.telegramUsername.startsWith("@") ? settings.telegramUsername : `@${settings.telegramUsername}`)
+      : DEFAULT_CONTACTS.telegram,
+    telegramUsername: (settings?.telegramUsername || "dragsoyuz").replace(/^@/, "").replace(/^https?:\/\/t\.me\//, ""),
+    address: settings?.address || DEFAULT_CONTACTS.address,
+    workSchedule: settings?.workSchedule
+      ? settings.workSchedule.split("\n").filter(line => line.trim())
+      : DEFAULT_CONTACTS.workSchedule,
+    coordinates: DEFAULT_CONTACTS.coordinates,
+  };
   return (
     <div className="min-h-screen bg-[var(--gray-50)]">
       {/* Breadcrumbs */}
@@ -85,7 +100,7 @@ export default function ContactsPage() {
 
             {/* WhatsApp */}
             <a
-              href={`https://wa.me/${CONTACTS.whatsapp}?text=Здравствуйте, хочу узнать о скупке радиодеталей.`}
+              href={`https://wa.me/${CONTACTS.phoneRaw}?text=Здравствуйте, хочу узнать о скупке радиодеталей.`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-4 p-6 bg-white rounded-xl border border-[var(--gray-200)] hover:border-green-400 hover:shadow-md transition-all"
@@ -103,7 +118,7 @@ export default function ContactsPage() {
 
             {/* Telegram */}
             <a
-              href={`https://t.me/${CONTACTS.telegram.replace("@", "")}`}
+              href={`https://t.me/${CONTACTS.telegramUsername}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-4 p-6 bg-white rounded-xl border border-[var(--gray-200)] hover:border-blue-400 hover:shadow-md transition-all"
@@ -160,15 +175,14 @@ export default function ContactsPage() {
                   <p className="text-sm text-[var(--gray-500)] mb-1">
                     Время работы
                   </p>
-                  <p className="font-medium text-[var(--gray-900)]">
-                    {CONTACTS.workingHours.weekdays}
-                  </p>
-                  <p className="font-medium text-[var(--gray-900)]">
-                    {CONTACTS.workingHours.saturday}
-                  </p>
-                  <p className="font-medium text-[var(--gray-500)]">
-                    {CONTACTS.workingHours.sunday}
-                  </p>
+                  {CONTACTS.workSchedule.map((line, index) => (
+                    <p 
+                      key={index} 
+                      className={`font-medium ${index === CONTACTS.workSchedule.length - 1 ? "text-[var(--gray-500)]" : "text-[var(--gray-900)]"}`}
+                    >
+                      {line}
+                    </p>
+                  ))}
                 </div>
               </div>
             </div>

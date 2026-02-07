@@ -36,6 +36,7 @@ interface ProductFormProps {
 interface FormData {
   name: string;
   slug: string;
+  description: string;
   image: string;
   categoryId: string;
   sortOrder: number;
@@ -88,6 +89,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
   const [imagePreview, setImagePreview] = useState(product?.image || "");
   const [imageUrl, setImageUrl] = useState(product?.image || "");
   const [isUploading, setIsUploading] = useState(false);
+  const [hasDescription, setHasDescription] = useState(!!(product?.description));
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = !!product;
@@ -104,6 +106,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
     defaultValues: {
       name: product?.name || "",
       slug: product?.slug || "",
+      description: product?.description || "",
       image: product?.image || "",
       categoryId: product?.categoryId || defaultCategoryId || "",
       sortOrder: product?.sortOrder ?? 0,
@@ -300,6 +303,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
           id: product.id,
           name: data.name,
           slug: data.slug,
+          description: hasDescription ? data.description || null : null,
           image: data.image || null,
           categoryId: data.categoryId,
           sortOrder: data.sortOrder,
@@ -323,6 +327,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
         result = await createProduct({
           name: data.name,
           slug: data.slug,
+          description: hasDescription ? data.description || null : null,
           image: data.image || null,
           categoryId: data.categoryId,
           sortOrder: data.sortOrder,
@@ -438,6 +443,40 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
                 />
                 {errors.slug && (
                   <p className="mt-1 text-sm text-red-600">{errors.slug.message}</p>
+                )}
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={hasDescription}
+                    onChange={(e) => {
+                      setHasDescription(e.target.checked);
+                      if (!e.target.checked) {
+                        setValue("description", "");
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span className="text-sm font-medium text-slate-700">
+                    Добавить описание
+                  </span>
+                </label>
+                {hasDescription && (
+                  <div className="mt-2">
+                    <textarea
+                      id="description"
+                      {...register("description")}
+                      rows={3}
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+                      placeholder="Краткое описание товара (2-3 предложения)"
+                    />
+                    <p className="mt-1 text-xs text-slate-500">
+                      Описание отобразится на карточке товара
+                    </p>
+                  </div>
                 )}
               </div>
 

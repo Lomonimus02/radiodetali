@@ -1,20 +1,23 @@
-import { getMetalRates, getProducts, getPinnedCategories } from "@/app/actions";
+import { getMetalRates, getProducts, getPinnedCategories, getGlobalSettings } from "@/app/actions";
 import { MetalRatesForm } from "./components/MetalRatesForm";
 import { PinnedCategoryRatesForm } from "./components/PinnedCategoryRatesForm";
-import { Package, TrendingUp } from "lucide-react";
+import { ContactSettingsForm } from "./components/ContactSettingsForm";
+import { Package, TrendingUp, Phone } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const [ratesResult, productsResult, pinnedCategoriesResult] = await Promise.all([
+  const [ratesResult, productsResult, pinnedCategoriesResult, globalSettingsResult] = await Promise.all([
     getMetalRates(),
     getProducts({ limit: 1 }),
     getPinnedCategories(),
+    getGlobalSettings(),
   ]);
 
   const rates = ratesResult.success ? ratesResult.data : null;
   const totalProducts = productsResult.success ? productsResult.total : 0;
   const pinnedCategories = pinnedCategoriesResult.success ? pinnedCategoriesResult.data : [];
+  const globalSettings = globalSettingsResult.success ? globalSettingsResult.data : null;
 
   return (
     <div className="space-y-8">
@@ -80,6 +83,31 @@ export default async function AdminDashboard() {
           Курсы металлов для категорий, закреплённых на дашборде
         </p>
         <PinnedCategoryRatesForm categories={pinnedCategories} />
+      </div>
+
+      {/* Contact Settings */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-indigo-50 rounded-lg">
+            <Phone className="w-5 h-5 text-indigo-600" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-slate-800">
+              Настройка контактов
+            </h2>
+            <p className="text-sm text-slate-500">
+              Контактные данные для Header, Footer и страницы Контактов
+            </p>
+          </div>
+        </div>
+        {globalSettings ? (
+          <ContactSettingsForm initialData={globalSettings} />
+        ) : (
+          <div className="text-red-500">
+            Ошибка загрузки настроек:{" "}
+            {!globalSettingsResult.success && globalSettingsResult.error}
+          </div>
+        )}
       </div>
     </div>
   );

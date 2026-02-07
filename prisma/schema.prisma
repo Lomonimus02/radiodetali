@@ -12,11 +12,18 @@ datasource db {
 }
 
 // Глобальные настройки (Singleton — всегда одна запись)
-// Содержит коэффициент наценки для всех товаров
+// Содержит коэффициент наценки для всех товаров и контактные данные
 model GlobalSettings {
   id          String   @id @default("global") // Фиксированный ID для единственной записи
   priceMarkup Float    @default(1.0) // Глобальный коэффициент наценки (например, 1.15 = +15%)
   updatedAt   DateTime @updatedAt
+
+  // Контактные данные
+  phoneNumber      String @default("") // Контактный телефон
+  email            String @default("") // Почта
+  telegramUsername String @default("") // Никнейм или ссылка на Telegram
+  address          String @default("") // Адрес офиса
+  workSchedule     String @default("") // Режим работы
 
   @@map("global_settings")
 }
@@ -75,13 +82,14 @@ enum UnitType {
 
 // Модель товара (радиодеталь)
 model Product {
-  id         String   @id @default(cuid())
-  name       String
-  slug       String   @unique
-  image      String?  // URL изображения
-  categoryId String
-  sortOrder  Int      @default(0) // Поле для ручной сортировки (меньше = выше)
-  unitType   UnitType @default(PIECE) // Единица измерения (PIECE = шт, GRAM = г, KG = кг)
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text // Краткое описание товара (2-3 предложения)
+  image       String?  // URL изображения
+  categoryId  String
+  sortOrder   Int      @default(0) // Поле для ручной сортировки (меньше = выше)
+  unitType    UnitType @default(PIECE) // Единица измерения (PIECE = шт, GRAM = г, KG = кг)
 
   // Наценка на товар (коэффициент: 0.9 = -10%, 1.0 = без наценки, 1.15 = +15%)
   priceMarkup  Float   @default(1.0)

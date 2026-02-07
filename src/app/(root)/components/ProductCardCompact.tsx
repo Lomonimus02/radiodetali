@@ -85,10 +85,17 @@ export function ProductCardCompact({ product, categorySlug }: ProductCardCompact
         <div className="p-4">
           {/* Name - клик ведет на страницу товара */}
           <Link href={productUrl}>
-            <h3 className="font-semibold text-[var(--gray-800)] hover:text-[var(--primary-600)] transition-colors line-clamp-2 mb-3 min-h-[2.5rem] cursor-pointer">
+            <h3 className="font-semibold text-[var(--gray-800)] hover:text-[var(--primary-600)] transition-colors line-clamp-2 min-h-[2.5rem] cursor-pointer">
               {product.name}
             </h3>
           </Link>
+
+          {/* Description */}
+          {product.description && (
+            <p className="text-sm text-[var(--gray-500)] mb-5 line-clamp-2">
+              {product.description}
+            </p>
+          )}
 
         {/* Prices */}
         <div className="space-y-1">

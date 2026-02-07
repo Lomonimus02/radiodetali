@@ -30,6 +30,7 @@ export interface ProductWithPrice {
   id: string;
   name: string;
   slug: string;
+  description: string | null;
   image: string | null;
   categoryId: string;
   categoryName: string;
@@ -70,6 +71,7 @@ export interface ProductWithPrice {
 export interface CreateProductInput {
   name: string;
   slug: string;
+  description?: string | null;
   image?: string | null;
   categoryId: string;
   sortOrder?: number;
@@ -101,6 +103,7 @@ export interface UpdateProductInput {
   id: string;
   name?: string;
   slug?: string;
+  description?: string | null;
   image?: string | null;
   categoryId?: string;
   sortOrder?: number;
@@ -155,6 +158,7 @@ interface DbProductWithCategory {
   id: string;
   name: string;
   slug: string;
+  description: string | null;
   image: string | null;
   categoryId: string;
   category: {
@@ -260,6 +264,7 @@ function serializeProduct(
     id: product.id,
     name: product.name,
     slug: product.slug,
+    description: product.description,
     image: product.image,
     categoryId: product.categoryId,
     categoryName: product.category.name,
@@ -598,6 +603,7 @@ export async function createProduct(
       data: {
         name: input.name.trim(),
         slug: input.slug.trim(),
+        description: input.description ?? null,
         image: input.image ?? null,
         categoryId: input.categoryId,
         sortOrder,
@@ -727,10 +733,12 @@ export async function updateProduct(
       isUsedAvailable?: boolean;
       manualPriceNew?: number | null;
       manualPriceUsed?: number | null;
+      description?: string | null;
     } = {};
 
     if (input.name !== undefined) updateData.name = input.name.trim();
     if (input.slug !== undefined) updateData.slug = input.slug.trim();
+    if (input.description !== undefined) updateData.description = input.description;
     if (input.image !== undefined) updateData.image = input.image;
     if (input.categoryId !== undefined) updateData.categoryId = input.categoryId;
     // Единица измерения

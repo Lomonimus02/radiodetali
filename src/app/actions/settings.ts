@@ -43,13 +43,24 @@ export interface GlobalSettingsData {
   id: string;
   priceMarkup: number; // Глобальный коэффициент наценки
   updatedAt: Date;
+  // Контактные данные
+  phoneNumber: string;
+  email: string;
+  telegramUsername: string;
+  address: string;
+  workSchedule: string;
 }
 
 /**
  * Входные данные для обновления глобальных настроек
  */
 export interface UpdateGlobalSettingsInput {
-  priceMarkup: number;
+  priceMarkup?: number;
+  phoneNumber?: string;
+  email?: string;
+  telegramUsername?: string;
+  address?: string;
+  workSchedule?: string;
 }
 
 /**
@@ -220,6 +231,11 @@ export async function getGlobalSettings(): Promise<GlobalSettingsResult> {
         data: {
           id: "global",
           priceMarkup: DEFAULT_MARKUP,
+          phoneNumber: "",
+          email: "",
+          telegramUsername: "",
+          address: "",
+          workSchedule: "",
         },
       });
     }
@@ -230,6 +246,11 @@ export async function getGlobalSettings(): Promise<GlobalSettingsResult> {
         id: settings.id,
         priceMarkup: settings.priceMarkup,
         updatedAt: settings.updatedAt,
+        phoneNumber: settings.phoneNumber,
+        email: settings.email,
+        telegramUsername: settings.telegramUsername,
+        address: settings.address,
+        workSchedule: settings.workSchedule,
       },
     };
   } catch (error) {
@@ -250,38 +271,53 @@ export async function updateGlobalSettings(
   input: UpdateGlobalSettingsInput
 ): Promise<GlobalSettingsResult> {
   try {
-    // Валидация входных данных
-    if (input.priceMarkup <= 0) {
-      return {
-        success: false,
-        error: "Коэффициент наценки должен быть положительным числом",
-      };
+    // Валидация входных данных (только если priceMarkup передан)
+    if (input.priceMarkup !== undefined) {
+      if (input.priceMarkup <= 0) {
+        return {
+          success: false,
+          error: "Коэффициент наценки должен быть положительным числом",
+        };
+      }
+
+      if (input.priceMarkup > 10) {
+        return {
+          success: false,
+          error: "Коэффициент наценки не может превышать 10 (1000%)",
+        };
+      }
     }
 
-    if (input.priceMarkup > 10) {
-      return {
-        success: false,
-        error: "Коэффициент наценки не может превышать 10 (1000%)",
-      };
-    }
+    // Собираем данные для обновления
+    const updateData: Partial<UpdateGlobalSettingsInput> = {};
+    if (input.priceMarkup !== undefined) updateData.priceMarkup = input.priceMarkup;
+    if (input.phoneNumber !== undefined) updateData.phoneNumber = input.phoneNumber;
+    if (input.email !== undefined) updateData.email = input.email;
+    if (input.telegramUsername !== undefined) updateData.telegramUsername = input.telegramUsername;
+    if (input.address !== undefined) updateData.address = input.address;
+    if (input.workSchedule !== undefined) updateData.workSchedule = input.workSchedule;
 
     // Обновляем или создаём запись (upsert)
     const settings = await prisma.globalSettings.upsert({
       where: { id: "global" },
-      update: {
-        priceMarkup: input.priceMarkup,
-      },
+      update: updateData,
       create: {
         id: "global",
-        priceMarkup: input.priceMarkup,
+        priceMarkup: input.priceMarkup ?? DEFAULT_MARKUP,
+        phoneNumber: input.phoneNumber ?? "",
+        email: input.email ?? "",
+        telegramUsername: input.telegramUsername ?? "",
+        address: input.address ?? "",
+        workSchedule: input.workSchedule ?? "",
       },
     });
 
-    // Инвалидируем кеш страниц, которые зависят от цен
+    // Инвалидируем кеш страниц, которые зависят от цен и контактов
     revalidatePath("/");
     revalidatePath("/admin");
     revalidatePath("/products");
     revalidatePath("/catalog");
+    revalidatePath("/contacts");
 
     return {
       success: true,
@@ -289,6 +325,11 @@ export async function updateGlobalSettings(
         id: settings.id,
         priceMarkup: settings.priceMarkup,
         updatedAt: settings.updatedAt,
+        phoneNumber: settings.phoneNumber,
+        email: settings.email,
+        telegramUsername: settings.telegramUsername,
+        address: settings.address,
+        workSchedule: settings.workSchedule,
       },
     };
   } catch (error) {

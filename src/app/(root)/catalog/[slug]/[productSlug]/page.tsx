@@ -276,7 +276,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <ol className="text-sm text-[var(--primary-700)] space-y-1 list-decimal list-inside">
                 <li>Соберите все детали данного типа</li>
                 <li>Свяжитесь с нами по телефону или форме обратной связи</li>
-                <li>Привезите детали или закажите бесплатный выезд курьера</li>
+                <li>Привезите детали</li>
                 <li>Получите оплату сразу после оценки</li>
               </ol>
             </div>

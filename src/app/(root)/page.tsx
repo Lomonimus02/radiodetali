@@ -247,9 +247,16 @@ async function CatalogSection() {
               {/* Content */}
               <div className="p-4">
                 {/* Product name */}
-                <h3 className="font-semibold text-[var(--gray-800)] group-hover:text-[var(--primary-600)] transition-colors line-clamp-2 mb-3 min-h-[2.5rem]">
+                <h3 className="font-semibold text-[var(--gray-800)] group-hover:text-[var(--primary-600)] transition-colors line-clamp-2 min-h-[2.5rem]">
                   {item.name}
                 </h3>
+
+                {/* Description */}
+                {item.description && (
+                  <p className="text-sm text-[var(--gray-500)] mb-5 line-clamp-2">
+                    {item.description}
+                  </p>
+                )}
 
                 {/* Prices */}
                 <div className="space-y-1">

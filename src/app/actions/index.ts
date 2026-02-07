@@ -75,3 +75,10 @@ export {
   type CategoryResult,
   type DeleteCategoryResult,
 } from "./categories";
+
+// Почтовые отправления
+export {
+  submitPostalRequest,
+  type PostalRequestInput,
+  type PostalRequestResult,
+} from "./postal";

@@ -98,7 +98,7 @@ function HeroSection() {
           <div className="flex justify-center mt-4 sm:hidden">
             <Link
               href="/postal"
-              className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-white/5 hover:bg-white/15 border border-white/15 rounded-xl font-medium text-sm text-white/80 hover:text-white transition-all backdrop-blur-sm"
+              className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-white/5 hover:bg-white/15 border border-white/15 rounded-xl font-semibold text-lg text-white/80 hover:text-white transition-all backdrop-blur-sm"
             >
               <Truck className="w-4 h-4" />
               Почтовые отправления

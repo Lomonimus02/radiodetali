@@ -65,10 +65,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ru_RU",
+    url: "https://драгсоюз.рф",
     siteName: "ДРАГСОЮЗ",
     title: "ДРАГСОЮЗ — Скупка радиодеталей с драгметаллами",
     description:
       "Профессиональная скупка радиодеталей. Честные цены, быстрая оценка, оплата на месте.",
+  },
+  alternates: {
+    canonical: "https://драгсоюз.рф",
   },
   twitter: {
     card: "summary_large_image",

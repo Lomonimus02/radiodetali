@@ -37,7 +37,7 @@ export function Footer({ contactInfo }: FooterProps) {
               <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center shadow-lg shadow-amber-500/20">
                 <Zap className="w-6 h-6 text-white" />
               </div>
-              <span className="font-bold text-xl">ДРАГСОЮЗ</span>
+              <span className="font-bold text-xl bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-200 bg-clip-text text-transparent">ДРАГСОЮЗ</span>
             </Link>
             <p className="text-white/60 text-sm leading-relaxed mb-4">
               Профессиональная скупка радиодеталей, содержащих драгоценные

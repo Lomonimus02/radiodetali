@@ -66,8 +66,8 @@ export default async function RootLayout({
   } : undefined;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="fixed top-0 left-0 right-0 z-50">
+    <div className="min-h-screen flex flex-col bg-[var(--background)]">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-[var(--gray-700)]" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <TopAlert />
         <Header contactInfo={headerContactInfo} />
       </div>

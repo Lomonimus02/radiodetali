@@ -21,6 +21,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   themeColor: "#343a40",
+  other: {
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
+  },
   title: {
     default: "ДРАГСОЮЗ — Скупка радиодеталей с драгметаллами",
     template: "%s | ДРАГСОЮЗ",

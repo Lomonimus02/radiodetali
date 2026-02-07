@@ -59,16 +59,19 @@
 }
 
 html {
-  /* iOS safe area: серый фон под статус-баром при rubber-band scroll */
+  /* iOS / Telegram WebView: тёмный фон чтобы любой gap/rubber-band показывал тёмный */
   background: var(--gray-700);
   overflow-x: hidden;
 }
 
 body {
-  background: var(--background);
+  /* Тёмный фон body — WKWebView underPageBackgroundColor берёт его.
+     Светлый фон перенесён на контентную обёртку (.page-content). */
+  background: var(--gray-700);
   color: var(--foreground);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
   overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Custom scrollbar */

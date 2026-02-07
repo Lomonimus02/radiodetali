@@ -186,7 +186,7 @@ export default function DashboardLayout({
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="h-full overflow-y-auto bg-slate-100">
       {/* Desktop Sidebar - fixed */}
       <DesktopSidebar />
 
@@ -194,7 +194,7 @@ export default function DashboardLayout({
       <MobileDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       {/* Main content with offset for desktop sidebar */}
-      <div className="lg:ml-64 min-h-screen flex flex-col">
+      <div className="lg:ml-64 min-h-full flex flex-col">
         {/* Mobile Header */}
         <header className="lg:hidden sticky top-0 z-20 bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3 shadow-sm">
           <button

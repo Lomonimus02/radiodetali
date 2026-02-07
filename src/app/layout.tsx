@@ -7,6 +7,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
+  themeColor: "#343a40",
+  colorScheme: "dark light",
 };
 
 const geistSans = Geist({
@@ -20,7 +22,6 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  themeColor: "#343a40",
   other: {
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "black-translucent",
@@ -84,7 +85,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru">
+    <html lang="ru" style={{ backgroundColor: '#343a40' }}>
+      <head>
+        {/* Explicit theme-color for Telegram/iOS in-app browsers */}
+        <meta name="theme-color" content="#343a40" />
+        <meta name="msapplication-navbutton-color" content="#343a40" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

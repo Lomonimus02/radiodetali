@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
 import {
   ArrowRight,
   Scale,
@@ -18,6 +19,54 @@ import { prisma } from "@/lib/prisma";
 
 // Отключаем статический пререндеринг (требуется БД)
 export const dynamic = "force-dynamic";
+
+// SEO Metadata для главной страницы
+export const metadata: Metadata = {
+  title: "Скупка радиодеталей и плат в СПб | Драг Союз",
+  description: "Выгодная скупка радиодеталей, приборов и лома драгметаллов. Честные цены, оплата сразу. Работаем с физ. и юр. лицами.",
+  openGraph: {
+    title: "Скупка радиодеталей и плат в СПб | Драг Союз",
+    description: "Выгодная скупка радиодеталей, приборов и лома драгметаллов. Честные цены, оплата сразу.",
+    type: "website",
+  },
+};
+
+// JSON-LD Schema.org для Organization
+interface OrganizationSchemaProps {
+  name: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+}
+
+function OrganizationSchema({ name, phone, email, address }: OrganizationSchemaProps) {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://drag-soyuz.ru";
+  
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name,
+    url: baseUrl,
+    logo: `${baseUrl}/logo.png`,
+    ...(phone && { telephone: phone }),
+    ...(email && { email }),
+    ...(address && {
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: address,
+        addressCountry: "RU",
+      },
+    }),
+    sameAs: [],
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
 
 // Получить суффикс единицы измерения для цены
 function getPriceUnitSuffix(unitType: "PIECE" | "GRAM" | "KG"): string {
@@ -457,6 +506,13 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* JSON-LD Schema.org Organization */}
+      <OrganizationSchema
+        name="ДРАГСОЮЗ"
+        phone={settings?.phoneNumber}
+        email={settings?.email}
+        address={settings?.address}
+      />
       <HeroSection />
       <CatalogSection />
       <CategoriesSection />

@@ -1,7 +1,10 @@
 import type { MetadataRoute } from "next";
-import { getCategories, getProducts } from "@/app/actions";
+import { prisma } from "@/lib/prisma";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://radioskupka.ru";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://drag-soyuz.ru";
+
+// Генерация sitemap происходит динамически (при запросе), т.к. требуется доступ к БД
+export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Статические страницы
@@ -25,42 +28,53 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     },
     {
-      url: `${BASE_URL}/cart`,
+      url: `${BASE_URL}/postal`,
       lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.5,
+      changeFrequency: "monthly",
+      priority: 0.6,
     },
   ];
 
-  // Страницы категорий и товаров
-  const categoriesResult = await getCategories();
-  const categoryPages: MetadataRoute.Sitemap = [];
-  const productPages: MetadataRoute.Sitemap = [];
-  
-  if (categoriesResult.success) {
-    for (const category of categoriesResult.data) {
-      // Category page
-      categoryPages.push({
-        url: `${BASE_URL}/catalog/${category.slug}`,
-        lastModified: new Date(),
-        changeFrequency: "daily" as const,
-        priority: 0.8,
-      });
-      
-      // Get products for this category
-      const productsResult = await getProducts({ categoryId: category.id, limit: 500 });
-      if (productsResult.success) {
-        for (const product of productsResult.data) {
-          productPages.push({
-            url: `${BASE_URL}/catalog/${category.slug}/${product.slug}`,
-            lastModified: new Date(),
-            changeFrequency: "daily" as const,
-            priority: 0.7,
-          });
-        }
-      }
-    }
-  }
+  try {
+    // Получаем категории напрямую из Prisma для доступа к updatedAt
+    const categories = await prisma.category.findMany({
+      select: {
+        slug: true,
+        updatedAt: true,
+      },
+    });
 
-  return [...staticPages, ...categoryPages, ...productPages];
+    const categoryPages: MetadataRoute.Sitemap = categories.map((category) => ({
+      url: `${BASE_URL}/catalog/${category.slug}`,
+      lastModified: category.updatedAt,
+      changeFrequency: "daily" as const,
+      priority: 0.8,
+    }));
+
+    // Получаем товары с их категориями
+    const products = await prisma.product.findMany({
+      select: {
+        slug: true,
+        updatedAt: true,
+        category: {
+          select: {
+            slug: true,
+          },
+        },
+      },
+    });
+
+    const productPages: MetadataRoute.Sitemap = products.map((product) => ({
+      url: `${BASE_URL}/catalog/${product.category.slug}/${product.slug}`,
+      lastModified: product.updatedAt,
+      changeFrequency: "daily" as const,
+      priority: 0.7,
+    }));
+
+    return [...staticPages, ...categoryPages, ...productPages];
+  } catch (error) {
+    // Если БД недоступна, возвращаем только статические страницы
+    console.error("Sitemap: Database unavailable, returning static pages only", error);
+    return staticPages;
+  }
 }

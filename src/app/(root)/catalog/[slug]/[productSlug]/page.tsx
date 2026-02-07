@@ -18,6 +18,8 @@ interface ProductPageProps {
   params: Promise<{ slug: string; productSlug: string }>;
 }
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://drag-soyuz.ru";
+
 // Получить суффикс единицы измерения для цены
 function getPriceUnitSuffix(unitType: UnitType): string {
   switch (unitType) {
@@ -53,7 +55,7 @@ function getDisplayPrice(product: { priceNew: number | null; priceUsed: number |
 export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
-  const { productSlug } = await params;
+  const { slug: categorySlug, productSlug } = await params;
   const result = await getProductBySlug(productSlug);
 
   if (!result.success) {
@@ -63,17 +65,22 @@ export async function generateMetadata({
   }
 
   const product = result.data;
+  const price = getDisplayPrice(product);
   const formattedPrice = new Intl.NumberFormat("ru-RU", {
     style: "currency",
     currency: "RUB",
     minimumFractionDigits: 0,
     maximumFractionDigits: 3,
-  }).format(getDisplayPrice(product));
-  const unitLabel = getUnitLabel(product.unitType);
+  }).format(price);
+
+  // Формируем полный URL до изображения
+  const imageUrl = product.image 
+    ? (product.image.startsWith("http") ? product.image : `${BASE_URL}${product.image}`)
+    : undefined;
 
   return {
-    title: `Продать ${product.name} - цена ${formattedPrice}`,
-    description: `Актуальная цена на ${product.name} (${product.slug.toUpperCase()}) — ${formattedPrice} за ${unitLabel}. Скупка радиодеталей с драгметаллами: золото, серебро, платина, палладий. Быстрая оценка, оплата на месте.`,
+    title: `${product.name} — цена скупки, продать дорого`,
+    description: `Продать ${product.name} по выгодной цене. Текущий курс скупки: ${formattedPrice}. Оценка и выкуп радиодеталей.`,
     keywords: [
       product.name,
       product.slug,
@@ -83,12 +90,99 @@ export async function generateMetadata({
       "драгоценные металлы",
     ],
     openGraph: {
-      title: `Продать ${product.name} - ${formattedPrice}`,
-      description: `Скупаем ${product.name} по цене ${formattedPrice} за ${unitLabel}. Оценка драгметаллов, быстрая оплата.`,
+      title: `${product.name} — цена скупки ${formattedPrice}`,
+      description: `Продать ${product.name} по выгодной цене. Текущий курс скупки: ${formattedPrice}. Оценка и выкуп радиодеталей.`,
       type: "website",
-      images: product.image ? [{ url: product.image }] : undefined,
+      url: `${BASE_URL}/catalog/${categorySlug}/${productSlug}`,
+      images: imageUrl ? [{ url: imageUrl, alt: product.name }] : undefined,
     },
   };
+}
+
+// JSON-LD Schema.org Product
+interface ProductSchemaProps {
+  name: string;
+  description?: string | null;
+  image?: string | null;
+  price: number;
+  categorySlug: string;
+  productSlug: string;
+}
+
+function ProductSchema({ name, description, image, price, categorySlug, productSlug }: ProductSchemaProps) {
+  const imageUrl = image 
+    ? (image.startsWith("http") ? image : `${BASE_URL}${image}`)
+    : undefined;
+
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name,
+    ...(description && { description }),
+    ...(imageUrl && { image: imageUrl }),
+    url: `${BASE_URL}/catalog/${categorySlug}/${productSlug}`,
+    offers: {
+      "@type": "Offer",
+      price: price.toFixed(2),
+      priceCurrency: "RUB",
+      availability: "https://schema.org/InStock",
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+// JSON-LD Schema.org BreadcrumbList
+interface BreadcrumbSchemaProps {
+  categoryName: string;
+  categorySlug: string;
+  productName: string;
+  productSlug: string;
+}
+
+function BreadcrumbSchema({ categoryName, categorySlug, productName, productSlug }: BreadcrumbSchemaProps) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Главная",
+        item: BASE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Каталог",
+        item: `${BASE_URL}/catalog`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: categoryName,
+        item: `${BASE_URL}/catalog/${categorySlug}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 4,
+        name: productName,
+        item: `${BASE_URL}/catalog/${categorySlug}/${productSlug}`,
+      },
+    ],
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
 }
 
 // Related products
@@ -144,16 +238,34 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   const product = result.data;
+  const displayPrice = getDisplayPrice(product);
 
   const formattedPrice = new Intl.NumberFormat("ru-RU", {
     style: "currency",
     currency: "RUB",
     minimumFractionDigits: 0,
     maximumFractionDigits: 3,
-  }).format(getDisplayPrice(product));
+  }).format(displayPrice);
 
   return (
-    <div className="min-h-screen bg-[var(--gray-50)]">
+    <>
+      {/* JSON-LD Schema.org structured data */}
+      <ProductSchema
+        name={product.name}
+        description={product.description}
+        image={product.image}
+        price={displayPrice}
+        categorySlug={categorySlug}
+        productSlug={productSlug}
+      />
+      <BreadcrumbSchema
+        categoryName={category.name}
+        categorySlug={categorySlug}
+        productName={product.name}
+        productSlug={productSlug}
+      />
+      
+      <div className="min-h-screen bg-[var(--gray-50)]">
       {/* Breadcrumbs */}
       <div className="bg-white border-b border-[var(--gray-200)]">
         <div className="container mx-auto px-4 py-3">
@@ -293,5 +405,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </Suspense>
       </div>
     </div>
+    </>
   );
 }

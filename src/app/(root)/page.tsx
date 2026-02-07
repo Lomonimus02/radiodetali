@@ -13,7 +13,7 @@ import {
   Recycle,
   Tag,
 } from "lucide-react";
-import { getCategoryShowcase } from "@/app/actions";
+import { getCategoryShowcase, getGlobalSettings } from "@/app/actions";
 import { prisma } from "@/lib/prisma";
 
 // Отключаем статический пререндеринг (требуется БД)
@@ -418,7 +418,7 @@ function BenefitsSection() {
 }
 
 // CTA Section
-function CTASection() {
+function CTASection({ phone, phoneHref }: { phone: string; phoneHref: string }) {
   return (
     <section className="py-16 md:py-20 bg-gradient-to-r from-[var(--primary-800)] to-[var(--primary-900)]">
       <div className="container mx-auto px-4 text-center">
@@ -430,16 +430,16 @@ function CTASection() {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
-            href="#contacts"
+            href="/contacts"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-[var(--accent-500)] hover:bg-[var(--accent-600)] rounded-lg font-semibold text-lg text-white transition-colors"
           >
             Связаться с нами
           </Link>
           <a
-            href="tel:+79001234567"
+            href={phoneHref}
             className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 hover:bg-white/20 border border-white/30 rounded-lg font-semibold text-lg text-white transition-colors"
           >
-            +7 (900) 123-45-67
+            {phone}
           </a>
         </div>
       </div>
@@ -447,7 +447,14 @@ function CTASection() {
   );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  // Получаем контактные данные из БД
+  const settingsResult = await getGlobalSettings();
+  const settings = settingsResult.success ? settingsResult.data : null;
+
+  const phone = settings?.phoneNumber || "+7 (812) 983-49-76";
+  const phoneHref = `tel:${(settings?.phoneNumber || "+78129834976").replace(/[^\d+]/g, "")}`;
+
   return (
     <>
       <HeroSection />
@@ -455,7 +462,7 @@ export default function HomePage() {
       <CategoriesSection />
       <StatsSection />
       <BenefitsSection />
-      <CTASection />
+      <CTASection phone={phone} phoneHref={phoneHref} />
     </>
   );
 }

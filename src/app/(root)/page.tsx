@@ -40,7 +40,7 @@ interface OrganizationSchemaProps {
 }
 
 function OrganizationSchema({ name, phone, email, address }: OrganizationSchemaProps) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://drag-soyuz.ru";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://драгсоюз.рф";
   
   const schema = {
     "@context": "https://schema.org",

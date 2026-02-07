@@ -9,7 +9,7 @@ interface CategoryPageProps {
   params: Promise<{ slug: string }>;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://drag-soyuz.ru";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://драгсоюз.рф";
 
 export async function generateMetadata({
   params,

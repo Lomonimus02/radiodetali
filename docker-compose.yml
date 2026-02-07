@@ -26,7 +26,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-http://213.171.10.37:3050}
+        - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-https://драгсоюз.рф}
     container_name: radiodetali_app
     restart: unless-stopped
     ports:

@@ -18,7 +18,7 @@ interface ProductPageProps {
   params: Promise<{ slug: string; productSlug: string }>;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://drag-soyuz.ru";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://драгсоюз.рф";
 
 // Получить суффикс единицы измерения для цены
 function getPriceUnitSuffix(unitType: UnitType): string {

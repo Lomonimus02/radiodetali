@@ -22,7 +22,7 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # NEXT_PUBLIC_ переменные должны быть доступны во время билда
-ARG NEXT_PUBLIC_BASE_URL=http://213.171.10.37:3050
+ARG NEXT_PUBLIC_BASE_URL=https://драгсоюз.рф
 ENV NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
 
 # Копируем зависимости из предыдущего этапа

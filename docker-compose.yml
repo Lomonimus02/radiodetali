@@ -25,6 +25,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-http://213.171.10.37:3050}
     container_name: radiodetali_app
     restart: unless-stopped
     ports:

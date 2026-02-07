@@ -143,7 +143,7 @@ export function Header({ contactInfo }: HeaderProps) {
               <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center lg:hidden">
                 <Home className="w-6 h-6 text-white" />
               </div>
-              <span className="hidden lg:block font-bold text-xl">
+              <span className="hidden lg:block font-bold text-xl bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-200 bg-clip-text text-transparent">
                 ДРАГСОЮЗ
               </span>
             </Link>
@@ -378,7 +378,7 @@ export function Header({ contactInfo }: HeaderProps) {
                 <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center">
                   <Zap className="w-5 h-5 text-white" />
                 </div>
-                <span className="font-bold text-white text-lg tracking-wide">ДРАГСОЮЗ</span>
+                <span className="font-bold text-lg tracking-wide bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-200 bg-clip-text text-transparent">ДРАГСОЮЗ</span>
               </div>
               <button
                 onClick={closeMenu}

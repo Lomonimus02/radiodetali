@@ -66,12 +66,12 @@ export default async function RootLayout({
   } : undefined;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--background)]">
-      <div className="fixed top-0 left-0 right-0 z-50 bg-[var(--gray-700)]" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+    <div className="h-full flex flex-col bg-[var(--background)] overflow-y-auto overflow-x-hidden overscroll-none" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="sticky top-0 z-50 bg-[var(--gray-700)] shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <TopAlert />
         <Header contactInfo={headerContactInfo} />
       </div>
-      <main className="flex-1 pt-[104px] lg:pt-[120px]">{children}</main>
+      <main className="flex-1">{children}</main>
       <Footer contactInfo={footerContactInfo} />
     </div>
   );

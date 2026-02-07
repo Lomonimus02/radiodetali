@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { getGlobalSettings } from "@/app/actions";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Контакты",
   description:

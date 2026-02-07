@@ -4,6 +4,8 @@ import { getGlobalSettings } from "@/app/actions";
 import type { HeaderContactInfo } from "./components/Header";
 import type { FooterContactInfo } from "./components/Footer";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: {
     default: "ДРАГСОЮЗ — Скупка радиодеталей в СПб по высоким ценам",

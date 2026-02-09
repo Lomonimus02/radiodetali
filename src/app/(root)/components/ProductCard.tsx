@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Package, Sparkles, Recycle, ArrowRight } from "lucide-react";
+import { Package, ArrowRight } from "lucide-react";
 import type { ProductWithPrice, UnitType } from "@/app/actions";
 import { ImageModal } from "./ImageModal";
 
@@ -168,18 +168,11 @@ export function ProductCard({ product, categorySlug, categoryName, variant = "de
           
           {/* Цена за Новый / Единая цена */}
           {hasNewPrice && (
-            <div className={`flex items-center justify-between px-2 py-1.5 rounded-md ${product.isSingleType ? 'bg-blue-50' : 'bg-green-50'}`}>
-              <div className="flex items-center gap-1">
-                {product.isSingleType ? (
-                  <Package className="w-3 h-3 text-blue-600" />
-                ) : (
-                  <Sparkles className="w-3 h-3 text-green-600" />
-                )}
-                <span className={`text-xs font-medium ${product.isSingleType ? 'text-blue-700' : 'text-green-700'}`}>
-                  {product.isSingleType ? 'Цена' : 'Новый'}
-                </span>
-              </div>
-              <span className={`font-bold ${product.isSingleType ? 'text-blue-700' : 'text-green-700'}`}>
+            <div className="flex items-center justify-between px-2 py-1.5 rounded-md bg-green-50">
+              <span className="text-xs font-medium text-green-700">
+                {product.isSingleType ? 'Цена' : 'Новый'}
+              </span>
+              <span className="font-bold text-green-700">
                 {formatPrice(product.priceNew!)}{getPriceUnitSuffix(product.unitType)}
               </span>
             </div>
@@ -188,10 +181,7 @@ export function ProductCard({ product, categorySlug, categoryName, variant = "de
           {/* Цена за Б/У (скрываем для единой цены) */}
           {hasUsedPrice && !product.isSingleType && (
             <div className="flex items-center justify-between bg-amber-50 px-2 py-1.5 rounded-md">
-              <div className="flex items-center gap-1">
-                <Recycle className="w-3 h-3 text-amber-600" />
-                <span className="text-xs font-medium text-amber-700">Б/У</span>
-              </div>
+              <span className="text-xs font-medium text-amber-700">Б/У</span>
               <span className="font-bold text-amber-700">
                 {formatPrice(product.priceUsed!)}{getPriceUnitSuffix(product.unitType)}
               </span>

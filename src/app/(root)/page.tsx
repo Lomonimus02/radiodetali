@@ -11,8 +11,6 @@ import {
   Clock,
   Sparkles,
   Package,
-  Recycle,
-  Tag,
 } from "lucide-react";
 import { getCategoryShowcase, getGlobalSettings } from "@/app/actions";
 import { prisma } from "@/lib/prisma";
@@ -404,28 +402,18 @@ async function CatalogSection() {
                 {/* Prices */}
                 <div className="space-y-1">
                   {item.priceNew !== null && (
-                    <div className={`flex items-center justify-between px-2 py-1.5 rounded-md ${item.isSingleType ? 'bg-blue-50' : 'bg-green-50'}`}>
-                      <div className="flex items-center gap-1">
-                        {item.isSingleType ? (
-                          <Tag className="w-3 h-3 text-blue-600" />
-                        ) : (
-                          <Sparkles className="w-3 h-3 text-green-600" />
-                        )}
-                        <span className={`text-xs font-medium ${item.isSingleType ? 'text-blue-700' : 'text-green-700'}`}>
-                          {item.isSingleType ? 'Цена' : 'Новый'}
-                        </span>
-                      </div>
-                      <span className={`font-bold ${item.isSingleType ? 'text-blue-700' : 'text-green-700'}`}>
+                    <div className="flex items-center justify-between px-2 py-1.5 rounded-md bg-green-50">
+                      <span className="text-xs font-medium text-green-700">
+                        {item.isSingleType ? 'Цена' : 'Новый'}
+                      </span>
+                      <span className="font-bold text-green-700">
                         {formatPrice(item.priceNew)}{getPriceUnitSuffix(item.unitType)}
                       </span>
                     </div>
                   )}
                   {item.priceUsed !== null && !item.isSingleType && (
                     <div className="flex items-center justify-between bg-amber-50 px-2 py-1.5 rounded-md">
-                      <div className="flex items-center gap-1">
-                        <Recycle className="w-3 h-3 text-amber-600" />
-                        <span className="text-xs font-medium text-amber-700">Б/У</span>
-                      </div>
+                      <span className="text-xs font-medium text-amber-700">Б/У</span>
                       <span className="font-bold text-amber-700">
                         {formatPrice(item.priceUsed)}{getPriceUnitSuffix(item.unitType)}
                       </span>
@@ -484,33 +472,22 @@ function BenefitsSection() {
     {
       icon: Scale,
       title: "Честные весы",
-      description:
-        "Точное взвешивание на сертифицированном оборудовании при вас",
     },
     {
       icon: Banknote,
       title: "Оплата сразу",
-      description: "Наличные или перевод на карту в момент сделки",
     },
     {
       icon: TrendingUp,
       title: "Актуальные цены",
-      description: "Автоматический пересчёт по биржевому курсу металлов",
     },
     {
       icon: Shield,
       title: "Гарантия честности",
-      description: "Работаем официально, предоставляем все документы",
-    },
-    {
-      icon: Truck,
-      title: "Выезд к клиенту",
-      description: "Бесплатный выезд при крупных партиях деталей",
     },
     {
       icon: Clock,
       title: "Быстрая оценка",
-      description: "Оценим вашу партию в течение 24 часов",
     },
   ];
 
@@ -526,23 +503,18 @@ function BenefitsSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {benefits.map((benefit, index) => (
             <div
               key={index}
-              className="flex gap-4 p-6 bg-white rounded-xl border border-[var(--gray-200)] hover:shadow-md transition-shadow"
+              className="flex flex-col items-center text-center p-6 bg-white rounded-xl border border-[var(--gray-200)] hover:shadow-md transition-shadow"
             >
-              <div className="w-12 h-12 rounded-lg bg-[var(--accent-100)] text-[var(--accent-600)] flex items-center justify-center shrink-0">
-                <benefit.icon className="w-6 h-6" />
+              <div className="w-14 h-14 rounded-full bg-[var(--accent-100)] text-[var(--accent-600)] flex items-center justify-center mb-3">
+                <benefit.icon className="w-7 h-7" />
               </div>
-              <div>
-                <h3 className="font-semibold text-[var(--gray-900)] mb-1">
-                  {benefit.title}
-                </h3>
-                <p className="text-sm text-[var(--gray-600)]">
-                  {benefit.description}
-                </p>
-              </div>
+              <h3 className="font-semibold text-[var(--gray-900)]">
+                {benefit.title}
+              </h3>
             </div>
           ))}
         </div>

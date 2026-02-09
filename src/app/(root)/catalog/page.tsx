@@ -44,27 +44,27 @@ async function CategoriesGrid() {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-6">
       {result.data.map((category) => (
         <Link
           key={category.id}
           href={`/catalog/${category.slug}`}
-          className="group block bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-lg transition-all duration-300 overflow-hidden p-6"
+          className="group block bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-lg transition-all duration-300 overflow-hidden p-3 md:p-6"
         >
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 rounded-full bg-[var(--accent-100)] flex items-center justify-center group-hover:bg-[var(--accent-200)] transition-colors">
-              <Package className="w-6 h-6 text-[var(--accent-600)]" />
+          <div className="flex items-center gap-2 md:gap-3 md:mb-3">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[var(--accent-100)] flex items-center justify-center group-hover:bg-[var(--accent-200)] transition-colors shrink-0">
+              <Package className="w-5 h-5 md:w-6 md:h-6 text-[var(--accent-600)]" />
             </div>
-            <div>
-              <h3 className="font-semibold text-[var(--gray-800)] group-hover:text-[var(--primary-600)] transition-colors">
+            <div className="min-w-0">
+              <h3 className="font-semibold text-sm md:text-base text-[var(--gray-800)] group-hover:text-[var(--primary-600)] transition-colors truncate">
                 {category.name}
               </h3>
-              <p className="text-sm text-[var(--gray-500)]">
+              <p className="text-xs md:text-sm text-[var(--gray-500)]">
                 {category.productCount} {category.productCount === 1 ? 'товар' : category.productCount < 5 ? 'товара' : 'товаров'}
               </p>
             </div>
           </div>
-          <p className="text-sm text-[var(--primary-600)] font-medium group-hover:underline">
+          <p className="hidden md:block text-sm text-[var(--primary-600)] font-medium group-hover:underline">
             Открыть раздел →
           </p>
         </Link>

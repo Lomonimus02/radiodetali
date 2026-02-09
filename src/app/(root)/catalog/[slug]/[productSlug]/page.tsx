@@ -70,7 +70,7 @@ export async function generateMetadata({
     style: "currency",
     currency: "RUB",
     minimumFractionDigits: 0,
-    maximumFractionDigits: 3,
+    maximumFractionDigits: 0,
   }).format(price);
 
   // Формируем полный URL до изображения
@@ -244,7 +244,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     style: "currency",
     currency: "RUB",
     minimumFractionDigits: 0,
-    maximumFractionDigits: 3,
+    maximumFractionDigits: 0,
   }).format(displayPrice);
 
   return (

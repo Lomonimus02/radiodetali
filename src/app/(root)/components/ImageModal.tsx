@@ -21,7 +21,6 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt }: ImageModalProps) 
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
-  const lastTapRef = useRef<number>(0);
   const initialPinchDistanceRef = useRef<number | null>(null);
   const initialScaleRef = useRef<number>(1);
 
@@ -83,22 +82,7 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt }: ImageModalProps) 
     setScale((prev) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, prev + delta)));
   }, []);
 
-  // Двойной клик для увеличения (используем нативное событие)
-  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (scale > 1) {
-      // Сброс к 1x
-      setScale(1);
-      setPosition({ x: 0, y: 0 });
-    } else {
-      // Увеличить до 2.5x
-      setScale(2.5);
-    }
-  }, [scale]);
-
-  // Touch events для pinch-to-zoom и double tap
+  // Touch events для pinch-to-zoom
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (e.touches.length === 2) {
       // Pinch начало
@@ -108,33 +92,13 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt }: ImageModalProps) 
       );
       initialPinchDistanceRef.current = distance;
       initialScaleRef.current = scale;
-    } else if (e.touches.length === 1) {
-      // Проверка на double tap
-      const now = Date.now();
-      const DOUBLE_TAP_DELAY = 300;
-      
-      if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-        // Double tap - зум
-        e.preventDefault();
-        if (scale > 1) {
-          setScale(1);
-          setPosition({ x: 0, y: 0 });
-        } else {
-          setScale(2.5);
-        }
-        lastTapRef.current = 0;
-      } else {
-        lastTapRef.current = now;
-        
-        // Драг начало (только если увеличено)
-        if (scale > 1) {
-          setIsDragging(true);
-          setDragStart({
-            x: e.touches[0].clientX - position.x,
-            y: e.touches[0].clientY - position.y,
-          });
-        }
-      }
+    } else if (e.touches.length === 1 && scale > 1) {
+      // Драг начало (только если увеличено)
+      setIsDragging(true);
+      setDragStart({
+        x: e.touches[0].clientX - position.x,
+        y: e.touches[0].clientY - position.y,
+      });
     }
   }, [scale, position]);
 
@@ -252,10 +216,10 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt }: ImageModalProps) 
       {/* Кнопка закрытия */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+        className="absolute top-4 right-4 z-10 p-3 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors shadow-lg"
         aria-label="Закрыть"
       >
-        <X className="w-6 h-6" />
+        <X className="w-8 h-8" />
       </button>
 
       {/* Изображение */}
@@ -263,7 +227,6 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt }: ImageModalProps) 
         ref={containerRef}
         className="relative w-full h-full flex items-center justify-center overflow-hidden select-none"
         onWheel={handleWheel}
-        onDoubleClick={handleDoubleClick}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -271,7 +234,7 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt }: ImageModalProps) 
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        style={{ cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in' }}
+        style={{ cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
       >
         <div
           className="relative w-full h-full max-w-[90vw] max-h-[90vh]"
@@ -293,13 +256,6 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt }: ImageModalProps) 
           />
         </div>
       </div>
-
-      {/* Подсказка */}
-      <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm text-center px-4">
-        {scale === 1 
-          ? "Колесико мыши или двойной тап для увеличения" 
-          : "Перетащите для перемещения • Двойной тап для сброса"}
-      </p>
     </div>
   );
 }

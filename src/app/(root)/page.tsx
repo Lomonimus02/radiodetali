@@ -168,7 +168,7 @@ function formatPrice(price: number): string {
     style: "currency",
     currency: "RUB",
     minimumFractionDigits: 0,
-    maximumFractionDigits: 3,
+    maximumFractionDigits: 0,
   }).format(price);
 }
 

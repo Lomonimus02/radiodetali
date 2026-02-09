@@ -217,7 +217,12 @@ export function calculateProductPrices(
     }
   }
 
-  return { priceNew, priceUsed, isSingleType };
+  // Округляем итоговые цены до целых чисел
+  return { 
+    priceNew: priceNew !== null ? Math.round(priceNew) : null, 
+    priceUsed: priceUsed !== null ? Math.round(priceUsed) : null, 
+    isSingleType 
+  };
 }
 
 /**
@@ -244,7 +249,7 @@ export function formatPrice(price: number): string {
     style: "currency",
     currency: "RUB",
     minimumFractionDigits: 0,
-    maximumFractionDigits: 3,
+    maximumFractionDigits: 0,
   }).format(price);
 }
 

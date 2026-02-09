@@ -79,7 +79,14 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt }: ImageModalProps) 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
-    setScale((prev) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, prev + delta)));
+    setScale((prev) => {
+      const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, prev + delta));
+      // Если уменьшаем до 1x, сбрасываем позицию
+      if (newScale <= 1) {
+        setPosition({ x: 0, y: 0 });
+      }
+      return newScale;
+    });
   }, []);
 
   // Touch events для pinch-to-zoom
@@ -113,6 +120,10 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt }: ImageModalProps) 
       const scaleChange = distance / initialPinchDistanceRef.current;
       const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, initialScaleRef.current * scaleChange));
       setScale(newScale);
+      // Если уменьшаем до 1x, сбрасываем позицию
+      if (newScale <= 1) {
+        setPosition({ x: 0, y: 0 });
+      }
     } else if (e.touches.length === 1 && isDragging && scale > 1) {
       // Драг
       e.preventDefault();
@@ -161,7 +172,13 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt }: ImageModalProps) 
   }, []);
 
   const zoomOut = useCallback(() => {
-    setScale((prev) => Math.max(MIN_SCALE, prev - ZOOM_STEP));
+    setScale((prev) => {
+      const newScale = Math.max(MIN_SCALE, prev - ZOOM_STEP);
+      if (newScale <= 1) {
+        setPosition({ x: 0, y: 0 });
+      }
+      return newScale;
+    });
   }, []);
 
   const resetZoom = useCallback(() => {

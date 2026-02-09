@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Zap, MapPin, Phone, Mail, Clock } from "lucide-react";
+import Image from "next/image";
+import { MapPin, Phone, Mail, Clock } from "lucide-react";
 
 // Тип контактных данных для Footer
 export interface FooterContactInfo {
@@ -34,8 +35,8 @@ export function Footer({ contactInfo }: FooterProps) {
           {/* Logo & Description */}
           <div className="lg:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center shadow-lg shadow-amber-500/20">
-                <Zap className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 flex items-center justify-center">
+                <Image src="/icon.svg" alt="ДРАГСОЮЗ" width={40} height={40} />
               </div>
               <span className="font-bold text-xl bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-200 bg-clip-text text-transparent">ДРАГСОЮЗ</span>
             </Link>

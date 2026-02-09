@@ -2,10 +2,33 @@ import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { existsSync } from "fs";
+import { cookies } from "next/headers";
 
 // Разрешённые типы файлов
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ADMIN_COOKIE_NAME = "admin_session";
+
+/**
+ * Проверка авторизации админа
+ */
+async function isAuthenticated(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get(ADMIN_COOKIE_NAME);
+  
+  if (!sessionCookie?.value) {
+    return false;
+  }
+
+  try {
+    const session = JSON.parse(
+      Buffer.from(sessionCookie.value, "base64").toString("utf-8")
+    );
+    return session.authenticated === true;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Генерирует уникальное имя файла
@@ -19,6 +42,14 @@ function generateFileName(originalName: string): string {
 
 export async function POST(request: Request) {
   try {
+    // Проверяем авторизацию
+    if (!(await isAuthenticated())) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
 

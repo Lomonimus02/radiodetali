@@ -432,15 +432,30 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
                 >
                   URL (slug) *
                 </label>
-                <input
-                  type="text"
-                  id="slug"
-                  {...register("slug", { required: "Slug обязателен" })}
-                  className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                    errors.slug ? "border-red-300 bg-red-50" : "border-slate-300"
-                  }`}
-                  placeholder="k10-17b"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    id="slug"
+                    {...register("slug", { required: "Slug обязателен" })}
+                    className={`flex-1 px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      errors.slug ? "border-red-300 bg-red-50" : "border-slate-300"
+                    }`}
+                    placeholder="k10-17b"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentName = watch("name");
+                      if (currentName) {
+                        setValue("slug", generateSlug(currentName));
+                      }
+                    }}
+                    className="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors text-sm whitespace-nowrap"
+                    title="Сгенерировать из названия"
+                  >
+                    ↻ Из названия
+                  </button>
+                </div>
                 {errors.slug && (
                   <p className="mt-1 text-sm text-red-600">{errors.slug.message}</p>
                 )}

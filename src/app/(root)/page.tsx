@@ -31,33 +31,118 @@ export const metadata: Metadata = {
   },
 };
 
-// JSON-LD Schema.org для Organization
+// JSON-LD Schema.org для LocalBusiness (лучше для Google Local)
 interface OrganizationSchemaProps {
   name: string;
   phone?: string;
   email?: string;
   address?: string;
+  workSchedule?: string;
+  telegram?: string;
 }
 
-function OrganizationSchema({ name, phone, email, address }: OrganizationSchemaProps) {
+// Парсинг расписания работы в формат Schema.org
+function parseWorkSchedule(schedule: string): Array<{
+  "@type": "OpeningHoursSpecification";
+  dayOfWeek: string[];
+  opens: string;
+  closes: string;
+}> | undefined {
+  if (!schedule) return undefined;
+  
+  const specs: Array<{
+    "@type": "OpeningHoursSpecification";
+    dayOfWeek: string[];
+    opens: string;
+    closes: string;
+  }> = [];
+  
+  const dayMap: Record<string, string> = {
+    "пн": "Monday",
+    "вт": "Tuesday", 
+    "ср": "Wednesday",
+    "чт": "Thursday",
+    "пт": "Friday",
+    "сб": "Saturday",
+    "вс": "Sunday",
+  };
+  
+  const lines = schedule.split("\n").filter(line => line.trim());
+  
+  for (const line of lines) {
+    // Паттерн: "Вт-Пт: с 11:00 до 17:00" или "Сб-Вс: с 10:00 до 17:00"
+    const match = line.match(/([а-яА-Я]{2})[-–]?([а-яА-Я]{2})?[:\s]+(?:с\s+)?(\d{1,2}:\d{2})\s*(?:до|-)\s*(\d{1,2}:\d{2})/i);
+    
+    if (match) {
+      const startDay = match[1].toLowerCase();
+      const endDay = match[2]?.toLowerCase() || startDay;
+      const opens = match[3];
+      const closes = match[4];
+      
+      const days: string[] = [];
+      const dayKeys = Object.keys(dayMap);
+      let inRange = false;
+      
+      for (const key of dayKeys) {
+        if (key === startDay) inRange = true;
+        if (inRange) days.push(dayMap[key]);
+        if (key === endDay) break;
+      }
+      
+      if (days.length > 0) {
+        specs.push({
+          "@type": "OpeningHoursSpecification",
+          dayOfWeek: days,
+          opens,
+          closes,
+        });
+      }
+    }
+  }
+  
+  return specs.length > 0 ? specs : undefined;
+}
+
+function OrganizationSchema({ name, phone, email, address, workSchedule, telegram }: OrganizationSchemaProps) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://драгсоюз.рф";
+  
+  const openingHours = workSchedule ? parseWorkSchedule(workSchedule) : undefined;
+  
+  // Формируем sameAs (ссылки на соцсети)
+  const sameAs: string[] = [];
+  if (telegram) {
+    const cleanTelegram = telegram.replace(/^@/, "").replace(/^https?:\/\/t\.me\//, "");
+    sameAs.push(`https://t.me/${cleanTelegram}`);
+  }
   
   const schema = {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": "LocalBusiness",
+    "@id": baseUrl,
     name,
     url: baseUrl,
     logo: `${baseUrl}/logo.png`,
+    image: `${baseUrl}/opengraph-image`,
+    description: "Скупка радиодеталей, содержащих драгоценные металлы. Транзисторы, конденсаторы, микросхемы, реле.",
+    priceRange: "₽₽",
+    currenciesAccepted: "RUB",
+    paymentAccepted: "Cash, Card",
     ...(phone && { telephone: phone }),
     ...(email && { email }),
     ...(address && {
       address: {
         "@type": "PostalAddress",
-        addressLocality: address,
+        streetAddress: address,
+        addressLocality: "Санкт-Петербург",
         addressCountry: "RU",
       },
     }),
-    sameAs: [],
+    areaServed: {
+      "@type": "City",
+      name: "Санкт-Петербург",
+    },
+    ...(openingHours && { openingHoursSpecification: openingHours }),
+    ...(sameAs.length > 0 && { sameAs }),
   };
 
   return (
@@ -506,12 +591,14 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* JSON-LD Schema.org Organization */}
+      {/* JSON-LD Schema.org LocalBusiness */}
       <OrganizationSchema
         name="ДРАГСОЮЗ"
         phone={settings?.phoneNumber}
         email={settings?.email}
         address={settings?.address}
+        workSchedule={settings?.workSchedule}
+        telegram={settings?.telegramUsername}
       />
       <HeroSection />
       <CatalogSection />

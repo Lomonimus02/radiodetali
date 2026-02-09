@@ -25,6 +25,10 @@ model GlobalSettings {
   address          String @default("") // Адрес офиса
   workSchedule     String @default("") // Режим работы
 
+  // Настройки Telegram-бота для уведомлений о заявках
+  telegramBotToken String @default("") // Токен бота (от @BotFather)
+  telegramChatId   String @default("") // Chat ID для отправки уведомлений
+
   @@map("global_settings")
 }
 

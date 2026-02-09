@@ -49,6 +49,9 @@ export interface GlobalSettingsData {
   telegramUsername: string;
   address: string;
   workSchedule: string;
+  // Настройки Telegram-бота
+  telegramBotToken: string;
+  telegramChatId: string;
 }
 
 /**
@@ -61,6 +64,8 @@ export interface UpdateGlobalSettingsInput {
   telegramUsername?: string;
   address?: string;
   workSchedule?: string;
+  telegramBotToken?: string;
+  telegramChatId?: string;
 }
 
 /**
@@ -236,6 +241,8 @@ export async function getGlobalSettings(): Promise<GlobalSettingsResult> {
           telegramUsername: "",
           address: "",
           workSchedule: "",
+          telegramBotToken: "",
+          telegramChatId: "",
         },
       });
     }
@@ -251,6 +258,8 @@ export async function getGlobalSettings(): Promise<GlobalSettingsResult> {
         telegramUsername: settings.telegramUsername,
         address: settings.address,
         workSchedule: settings.workSchedule,
+        telegramBotToken: settings.telegramBotToken,
+        telegramChatId: settings.telegramChatId,
       },
     };
   } catch (error) {
@@ -296,6 +305,8 @@ export async function updateGlobalSettings(
     if (input.telegramUsername !== undefined) updateData.telegramUsername = input.telegramUsername;
     if (input.address !== undefined) updateData.address = input.address;
     if (input.workSchedule !== undefined) updateData.workSchedule = input.workSchedule;
+    if (input.telegramBotToken !== undefined) updateData.telegramBotToken = input.telegramBotToken;
+    if (input.telegramChatId !== undefined) updateData.telegramChatId = input.telegramChatId;
 
     // Обновляем или создаём запись (upsert)
     const settings = await prisma.globalSettings.upsert({
@@ -309,6 +320,8 @@ export async function updateGlobalSettings(
         telegramUsername: input.telegramUsername ?? "",
         address: input.address ?? "",
         workSchedule: input.workSchedule ?? "",
+        telegramBotToken: input.telegramBotToken ?? "",
+        telegramChatId: input.telegramChatId ?? "",
       },
     });
 
@@ -330,6 +343,8 @@ export async function updateGlobalSettings(
         telegramUsername: settings.telegramUsername,
         address: settings.address,
         workSchedule: settings.workSchedule,
+        telegramBotToken: settings.telegramBotToken,
+        telegramChatId: settings.telegramChatId,
       },
     };
   } catch (error) {

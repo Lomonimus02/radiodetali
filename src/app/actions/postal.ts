@@ -1,5 +1,7 @@
 "use server";
 
+import { sendPostalRequestToTelegram } from "@/lib/telegram";
+
 export type PostalRequestInput = {
   name: string;
   phone: string;
@@ -13,7 +15,7 @@ export type PostalRequestResult = {
 
 /**
  * Server Action для обработки заявки на почтовое отправление
- * TODO: В будущем подключить отправку в Telegram
+ * Отправляет уведомление в Telegram
  */
 export async function submitPostalRequest(
   input: PostalRequestInput
@@ -28,7 +30,7 @@ export async function submitPostalRequest(
       return { success: false, error: "Пожалуйста, укажите корректный телефон" };
     }
 
-    // Логирование заявки (в будущем заменить на отправку в Telegram)
+    // Логирование
     console.log("=== Новая заявка на почтовое отправление ===");
     console.log("Имя:", input.name.trim());
     console.log("Телефон:", input.phone.trim());
@@ -37,6 +39,17 @@ export async function submitPostalRequest(
     }
     console.log("Время:", new Date().toLocaleString("ru-RU"));
     console.log("============================================");
+
+    // Отправка в Telegram (не блокируем ответ пользователю при ошибке Telegram)
+    try {
+      await sendPostalRequestToTelegram({
+        name: input.name.trim(),
+        phone: input.phone.trim(),
+        comment: input.comment?.trim(),
+      });
+    } catch (telegramError) {
+      console.error("Ошибка отправки в Telegram:", telegramError);
+    }
 
     return { success: true };
   } catch (error) {

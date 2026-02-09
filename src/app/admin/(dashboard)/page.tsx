@@ -2,7 +2,8 @@ import { getMetalRates, getProducts, getPinnedCategories, getGlobalSettings } fr
 import { MetalRatesForm } from "./components/MetalRatesForm";
 import { PinnedCategoryRatesForm } from "./components/PinnedCategoryRatesForm";
 import { ContactSettingsForm } from "./components/ContactSettingsForm";
-import { Package, TrendingUp, Phone } from "lucide-react";
+import { TelegramSettingsForm } from "./components/TelegramSettingsForm";
+import { Package, TrendingUp, Phone, Bot } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -102,6 +103,31 @@ export default async function AdminDashboard() {
         </div>
         {globalSettings ? (
           <ContactSettingsForm initialData={globalSettings} />
+        ) : (
+          <div className="text-red-500">
+            Ошибка загрузки настроек:{" "}
+            {!globalSettingsResult.success && globalSettingsResult.error}
+          </div>
+        )}
+      </div>
+
+      {/* Telegram Bot Settings */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-blue-50 rounded-lg">
+            <Bot className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-slate-800">
+              Telegram-бот для заявок
+            </h2>
+            <p className="text-sm text-slate-500">
+              Настройте бота для получения заявок со страницы «Почтовые отправления»
+            </p>
+          </div>
+        </div>
+        {globalSettings ? (
+          <TelegramSettingsForm initialData={globalSettings} />
         ) : (
           <div className="text-red-500">
             Ошибка загрузки настроек:{" "}

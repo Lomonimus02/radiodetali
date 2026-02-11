@@ -157,10 +157,6 @@ export function ProductCard({ product, categorySlug, categoryName, variant = "de
 
         {/* Prices - показываем обе цены */}
         <div className="mb-3 space-y-1">
-          <p className="text-xs text-[var(--gray-500)] uppercase tracking-wide mb-1">
-            Цена{getPriceUnitSuffix(product.unitType)}
-          </p>
-          
           {/* Цена по запросу */}
           {product.isPriceOnRequest ? (
             <div className="flex items-center justify-center px-2 py-2.5 rounded-md bg-slate-100">

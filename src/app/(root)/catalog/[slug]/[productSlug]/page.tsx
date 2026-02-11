@@ -240,13 +240,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const product = result.data;
   const displayPrice = getDisplayPrice(product);
 
-  const formattedPrice = new Intl.NumberFormat("ru-RU", {
-    style: "currency",
-    currency: "RUB",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(displayPrice);
-
   return (
     <>
       {/* JSON-LD Schema.org structured data */}
@@ -342,20 +335,57 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {/* Price block */}
             <div className="bg-gradient-to-r from-[var(--accent-50)] to-[var(--accent-100)] rounded-xl p-6 mb-6 border border-[var(--accent-200)]">
               <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm text-[var(--gray-600)] mb-1">
+                <div className="flex-1">
+                  <p className="text-sm text-[var(--gray-600)] mb-3">
                     Цена скупки за {getUnitShort(product.unitType)}
                   </p>
                   {product.isPriceOnRequest ? (
-                    <p className="text-2xl md:text-3xl font-medium text-slate-500 italic">
+                    <p className="text-xl md:text-2xl font-medium text-slate-500 italic">
                       Цена по запросу
                     </p>
                   ) : (
-                    <p className="text-3xl md:text-4xl font-bold text-[var(--accent-700)] price-highlight">
-                      {formattedPrice}{getPriceUnitSuffix(product.unitType)}
-                    </p>
+                    <div className="space-y-2">
+                      {/* Цена за Новое */}
+                      {product.priceNew !== null && (
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 bg-green-100 px-3 py-2 sm:px-4 sm:py-3 rounded-lg">
+                          <span className="text-xs sm:text-sm font-medium text-green-700">
+                            {product.isSingleType ? "Цена" : "Новое"}
+                          </span>
+                          <span className="text-xl sm:text-2xl md:text-3xl font-bold text-green-700">
+                            {new Intl.NumberFormat("ru-RU", {
+                              style: "currency",
+                              currency: "RUB",
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            }).format(product.priceNew)}{getPriceUnitSuffix(product.unitType)}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Цена за Б/У */}
+                      {product.priceUsed !== null && !product.isSingleType && (
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 bg-amber-100 px-3 py-2 sm:px-4 sm:py-3 rounded-lg">
+                          <span className="text-xs sm:text-sm font-medium text-amber-700">Б/У</span>
+                          <span className="text-xl sm:text-2xl md:text-3xl font-bold text-amber-700">
+                            {new Intl.NumberFormat("ru-RU", {
+                              style: "currency",
+                              currency: "RUB",
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            }).format(product.priceUsed)}{getPriceUnitSuffix(product.unitType)}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Если нет цен */}
+                      {product.priceNew === null && product.priceUsed === null && (
+                        <p className="text-lg text-[var(--gray-500)] italic">
+                          Не принимается
+                        </p>
+                      )}
+                    </div>
                   )}
-                  <p className="text-xs text-[var(--gray-500)] mt-2 flex items-center gap-1">
+                  <p className="text-xs text-[var(--gray-500)] mt-3 flex items-center gap-1">
                     <Info className="w-3 h-3" />
                     {product.isPriceOnRequest 
                       ? "Свяжитесь с нами для уточнения стоимости"

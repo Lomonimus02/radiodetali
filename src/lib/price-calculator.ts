@@ -57,8 +57,10 @@ export interface MetalContent {
   manualPriceNew?: unknown | null;
   manualPriceUsed?: unknown | null;
   
-  // Наценка товара (коэффициент: 0.9 = -10%, 1.0 = без наценки, 1.15 = +15%)
+  // Наценка товара для НОВОГО (коэффициент: 0.9 = -10%, 1.0 = без наценки, 1.15 = +15%)
   priceMarkup?: number;
+  // Наценка товара для Б/У
+  priceMarkupUsed?: number;
   
   // Тип товара: true = одна цена (без разделения Новое/Б/У)
   isSingleType?: boolean;
@@ -171,6 +173,7 @@ export function calculateProductPrices(
 ): ProductPrices {
   const rates = resolveRates(globalRates, categoryRates);
   const markup = product.priceMarkup ?? 1.0;
+  const markupUsed = product.priceMarkupUsed ?? 1.0; // Наценка для Б/У
   const isSingleType = product.isSingleType ?? false;
 
   // ========================================
@@ -213,7 +216,8 @@ export function calculateProductPrices(
         product.contentPalladiumUsed,
         rates
       );
-      priceUsed = Math.round(basePrice * markup * 100) / 100;
+      // Используем markupUsed для Б/У товаров
+      priceUsed = Math.round(basePrice * markupUsed * 100) / 100;
     }
   }
 

@@ -99,33 +99,44 @@ export function ProductCardCompact({ product, categorySlug }: ProductCardCompact
 
         {/* Prices */}
         <div className="space-y-1">
-          {/* Цена за Новый / Единая цена */}
-          {hasNewPrice && (
-            <div className="flex items-center justify-between px-2 py-1.5 rounded-md bg-green-50">
-              <span className="text-xs font-medium text-green-700">
-                {product.isSingleType ? 'Цена' : 'Новый'}
-              </span>
-              <span className="font-bold text-green-700">
-                {formatPrice(product.priceNew!)}{getPriceUnitSuffix(product.unitType)}
+          {/* Цена по запросу */}
+          {product.isPriceOnRequest ? (
+            <div className="flex items-center justify-center px-2 py-2.5 rounded-md bg-slate-100">
+              <span className="text-sm font-medium text-slate-500 italic">
+                Цена по запросу
               </span>
             </div>
-          )}
-          
-          {/* Цена за Б/У (скрываем для единой цены) */}
-          {hasUsedPrice && !product.isSingleType && (
-            <div className="flex items-center justify-between bg-amber-50 px-2 py-1.5 rounded-md">
-              <span className="text-xs font-medium text-amber-700">Б/У</span>
-              <span className="font-bold text-amber-700">
-                {formatPrice(product.priceUsed!)}{getPriceUnitSuffix(product.unitType)}
-              </span>
-            </div>
-          )}
+          ) : (
+            <>
+              {/* Цена за Новый / Единая цена */}
+              {hasNewPrice && (
+                <div className="flex items-center justify-between px-2 py-1.5 rounded-md bg-green-50">
+                  <span className="text-xs font-medium text-green-700">
+                    {product.isSingleType ? 'Цена' : 'Новый'}
+                  </span>
+                  <span className="font-bold text-green-700">
+                    {formatPrice(product.priceNew!)}{getPriceUnitSuffix(product.unitType)}
+                  </span>
+                </div>
+              )}
+              
+              {/* Цена за Б/У (скрываем для единой цены) */}
+              {hasUsedPrice && !product.isSingleType && (
+                <div className="flex items-center justify-between bg-amber-50 px-2 py-1.5 rounded-md">
+                  <span className="text-xs font-medium text-amber-700">Б/У</span>
+                  <span className="font-bold text-amber-700">
+                    {formatPrice(product.priceUsed!)}{getPriceUnitSuffix(product.unitType)}
+                  </span>
+                </div>
+              )}
 
-          {/* Если ничего не принимается */}
-          {!hasNewPrice && !hasUsedPrice && (
-            <p className="text-xs text-[var(--gray-400)] italic">
-              Не принимается
-            </p>
+              {/* Если ничего не принимается */}
+              {!hasNewPrice && !hasUsedPrice && (
+                <p className="text-xs text-[var(--gray-400)] italic">
+                  Не принимается
+                </p>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -44,7 +44,9 @@ interface FormData {
   unitType: UnitType;
   // Наценка и тип товара
   priceMarkup: number;
+  priceMarkupUsed: number;
   isSingleType: boolean;
+  isPriceOnRequest: boolean;
   // Содержание металлов для НОВЫХ
   contentGold: number;
   contentSilver: number;
@@ -114,7 +116,9 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
       unitType: product?.unitType ?? "PIECE",
       // Наценка и тип товара
       priceMarkup: product?.priceMarkup ?? 1.0,
+      priceMarkupUsed: product?.priceMarkupUsed ?? 1.0,
       isSingleType: product?.isSingleType ?? false,
+      isPriceOnRequest: product?.isPriceOnRequest ?? false,
       // Содержание металлов для НОВЫХ
       contentGold: product?.contentGold || 0,
       contentSilver: product?.contentSilver || 0,
@@ -137,6 +141,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
   const watchIsUsedAvailable = watch("isUsedAvailable");
   const watchIsSingleType = watch("isSingleType");
   const watchPriceMarkup = watch("priceMarkup");
+  const watchPriceMarkupUsed = watch("priceMarkupUsed");
   const watchCategoryId = watch("categoryId");
   const watchUnitType = watch("unitType");
   
@@ -174,6 +179,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
     const ratePd = selectedCategory?.customRatePd ?? metalRates.palladium;
     
     const markup = watchPriceMarkup || 1.0;
+    const markupUsed = watchPriceMarkupUsed || 1.0;
     
     // Цена за НОВОЕ (содержание в мг, курсы в руб/мг)
     const priceNew = (
@@ -183,19 +189,20 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
       (watchContentPalladium || 0) * ratePd
     ) * markup;
     
-    // Цена за Б/У
+    // Цена за Б/У (используем markupUsed)
     const priceUsed = (
       (watchContentGoldUsed || 0) * rateAu +
       (watchContentSilverUsed || 0) * rateAg +
       (watchContentPlatinumUsed || 0) * ratePt +
       (watchContentPalladiumUsed || 0) * ratePd
-    ) * markup;
+    ) * markupUsed;
     
     return { priceNew, priceUsed };
   }, [
     metalRates,
     selectedCategory,
     watchPriceMarkup,
+    watchPriceMarkupUsed,
     watchContentGold,
     watchContentSilver,
     watchContentPlatinum,
@@ -309,7 +316,9 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
           sortOrder: data.sortOrder,
           unitType: data.unitType,
           priceMarkup: data.priceMarkup,
+          priceMarkupUsed: data.priceMarkupUsed,
           isSingleType: data.isSingleType,
+          isPriceOnRequest: data.isPriceOnRequest,
           contentGold: data.contentGold,
           contentSilver: data.contentSilver,
           contentPlatinum: data.contentPlatinum,
@@ -333,7 +342,9 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
           sortOrder: data.sortOrder,
           unitType: data.unitType,
           priceMarkup: data.priceMarkup,
+          priceMarkupUsed: data.priceMarkupUsed,
           isSingleType: data.isSingleType,
+          isPriceOnRequest: data.isPriceOnRequest,
           contentGold: data.contentGold,
           contentSilver: data.contentSilver,
           contentPlatinum: data.contentPlatinum,
@@ -631,26 +642,72 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
               </div>
 
               {/* Price Markup */}
-              <div>
-                <label
-                  htmlFor="priceMarkup"
-                  className="block text-sm font-medium text-slate-700 mb-1"
-                >
-                  Наценка (Коэффициент)
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label
+                    htmlFor="priceMarkup"
+                    className="block text-sm font-medium text-slate-700 mb-1"
+                  >
+                    Наценка (Новое / Единое)
+                  </label>
+                  <input
+                    type="number"
+                    id="priceMarkup"
+                    step="0.001"
+                    min="0.1"
+                    max="10"
+                    {...register("priceMarkup", { valueAsNumber: true, min: 0.1, max: 10 })}
+                    className="w-full max-w-xs px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="1.0"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">
+                    1.0 = без наценки, 0.9 = -10%, 1.15 = +15%
+                  </p>
+                </div>
+
+                {/* Price Markup Used - показывается только если не единый тип */}
+                {!watchIsSingleType && (
+                  <div>
+                    <label
+                      htmlFor="priceMarkupUsed"
+                      className="block text-sm font-medium text-slate-700 mb-1"
+                    >
+                      Наценка (Б/У)
+                    </label>
+                    <input
+                      type="number"
+                      id="priceMarkupUsed"
+                      step="0.001"
+                      min="0.1"
+                      max="10"
+                      {...register("priceMarkupUsed", { valueAsNumber: true, min: 0.1, max: 10 })}
+                      className="w-full max-w-xs px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="1.0"
+                    />
+                    <p className="mt-1 text-xs text-slate-500">
+                      Отдельная наценка для Б/У товаров
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Price On Request Toggle */}
+              <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    {...register("isPriceOnRequest")}
+                    className="w-5 h-5 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-amber-800">
+                      Цена по запросу
+                    </span>
+                    <p className="text-xs text-amber-600 mt-0.5">
+                      Скрывает цену на сайте, вместо неё показывается &quot;Цена по запросу&quot;
+                    </p>
+                  </div>
                 </label>
-                <input
-                  type="number"
-                  id="priceMarkup"
-                  step="0.01"
-                  min="0.1"
-                  max="10"
-                  {...register("priceMarkup", { valueAsNumber: true, min: 0.1, max: 10 })}
-                  className="w-full max-w-xs px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="1.0"
-                />
-                <p className="mt-1 text-xs text-slate-500">
-                  1.0 = без наценки, 0.9 = -10%, 1.15 = +15%
-                </p>
               </div>
 
               {/* Single Type Toggle */}

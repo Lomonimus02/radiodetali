@@ -96,9 +96,12 @@ model Product {
   unitType    UnitType @default(PIECE) // Единица измерения (PIECE = шт, GRAM = г, KG = кг)
 
   // Наценка на товар (коэффициент: 0.9 = -10%, 1.0 = без наценки, 1.15 = +15%)
-  priceMarkup  Float   @default(1.0)
+  priceMarkup     Float   @default(1.0) // Наценка для НОВОГО или единого типа
+  priceMarkupUsed Float   @default(1.0) // Наценка для Б/У товаров
   // Тип товара: true = одна цена (без разделения Новое/Б/У), false = две цены
   isSingleType Boolean @default(false)
+  // Цена по запросу (скрывает цену, показывает "Цена по запросу")
+  isPriceOnRequest Boolean @default(false)
 
   // Содержание металлов в граммах для НОВЫХ товаров
   contentGold      Decimal @default(0) @db.Decimal(14, 6) // до 0.000001 г

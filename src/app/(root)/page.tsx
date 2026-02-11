@@ -401,23 +401,34 @@ async function CatalogSection() {
 
                 {/* Prices */}
                 <div className="space-y-1">
-                  {item.priceNew !== null && (
-                    <div className="flex items-center justify-between px-2 py-1.5 rounded-md bg-green-50">
-                      <span className="text-xs font-medium text-green-700">
-                        {item.isSingleType ? 'Цена' : 'Новый'}
-                      </span>
-                      <span className="font-bold text-green-700">
-                        {formatPrice(item.priceNew)}{getPriceUnitSuffix(item.unitType)}
+                  {/* Цена по запросу */}
+                  {item.isPriceOnRequest ? (
+                    <div className="flex items-center justify-center px-2 py-2.5 rounded-md bg-slate-100">
+                      <span className="text-sm font-medium text-slate-500 italic">
+                        Цена по запросу
                       </span>
                     </div>
-                  )}
-                  {item.priceUsed !== null && !item.isSingleType && (
-                    <div className="flex items-center justify-between bg-amber-50 px-2 py-1.5 rounded-md">
-                      <span className="text-xs font-medium text-amber-700">Б/У</span>
-                      <span className="font-bold text-amber-700">
-                        {formatPrice(item.priceUsed)}{getPriceUnitSuffix(item.unitType)}
-                      </span>
-                    </div>
+                  ) : (
+                    <>
+                      {item.priceNew !== null && (
+                        <div className="flex items-center justify-between px-2 py-1.5 rounded-md bg-green-50">
+                          <span className="text-xs font-medium text-green-700">
+                            {item.isSingleType ? 'Цена' : 'Новый'}
+                          </span>
+                          <span className="font-bold text-green-700">
+                            {formatPrice(item.priceNew)}{getPriceUnitSuffix(item.unitType)}
+                          </span>
+                        </div>
+                      )}
+                      {item.priceUsed !== null && !item.isSingleType && (
+                        <div className="flex items-center justify-between bg-amber-50 px-2 py-1.5 rounded-md">
+                          <span className="text-xs font-medium text-amber-700">Б/У</span>
+                          <span className="font-bold text-amber-700">
+                            {formatPrice(item.priceUsed)}{getPriceUnitSuffix(item.unitType)}
+                          </span>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

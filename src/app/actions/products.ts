@@ -38,10 +38,14 @@ export interface ProductWithPrice {
   sortOrder: number;
   // Единица измерения (PIECE = шт, GRAM = г, KG = кг)
   unitType: UnitType;
-  // Наценка на товар (коэффициент)
+  // Наценка на товар (коэффициент) для НОВОГО
   priceMarkup: number;
+  // Наценка для Б/У товаров
+  priceMarkupUsed: number;
   // Тип товара: true = одна цена (без разделения Новое/Б/У)
   isSingleType: boolean;
+  // Цена по запросу
+  isPriceOnRequest: boolean;
   // Содержание металлов для НОВЫХ
   contentGold: number;
   contentSilver: number;
@@ -79,7 +83,9 @@ export interface CreateProductInput {
   unitType?: UnitType;
   // Наценка и тип товара
   priceMarkup?: number;
+  priceMarkupUsed?: number;
   isSingleType?: boolean;
+  isPriceOnRequest?: boolean;
   // Содержание металлов для НОВЫХ
   contentGold?: number;
   contentSilver?: number;
@@ -111,7 +117,9 @@ export interface UpdateProductInput {
   unitType?: UnitType;
   // Наценка и тип товара
   priceMarkup?: number;
+  priceMarkupUsed?: number;
   isSingleType?: boolean;
+  isPriceOnRequest?: boolean;
   // Содержание металлов для НОВЫХ
   contentGold?: number;
   contentSilver?: number;
@@ -175,7 +183,9 @@ interface DbProductWithCategory {
   unitType: UnitType;
   // Наценка и тип товара
   priceMarkup: number;
+  priceMarkupUsed: number;
   isSingleType: boolean;
+  isPriceOnRequest: boolean;
   // Содержание металлов для НОВЫХ
   contentGold: unknown; // Prisma Decimal
   contentSilver: unknown;
@@ -230,6 +240,7 @@ function serializeProduct(
 ): ProductWithPrice {
   // Наценка товара умножается на глобальную наценку (внутри priceMarkup товара)
   const effectiveMarkup = product.priceMarkup * globalPriceMarkup;
+  const effectiveMarkupUsed = product.priceMarkupUsed * globalPriceMarkup;
   
   // Получаем кастомные курсы категории
   const categoryRates = {
@@ -254,6 +265,7 @@ function serializeProduct(
       manualPriceNew: product.manualPriceNew,
       manualPriceUsed: product.manualPriceUsed,
       priceMarkup: effectiveMarkup, // Используем эффективную наценку
+      priceMarkupUsed: effectiveMarkupUsed, // Наценка для Б/У
       isSingleType: product.isSingleType,
     },
     rates,
@@ -272,7 +284,9 @@ function serializeProduct(
     sortOrder: product.sortOrder,
     unitType: product.unitType,
     priceMarkup: product.priceMarkup,
+    priceMarkupUsed: product.priceMarkupUsed,
     isSingleType: product.isSingleType,
+    isPriceOnRequest: product.isPriceOnRequest,
     contentGold: toNumber(product.contentGold),
     contentSilver: toNumber(product.contentSilver),
     contentPlatinum: toNumber(product.contentPlatinum),
@@ -611,7 +625,9 @@ export async function createProduct(
         unitType: input.unitType ?? "PIECE",
         // Наценка и тип товара
         priceMarkup: input.priceMarkup ?? 1.0,
+        priceMarkupUsed: input.priceMarkupUsed ?? 1.0,
         isSingleType: input.isSingleType ?? false,
+        isPriceOnRequest: input.isPriceOnRequest ?? false,
         // Содержание металлов для НОВЫХ (обрабатываем null и NaN как 0)
         contentGold: (input.contentGold == null || Number.isNaN(input.contentGold)) ? 0 : input.contentGold,
         contentSilver: (input.contentSilver == null || Number.isNaN(input.contentSilver)) ? 0 : input.contentSilver,
@@ -718,7 +734,9 @@ export async function updateProduct(
       unitType?: UnitType;
       // Наценка и тип товара
       priceMarkup?: number;
+      priceMarkupUsed?: number;
       isSingleType?: boolean;
+      isPriceOnRequest?: boolean;
       // Содержание металлов для НОВЫХ
       contentGold?: number;
       contentSilver?: number;
@@ -745,7 +763,9 @@ export async function updateProduct(
     if (input.unitType !== undefined) updateData.unitType = input.unitType;
     // Наценка и тип товара
     if (input.priceMarkup !== undefined) updateData.priceMarkup = input.priceMarkup;
+    if (input.priceMarkupUsed !== undefined) updateData.priceMarkupUsed = input.priceMarkupUsed;
     if (input.isSingleType !== undefined) updateData.isSingleType = input.isSingleType;
+    if (input.isPriceOnRequest !== undefined) updateData.isPriceOnRequest = input.isPriceOnRequest;
     // sortOrder обрабатывается отдельно через reorder
     // НОВЫЕ - обрабатываем null и NaN как 0
     if (input.contentGold !== undefined) updateData.contentGold = (input.contentGold == null || Number.isNaN(input.contentGold)) ? 0 : input.contentGold;

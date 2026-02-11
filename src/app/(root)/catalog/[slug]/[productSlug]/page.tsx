@@ -334,13 +334,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
           {/* Product info */}
           <div>
-            {/* Title & marking */}
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[var(--gray-900)] mb-2">
+            {/* Title */}
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[var(--gray-900)] mb-6">
               {product.name}
             </h1>
-            <p className="text-lg text-[var(--gray-500)] font-mono mb-6">
-              Маркировка: {product.slug.toUpperCase()}
-            </p>
 
             {/* Price block */}
             <div className="bg-gradient-to-r from-[var(--accent-50)] to-[var(--accent-100)] rounded-xl p-6 mb-6 border border-[var(--accent-200)]">
@@ -349,12 +346,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   <p className="text-sm text-[var(--gray-600)] mb-1">
                     Цена скупки за {getUnitShort(product.unitType)}
                   </p>
-                  <p className="text-3xl md:text-4xl font-bold text-[var(--accent-700)] price-highlight">
-                    {formattedPrice}{getPriceUnitSuffix(product.unitType)}
-                  </p>
+                  {product.isPriceOnRequest ? (
+                    <p className="text-2xl md:text-3xl font-medium text-slate-500 italic">
+                      Цена по запросу
+                    </p>
+                  ) : (
+                    <p className="text-3xl md:text-4xl font-bold text-[var(--accent-700)] price-highlight">
+                      {formattedPrice}{getPriceUnitSuffix(product.unitType)}
+                    </p>
+                  )}
                   <p className="text-xs text-[var(--gray-500)] mt-2 flex items-center gap-1">
                     <Info className="w-3 h-3" />
-                    Цена рассчитана по актуальному курсу драгметаллов
+                    {product.isPriceOnRequest 
+                      ? "Свяжитесь с нами для уточнения стоимости"
+                      : "Цена рассчитана по актуальному курсу драгметаллов"
+                    }
                   </p>
                 </div>
                 <Scale className="w-12 h-12 text-[var(--accent-400)] shrink-0" />

@@ -571,6 +571,7 @@ export interface CategoryShowcaseItem {
   isNewAvailable: boolean;
   isUsedAvailable: boolean;
   isSingleType: boolean;   // Единая цена (без разделения на Б/У)
+  isPriceOnRequest: boolean; // Цена по запросу
   unitType: "PIECE" | "GRAM" | "KG"; // Единица измерения
   // Данные категории для ссылки
   categorySlug: string;    // slug категории
@@ -609,7 +610,6 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
     }
 
     const markup = globalSettings?.priceMarkup ? Number(globalSettings.priceMarkup) : 1;
-    const markupUsed = markup; // Используем тот же коэффициент для Б/У товаров
 
     // Получаем только корневые категории с товарами (включая товары подкатегорий)
     const categories = await prisma.category.findMany({
@@ -639,7 +639,9 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
             isNewAvailable: true,
             isUsedAvailable: true,
             isSingleType: true,
+            isPriceOnRequest: true,
             priceMarkup: true,
+            priceMarkupUsed: true,
             // Ручные цены
             manualPriceNew: true,
             manualPriceUsed: true,
@@ -672,7 +674,9 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
                 isNewAvailable: true,
                 isUsedAvailable: true,
                 isSingleType: true,
+                isPriceOnRequest: true,
                 priceMarkup: true,
+                priceMarkupUsed: true,
                 manualPriceNew: true,
                 manualPriceUsed: true,
               },
@@ -732,6 +736,7 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
       for (const product of allProducts) {
         // Эффективная наценка = наценка товара * глобальная наценка
         const effectiveMarkup = (product.priceMarkup ?? 1) * markup;
+        const effectiveMarkupUsed = (product.priceMarkupUsed ?? 1) * markup;
         
         // Получаем курсы с учётом кастомных курсов категории товара
         const rates = resolveRates(metalRates, product.categoryRates);
@@ -766,7 +771,7 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
               product.contentPalladiumUsed,
               rates
             );
-            priceUsed = Math.round(basePriceUsed * effectiveMarkup * 100) / 100;
+            priceUsed = Math.round(basePriceUsed * effectiveMarkupUsed * 100) / 100;
           }
         }
 
@@ -794,6 +799,7 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
           isNewAvailable: mostExpensiveProduct.isNewAvailable,
           isUsedAvailable: mostExpensiveProduct.isUsedAvailable,
           isSingleType: mostExpensiveProduct.isSingleType,
+          isPriceOnRequest: mostExpensiveProduct.isPriceOnRequest,
           unitType: mostExpensiveProduct.unitType,
           // Данные категории
           categorySlug: category.slug,

@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { calculateProductPrices } from "@/lib/price-calculator";
 import { revalidatePath } from "next/cache";
+import Fuse from "fuse.js";
 
 // ============================================================================
 // ТИПЫ
@@ -172,6 +173,7 @@ interface DbProductWithCategory {
   category: {
     name: string;
     slug: string;
+    sortOrder: number; // Для сортировки по категории
     // Кастомные курсы категории
     customRateAu: number | null;
     customRateAg: number | null;
@@ -392,6 +394,23 @@ async function reorderProductsInCategory(
 /**
  * Получить список товаров с рассчитанными ценами
  */
+/**
+ * Нормализует строку для поиска: убирает лишние пробелы, приводит к нижнему регистру
+ */
+function normalizeSearchQuery(query: string): string {
+  return query
+    .toLowerCase()
+    .replace(/\s+/g, ' ')  // Заменяем множественные пробелы на один
+    .trim();
+}
+
+/**
+ * Создает версию без пробелов для сравнения "КМ 604" vs "КМ604"
+ */
+function removeSpaces(str: string): string {
+  return str.replace(/\s+/g, '');
+}
+
 export async function getProducts(
   filters?: ProductFilters
 ): Promise<ProductsResult> {
@@ -401,10 +420,21 @@ export async function getProducts(
     // Формируем условия фильтрации
     const where: {
       categoryId?: string | { in: string[] };
-      OR?: Array<{ name: { contains: string; mode: "insensitive" } } | { slug: { contains: string; mode: "insensitive" } }>;
     } = {};
 
+    // Флаг: включены ли подкатегории
+    let includesSubcategories = false;
+    // childSortOrder родительской категории (для сортировки)
+    let parentCategoryChildSortOrder = 0;
+
     if (categoryId) {
+      // Получаем родительскую категорию с childSortOrder
+      const parentCategory = await prisma.category.findUnique({
+        where: { id: categoryId },
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      parentCategoryChildSortOrder = (parentCategory as any)?.childSortOrder ?? 0;
+
       // Находим все подкатегории данной категории
       const subcategories = await prisma.category.findMany({
         where: { parentId: categoryId },
@@ -415,17 +445,112 @@ export async function getProducts(
       if (subcategories.length > 0) {
         const categoryIds = [categoryId, ...subcategories.map(c => c.id)];
         where.categoryId = { in: categoryIds };
+        includesSubcategories = true;
       } else {
         where.categoryId = categoryId;
       }
     }
 
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { slug: { contains: search, mode: "insensitive" } },
-      ];
+    // ========================================================================
+    // УМНЫЙ ПОИСК С FUSE.JS
+    // ========================================================================
+    if (search && search.trim()) {
+      const normalizedSearch = normalizeSearchQuery(search);
+      const searchWithoutSpaces = removeSpaces(normalizedSearch);
+      
+      // Получаем ВСЕ товары для fuzzy-поиска (с учётом фильтра по категории)
+      const [allProducts, rates, priceMarkup] = await Promise.all([
+        prisma.product.findMany({
+          where,
+          include: {
+            category: {
+              select: {
+                name: true,
+                slug: true,
+                sortOrder: true,
+                customRateAu: true,
+                customRateAg: true,
+                customRatePt: true,
+                customRatePd: true,
+              },
+            },
+          },
+          orderBy: { sortOrder: "asc" },
+        }),
+        getCurrentRates(),
+        getPriceMarkup(),
+      ]);
+
+      // Подготавливаем данные для Fuse.js с нормализованными полями
+      const productsForSearch = allProducts.map((product) => ({
+        ...product,
+        // Добавляем нормализованные версии для лучшего поиска
+        nameNormalized: removeSpaces(product.name.toLowerCase()),
+        slugNormalized: removeSpaces(product.slug.toLowerCase()),
+        descriptionNormalized: product.description 
+          ? removeSpaces(product.description.toLowerCase()) 
+          : '',
+      }));
+
+      // Настройка Fuse.js
+      const fuse = new Fuse(productsForSearch, {
+        keys: [
+          { name: 'name', weight: 2 },           // Название — высокий приоритет
+          { name: 'nameNormalized', weight: 2 }, // Нормализованное название (без пробелов)
+          { name: 'slug', weight: 1.5 },         // Слаг
+          { name: 'slugNormalized', weight: 1.5 },
+          { name: 'description', weight: 1 },   // Описание
+          { name: 'descriptionNormalized', weight: 1 },
+        ],
+        threshold: 0.3,          // Порог нечеткости (0 = точное совпадение, 1 = любое)
+        ignoreLocation: true,    // Искать совпадение в любом месте строки
+        minMatchCharLength: 2,   // Минимум 2 символа для совпадения
+        includeScore: true,      // Включить оценку релевантности
+        findAllMatches: true,    // Найти все совпадения в строке
+        // Extended search позволяет использовать спецсимволы
+        // но для простоты используем обычный режим
+      });
+
+      // Выполняем поиск по обоим вариантам запроса
+      const results1 = fuse.search(normalizedSearch);
+      const results2 = fuse.search(searchWithoutSpaces);
+      
+      // Объединяем результаты и убираем дубликаты
+      const seenIds = new Set<string>();
+      const combinedResults: typeof results1 = [];
+      
+      for (const result of [...results1, ...results2]) {
+        if (!seenIds.has(result.item.id)) {
+          seenIds.add(result.item.id);
+          combinedResults.push(result);
+        }
+      }
+      
+      // Сортируем по релевантности (меньший score = лучше)
+      combinedResults.sort((a, b) => (a.score ?? 1) - (b.score ?? 1));
+      
+      const total = combinedResults.length;
+      
+      // Применяем пагинацию
+      const paginatedResults = combinedResults.slice(offset, offset + limit);
+      
+      // Преобразуем товары с рассчитанными ценами
+      const productsWithPrices = paginatedResults.map(({ item }) => {
+        // Убираем временные нормализованные поля
+        const { nameNormalized, slugNormalized, descriptionNormalized, ...product } = item;
+        return serializeProduct(product as DbProductWithCategory, rates, priceMarkup);
+      });
+
+      return {
+        success: true,
+        data: productsWithPrices,
+        total,
+      };
     }
+
+    // ========================================================================
+    // ОБЫЧНАЯ ВЫБОРКА БЕЗ ПОИСКА
+    // ========================================================================
 
     // Получаем товары, курсы и наценку параллельно
     const [products, rates, priceMarkup, total] = await Promise.all([
@@ -436,6 +561,7 @@ export async function getProducts(
             select: {
               name: true,
               slug: true,
+              sortOrder: true, // Включаем sortOrder категории для сортировки
               customRateAu: true,
               customRateAg: true,
               customRatePt: true,
@@ -444,16 +570,47 @@ export async function getProducts(
           },
         },
         orderBy: { sortOrder: "asc" },
-        take: limit,
-        skip: offset,
+        // Если включены подкатегории, загружаем больше для клиентской сортировки
+        // (Prisma не поддерживает orderBy по полям связанной модели напрямую)
+        take: includesSubcategories ? undefined : limit,
+        skip: includesSubcategories ? undefined : offset,
       }),
       getCurrentRates(),
       getPriceMarkup(),
       prisma.product.count({ where }),
     ]);
 
+    // Если включены подкатегории — сортируем:
+    // - Для товаров родительской категории используем childSortOrder родителя
+    // - Для товаров подкатегорий используем sortOrder подкатегории
+    let sortedProducts = products;
+    if (includesSubcategories && categoryId) {
+      sortedProducts = [...products].sort((a, b) => {
+        // Определяем "эффективный sortOrder" для товара:
+        // - Если товар из родительской категории -> используем childSortOrder родителя
+        // - Если товар из подкатегории -> используем sortOrder подкатегории
+        const isFromParentA = a.categoryId === categoryId;
+        const isFromParentB = b.categoryId === categoryId;
+        
+        const effectiveOrderA = isFromParentA 
+          ? parentCategoryChildSortOrder 
+          : (a.category as { sortOrder: number }).sortOrder ?? 0;
+        const effectiveOrderB = isFromParentB 
+          ? parentCategoryChildSortOrder 
+          : (b.category as { sortOrder: number }).sortOrder ?? 0;
+        
+        if (effectiveOrderA !== effectiveOrderB) {
+          return effectiveOrderA - effectiveOrderB;
+        }
+        // При равных позициях категорий — сортируем по sortOrder товара
+        return a.sortOrder - b.sortOrder;
+      });
+      // Применяем пагинацию после сортировки
+      sortedProducts = sortedProducts.slice(offset, offset + limit);
+    }
+
     // Преобразуем товары с рассчитанными ценами
-    const productsWithPrices = products.map((product: DbProductWithCategory) =>
+    const productsWithPrices = sortedProducts.map((product: DbProductWithCategory) =>
       serializeProduct(product, rates, priceMarkup)
     );
 
@@ -484,6 +641,7 @@ export async function getProductById(id: string): Promise<ProductResult> {
             select: {
               name: true,
               slug: true,
+              sortOrder: true,
               customRateAu: true,
               customRateAg: true,
               customRatePt: true,
@@ -529,6 +687,7 @@ export async function getProductBySlug(slug: string): Promise<ProductResult> {
             select: {
               name: true,
               slug: true,
+              sortOrder: true,
               customRateAu: true,
               customRateAg: true,
               customRatePt: true,
@@ -648,6 +807,7 @@ export async function createProduct(
           select: {
             name: true,
             slug: true,
+            sortOrder: true,
             customRateAu: true,
             customRateAg: true,
             customRatePt: true,
@@ -791,6 +951,7 @@ export async function updateProduct(
           select: {
             name: true,
             slug: true,
+            sortOrder: true,
             customRateAu: true,
             customRateAg: true,
             customRatePt: true,
@@ -893,6 +1054,7 @@ export async function getProductsByIds(ids: string[]): Promise<ProductsResult> {
             select: {
               name: true,
               slug: true,
+              sortOrder: true,
               customRateAu: true,
               customRateAg: true,
               customRatePt: true,

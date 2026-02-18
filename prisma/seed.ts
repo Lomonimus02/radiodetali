@@ -2,6 +2,7 @@ import "dotenv/config";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
+import bcrypt from "bcryptjs";
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -14,15 +15,29 @@ async function main() {
   console.log("🌱 Начинаем заполнение базы данных...");
 
   // 0. Создаем или обновляем глобальные настройки (единственная запись с id="global")
+  // Хешируем дефолтный пароль admin123 для первоначальной настройки
+  const defaultPassword = "admin123";
+  const defaultPasswordHash = await bcrypt.hash(defaultPassword, 10);
+  
+  // Проверяем, есть ли уже запись и установлен ли пароль
+  const existingSettings = await prisma.globalSettings.findUnique({
+    where: { id: "global" },
+    select: { adminPasswordHash: true },
+  });
+  
   const globalSettings = await prisma.globalSettings.upsert({
     where: { id: "global" },
-    update: {},
+    update: existingSettings?.adminPasswordHash ? {} : { adminPasswordHash: defaultPasswordHash },
     create: {
       id: "global",
       priceMarkup: 1.0, // Дефолтная наценка 0% (коэффициент 1.0)
+      adminPasswordHash: defaultPasswordHash, // Дефолтный пароль: admin123
     },
   });
   console.log("✅ Глобальные настройки созданы: priceMarkup =", globalSettings.priceMarkup);
+  if (!existingSettings?.adminPasswordHash) {
+    console.log("   📌 Дефолтный пароль администратора: admin123 (рекомендуется сменить после первого входа)");
+  }
 
   // 1. Создаем или обновляем курсы металлов (единственная запись с id="current")
   const metalRate = await prisma.metalRate.upsert({

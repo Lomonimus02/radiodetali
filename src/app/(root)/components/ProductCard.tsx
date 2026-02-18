@@ -57,7 +57,7 @@ export function ProductCard({ product, categorySlug, categoryName, variant = "de
         className="group block bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-xl transition-all duration-300 overflow-hidden"
       >
         {/* Image - larger aspect ratio for showcase */}
-        <div className="relative aspect-[4/3] bg-[var(--gray-100)] overflow-hidden">
+        <div className="relative aspect-[3/2] md:aspect-[4/3] bg-[var(--gray-100)] overflow-hidden">
           {product.image ? (
             <Image
               src={product.image}
@@ -118,7 +118,7 @@ export function ProductCard({ product, categorySlug, categoryName, variant = "de
           className="w-full cursor-zoom-in"
           aria-label={`Увеличить изображение ${product.name}`}
         >
-          <div className="relative aspect-square bg-[var(--gray-100)] overflow-hidden">
+          <div className="relative aspect-[3/2] md:aspect-square bg-[var(--gray-100)] overflow-hidden">
             {product.image ? (
               <Image
                 src={product.image}
@@ -140,7 +140,7 @@ export function ProductCard({ product, categorySlug, categoryName, variant = "de
         </button>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-2 md:p-4">
         {/* Name */}
         <Link href={productUrl}>
           <h3 className="font-semibold text-[var(--gray-800)] group-hover:text-[var(--primary-600)] transition-colors line-clamp-2 min-h-[2.5rem]">

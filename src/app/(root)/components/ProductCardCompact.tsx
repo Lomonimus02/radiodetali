@@ -57,7 +57,7 @@ export function ProductCardCompact({ product, categorySlug }: ProductCardCompact
         <button
           type="button"
           onClick={() => product.image && setIsImageModalOpen(true)}
-          className="relative w-full aspect-square bg-[var(--gray-100)] overflow-hidden cursor-zoom-in"
+          className="relative w-full aspect-[3/2] md:aspect-square bg-[var(--gray-100)] overflow-hidden cursor-zoom-in"
           aria-label={`Увеличить изображение ${product.name}`}
         >
           {product.image ? (
@@ -82,7 +82,7 @@ export function ProductCardCompact({ product, categorySlug }: ProductCardCompact
         </button>
 
         {/* Content */}
-        <div className="p-4">
+        <div className="p-2 md:p-4">
           {/* Name - клик ведет на страницу товара */}
           <Link href={productUrl}>
             <h3 className="font-semibold text-[var(--gray-800)] hover:text-[var(--primary-600)] transition-colors line-clamp-2 min-h-[2.5rem] cursor-pointer">

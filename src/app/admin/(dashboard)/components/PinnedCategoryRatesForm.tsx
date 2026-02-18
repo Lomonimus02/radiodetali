@@ -178,7 +178,7 @@ export function PinnedCategoryRatesForm({
                     placeholder="—"
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">
-                    ₽/мг
+                    ₽/г
                   </span>
                 </div>
               </div>

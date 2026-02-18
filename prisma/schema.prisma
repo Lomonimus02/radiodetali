@@ -18,6 +18,9 @@ model GlobalSettings {
   priceMarkup Float    @default(1.0) // Глобальный коэффициент наценки (например, 1.15 = +15%)
   updatedAt   DateTime @updatedAt
 
+  // Хеш пароля администратора (bcrypt)
+  adminPasswordHash String? // Если null — используется ADMIN_PASSWORD из env (для обратной совместимости)
+
   // Контактные данные
   phoneNumber      String @default("") // Контактный телефон
   email            String @default("") // Почта
@@ -51,7 +54,8 @@ model Category {
   name           String
   slug           String  @unique
   parentId       String?
-  sortOrder      Int     @default(0) // Поле для ручной сортировки (меньше = выше)
+  sortOrder      Int     @default(0) // Поле для сортировки на странице /catalog (корневые категории)
+  childSortOrder Int     @default(0) // Позиция родительской категории среди своих подкатегорий для отображения товаров
   warningMessage String? @db.Text // Информационное предупреждение для категории (отображается на странице каталога)
 
   // Закрепить управление курсом на Дашборде

@@ -293,13 +293,13 @@ async function CategoriesSection() {
           </Link>
         </div>
 
-        {/* Grid: 2 columns mobile, 9 columns desktop (1 row) */}
-        <div className="grid grid-cols-2 xl:grid-cols-9 gap-3">
+        {/* Grid: 1 column mobile, 3 md, 9 xl (1 row) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-9 gap-3">
           {categories.map((category: CategoryType, index: number) => (
             <Link
               key={category.id}
               href={`/catalog/${category.slug}`}
-              className={`group block bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-lg transition-all duration-300 p-4 text-center ${index === 8 ? 'hidden xl:block' : ''}`}
+              className={`group block bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-lg transition-all duration-300 p-3 md:p-4 text-center ${index === 8 ? 'hidden xl:block' : ''}`}
             >
               <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-[var(--accent-100)] flex items-center justify-center group-hover:bg-[var(--accent-200)] transition-colors">
                 <Package className="w-5 h-5 text-[var(--accent-600)]" />
@@ -363,7 +363,7 @@ async function CatalogSection() {
               className="group block bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-lg transition-all duration-300 overflow-hidden"
             >
               {/* Product image */}
-              <div className="relative aspect-square bg-[var(--gray-100)] overflow-hidden">
+              <div className="relative aspect-[3/2] md:aspect-square bg-[var(--gray-100)] overflow-hidden">
                 {item.image ? (
                   <Image
                     src={item.image}
@@ -386,7 +386,7 @@ async function CatalogSection() {
               </div>
 
               {/* Content */}
-              <div className="p-4">
+              <div className="p-2 md:p-4">
                 {/* Product name */}
                 <h3 className="font-semibold text-[var(--gray-800)] group-hover:text-[var(--primary-600)] transition-colors line-clamp-2 min-h-[2.5rem]">
                   {item.name}
@@ -514,11 +514,11 @@ function BenefitsSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {benefits.map((benefit, index) => (
             <div
               key={index}
-              className="flex flex-col items-center text-center p-6 bg-white rounded-xl border border-[var(--gray-200)] hover:shadow-md transition-shadow"
+              className="flex flex-col items-center text-center p-4 md:p-6 bg-white rounded-xl border border-[var(--gray-200)] hover:shadow-md transition-shadow"
             >
               <div className="w-14 h-14 rounded-full bg-[var(--accent-100)] text-[var(--accent-600)] flex items-center justify-center mb-3">
                 <benefit.icon className="w-7 h-7" />

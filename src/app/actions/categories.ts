@@ -17,6 +17,7 @@ export interface CategoryData {
   parentId: string | null;
   parentName: string | null;
   sortOrder: number;
+  childSortOrder: number; // Позиция родительской категории среди подкатегорий
   warningMessage: string | null;
   // Закрепить управление курсом на Дашборде
   isPinnedToDashboard: boolean;
@@ -39,6 +40,7 @@ export interface CreateCategoryInput {
   slug: string;
   parentId?: string | null;
   sortOrder?: number;
+  childSortOrder?: number; // Позиция родительской категории среди подкатегорий
   warningMessage?: string | null;
   // Закрепить управление курсом на Дашборде
   isPinnedToDashboard?: boolean;
@@ -58,6 +60,7 @@ export interface UpdateCategoryInput {
   slug?: string;
   parentId?: string | null;
   sortOrder?: number;
+  childSortOrder?: number; // Позиция родительской категории среди подкатегорий
   warningMessage?: string | null;
   // Закрепить управление курсом на Дашборде
   isPinnedToDashboard?: boolean;
@@ -173,6 +176,7 @@ export async function getCategories(rootOnly: boolean = false): Promise<Categori
         parentId: cat.parentId,
         parentName: cat.parent?.name ?? null,
         sortOrder: cat.sortOrder,
+        childSortOrder: cat.childSortOrder,
         warningMessage: cat.warningMessage,
         isPinnedToDashboard: cat.isPinnedToDashboard,
         customRateAu: cat.customRateAu,
@@ -225,6 +229,7 @@ export async function getCategoryBySlug(slug: string): Promise<CategoryResult> {
         parentId: category.parentId,
         parentName: category.parent?.name ?? null,
         sortOrder: category.sortOrder,
+        childSortOrder: category.childSortOrder,
         warningMessage: category.warningMessage,
         isPinnedToDashboard: category.isPinnedToDashboard,
         customRateAu: category.customRateAu,
@@ -271,6 +276,7 @@ export async function getCategoryById(id: string): Promise<CategoryResult> {
         parentId: category.parentId,
         parentName: category.parent?.name ?? null,
         sortOrder: category.sortOrder,
+        childSortOrder: category.childSortOrder,
         warningMessage: category.warningMessage,
         isPinnedToDashboard: category.isPinnedToDashboard,
         customRateAu: category.customRateAu,
@@ -343,6 +349,7 @@ export async function createCategory(
         slug: input.slug.trim(),
         parentId: input.parentId ?? null,
         sortOrder,
+        childSortOrder: input.childSortOrder ?? 0,
         warningMessage: input.warningMessage?.trim() || null,
         isPinnedToDashboard: input.isPinnedToDashboard ?? false,
         // Кастомные курсы: если пустое/undefined — пишем null
@@ -369,6 +376,7 @@ export async function createCategory(
         parentId: category.parentId,
         parentName: category.parent?.name ?? null,
         sortOrder: category.sortOrder,
+        childSortOrder: category.childSortOrder,
         warningMessage: category.warningMessage,
         isPinnedToDashboard: category.isPinnedToDashboard,
         customRateAu: category.customRateAu,
@@ -437,6 +445,7 @@ export async function updateCategory(
       slug?: string;
       warningMessage?: string | null;
       isPinnedToDashboard?: boolean;
+      childSortOrder?: number;
       customRateAu?: number | null;
       customRateAg?: number | null;
       customRatePt?: number | null;
@@ -448,6 +457,7 @@ export async function updateCategory(
     if (input.slug !== undefined) updateData.slug = input.slug.trim();
     if (input.warningMessage !== undefined) updateData.warningMessage = input.warningMessage?.trim() || null;
     if (input.isPinnedToDashboard !== undefined) updateData.isPinnedToDashboard = input.isPinnedToDashboard;
+    if (input.childSortOrder !== undefined) updateData.childSortOrder = input.childSortOrder;
     // Кастомные курсы: если поле передано — обновляем (включая null для сброса)
     if (input.customRateAu !== undefined) updateData.customRateAu = input.customRateAu;
     if (input.customRateAg !== undefined) updateData.customRateAg = input.customRateAg;
@@ -491,6 +501,7 @@ export async function updateCategory(
         parentId: category.parentId,
         parentName: category.parent?.name ?? null,
         sortOrder: category.sortOrder,
+        childSortOrder: category.childSortOrder,
         warningMessage: category.warningMessage,
         isPinnedToDashboard: category.isPinnedToDashboard,
         customRateAu: category.customRateAu,

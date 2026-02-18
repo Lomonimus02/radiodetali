@@ -27,6 +27,7 @@ interface FormData {
   slug: string;
   parentId: string;
   sortOrder: number;
+  childSortOrder: number; // Позиция родительской категории среди подкатегорий
   warningMessage: string;
   // Кастомные курсы металлов (цена за 1 мг в рублях)
   customRateAu: string;
@@ -72,6 +73,7 @@ export function CategoryFormDialog({
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
@@ -79,6 +81,7 @@ export function CategoryFormDialog({
       slug: editCategory?.slug || "",
       parentId: editCategory?.parentId || "",
       sortOrder: editCategory?.sortOrder ?? 0,
+      childSortOrder: editCategory?.childSortOrder ?? 0,
       warningMessage: editCategory?.warningMessage || "",
       customRateAu: editCategory?.customRateAu?.toString() || "",
       customRateAg: editCategory?.customRateAg?.toString() || "",
@@ -95,6 +98,7 @@ export function CategoryFormDialog({
       slug: editCategory?.slug || "",
       parentId: editCategory?.parentId || "",
       sortOrder: editCategory?.sortOrder ?? 0,
+      childSortOrder: editCategory?.childSortOrder ?? 0,
       warningMessage: editCategory?.warningMessage || "",
       customRateAu: editCategory?.customRateAu?.toString() || "",
       customRateAg: editCategory?.customRateAg?.toString() || "",
@@ -107,6 +111,10 @@ export function CategoryFormDialog({
     setIsOpen(false);
     setNotification(null);
   };
+
+  // Следим за parentId для условного отображения childSortOrder
+  const watchParentId = watch("parentId");
+  const isRootCategory = !watchParentId;
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
@@ -136,6 +144,7 @@ export function CategoryFormDialog({
           slug: data.slug,
           parentId: data.parentId || null,
           sortOrder: data.sortOrder,
+          childSortOrder: data.childSortOrder,
           warningMessage: data.warningMessage || null,
           customRateAu: parseRate(data.customRateAu),
           customRateAg: parseRate(data.customRateAg),
@@ -148,6 +157,7 @@ export function CategoryFormDialog({
           slug: data.slug,
           parentId: data.parentId || null,
           sortOrder: data.sortOrder,
+          childSortOrder: data.childSortOrder,
           warningMessage: data.warningMessage || null,
           customRateAu: parseRate(data.customRateAu),
           customRateAg: parseRate(data.customRateAg),
@@ -326,7 +336,7 @@ export function CategoryFormDialog({
                   htmlFor="cat-sortOrder"
                   className="block text-sm font-medium text-slate-700 mb-1"
                 >
-                  Порядковый номер (Сортировка)
+                  Порядковый номер (Сортировка на /catalog)
                 </label>
                 <input
                   type="number"
@@ -334,12 +344,39 @@ export function CategoryFormDialog({
                   step="1"
                   {...register("sortOrder", { valueAsNumber: true })}
                   className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="0"
+                  placeholder="0 = авто"
                 />
                 <p className="mt-1 text-xs text-slate-500">
-                  Чем меньше число, тем выше категория в списке
+                  {isRootCategory 
+                    ? "Позиция категории на странице /catalog. Оставьте 0 для авто."
+                    : "Позиция подкатегории среди других подкатегорий. Оставьте 0 для авто."
+                  }
                 </p>
               </div>
+
+              {/* Child Sort Order - только для корневых категорий */}
+              {isRootCategory && (
+                <div>
+                  <label
+                    htmlFor="cat-childSortOrder"
+                    className="block text-sm font-medium text-slate-700 mb-1"
+                  >
+                    Позиция среди подкатегорий (Внутри категории)
+                  </label>
+                  <input
+                    type="number"
+                    id="cat-childSortOrder"
+                    step="1"
+                    {...register("childSortOrder", { valueAsNumber: true })}
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="0 = товары этой категории первыми"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">
+                    Определяет порядок товаров этой категории относительно подкатегорий. 
+                    <br />0 = товары родительской категории идут первыми.
+                  </p>
+                </div>
+              )}
 
               {/* Warning Message */}
               <div>

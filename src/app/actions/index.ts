@@ -27,7 +27,9 @@ export {
   loginAdmin,
   logoutAdmin,
   isAuthenticated,
+  changePassword,
   type LoginResult,
+  type ChangePasswordResult,
 } from "./auth";
 
 // Товары

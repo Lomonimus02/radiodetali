@@ -10,6 +10,7 @@ import {
   X,
   LogOut,
   ChevronRight,
+  Settings,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { logoutAdmin } from "@/app/actions";
@@ -31,6 +32,11 @@ const navItems: NavItem[] = [
     href: "/admin/catalog",
     label: "Управление каталогом",
     icon: <FolderOpen className="w-5 h-5" />,
+  },
+  {
+    href: "/admin/settings",
+    label: "Настройки",
+    icon: <Settings className="w-5 h-5" />,
   },
   {
     href: "/",

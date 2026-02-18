@@ -27,6 +27,7 @@ interface FormData {
   slug: string;
   parentId: string;
   sortOrder: number;
+  childSortOrder: number;
   warningMessage: string;
   // Закрепить управление курсом на Дашборде
   isPinnedToDashboard: boolean;
@@ -74,6 +75,7 @@ export function CategoryForm({
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
@@ -81,6 +83,7 @@ export function CategoryForm({
       slug: editCategory?.slug || "",
       parentId: editCategory?.parentId || defaultParentId || "",
       sortOrder: editCategory?.sortOrder ?? 0,
+      childSortOrder: editCategory?.childSortOrder ?? 0,
       warningMessage: editCategory?.warningMessage || "",
       isPinnedToDashboard: editCategory?.isPinnedToDashboard ?? false,
       customRateAu: editCategory?.customRateAu?.toString() || "",
@@ -89,6 +92,10 @@ export function CategoryForm({
       customRatePd: editCategory?.customRatePd?.toString() || "",
     },
   });
+
+  // Смотрим parentId чтобы показать/скрыть childSortOrder
+  const watchParentId = watch("parentId");
+  const isRootCategory = !watchParentId && !defaultParentId;
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
@@ -118,6 +125,7 @@ export function CategoryForm({
           slug: data.slug,
           parentId: data.parentId || null,
           sortOrder: data.sortOrder,
+          childSortOrder: data.childSortOrder,
           warningMessage: data.warningMessage || null,
           isPinnedToDashboard: data.isPinnedToDashboard,
           customRateAu: parseRate(data.customRateAu),
@@ -131,6 +139,7 @@ export function CategoryForm({
           slug: data.slug,
           parentId: data.parentId || null,
           sortOrder: data.sortOrder,
+          childSortOrder: data.childSortOrder,
           warningMessage: data.warningMessage || null,
           isPinnedToDashboard: data.isPinnedToDashboard,
           customRateAu: parseRate(data.customRateAu),
@@ -294,6 +303,30 @@ export function CategoryForm({
               Чем меньше число, тем выше категория в списке
             </p>
           </div>
+
+          {/* Child Sort Order - только для корневых категорий */}
+          {isRootCategory && (
+            <div>
+              <label
+                htmlFor="cat-childSortOrder"
+                className="block text-sm font-medium text-slate-700 mb-1"
+              >
+                Порядок среди подкатегорий (для отображения товаров)
+              </label>
+              <input
+                type="number"
+                id="cat-childSortOrder"
+                step="1"
+                {...register("childSortOrder", { valueAsNumber: true })}
+                className="w-full max-w-xs px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="0"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                Определяет позицию товаров родительской категории среди подкатегорий.
+                Например: 0 = первыми, 100 = последними.
+              </p>
+            </div>
+          )}
 
           {/* Warning Message */}
           <div>

@@ -612,10 +612,10 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
                   step="1"
                   {...register("sortOrder", { valueAsNumber: true })}
                   className="w-full max-w-xs px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="0"
+                  placeholder="0 = авто"
                 />
                 <p className="mt-1 text-xs text-slate-500">
-                  Чем меньше число, тем выше товар в списке
+                  Чем меньше число, тем выше товар. Оставьте 0 для авто-определения.
                 </p>
               </div>
 
@@ -760,17 +760,17 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
                 </div>
                 <div className="space-y-3">
                   {[
-                    { key: "contentGold" as const, label: "Золото", symbol: "Au" },
-                    { key: "contentSilver" as const, label: "Серебро", symbol: "Ag" },
-                    { key: "contentPlatinum" as const, label: "Платина", symbol: "Pt" },
-                    { key: "contentPalladium" as const, label: "Палладий", symbol: "Pd" },
+                    { key: "contentGold" as const, label: "Золото", symbol: "Au", unit: "мг" },
+                    { key: "contentSilver" as const, label: "Серебро", symbol: "Ag", unit: "г" },
+                    { key: "contentPlatinum" as const, label: "Платина", symbol: "Pt", unit: "мг" },
+                    { key: "contentPalladium" as const, label: "Палладий", symbol: "Pd", unit: "мг" },
                   ].map((metal) => (
                     <div key={metal.key}>
                       <label
                         htmlFor={metal.key}
                         className="block text-xs font-medium text-slate-600 mb-1"
                       >
-                        {metal.label} {metal.symbol} ({contentSuffix})
+                        {metal.label} {metal.symbol} ({metal.unit})
                       </label>
                       <div className="relative">
                         <div className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded bg-green-100 flex items-center justify-center">
@@ -788,7 +788,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
                           placeholder="0"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">
-                          {contentSuffix}
+                          {metal.unit}
                         </span>
                       </div>
                     </div>
@@ -835,17 +835,17 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
                   </div>
                   <div className="space-y-3">
                     {[
-                      { key: "contentGoldUsed" as const, label: "Золото", symbol: "Au" },
-                      { key: "contentSilverUsed" as const, label: "Серебро", symbol: "Ag" },
-                      { key: "contentPlatinumUsed" as const, label: "Платина", symbol: "Pt" },
-                      { key: "contentPalladiumUsed" as const, label: "Палладий", symbol: "Pd" },
+                      { key: "contentGoldUsed" as const, label: "Золото", symbol: "Au", unit: "мг" },
+                      { key: "contentSilverUsed" as const, label: "Серебро", symbol: "Ag", unit: "г" },
+                      { key: "contentPlatinumUsed" as const, label: "Платина", symbol: "Pt", unit: "мг" },
+                      { key: "contentPalladiumUsed" as const, label: "Палладий", symbol: "Pd", unit: "мг" },
                     ].map((metal) => (
                       <div key={metal.key}>
                         <label
                           htmlFor={metal.key}
                           className="block text-xs font-medium text-slate-600 mb-1"
                         >
-                          {metal.label} {metal.symbol} ({contentSuffix})
+                          {metal.label} {metal.symbol} ({metal.unit})
                         </label>
                         <div className="relative">
                           <div className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded bg-amber-100 flex items-center justify-center">
@@ -863,7 +863,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
                             placeholder="0"
                           />
                           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">
-                            {contentSuffix}
+                            {metal.unit}
                           </span>
                         </div>
                       </div>

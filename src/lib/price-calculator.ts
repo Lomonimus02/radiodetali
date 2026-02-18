@@ -2,9 +2,9 @@
  * Price Calculator — расчёт цен на товары по содержанию драгоценных металлов
  * 
  * Система единиц измерения:
- * - Содержание металлов (content) — в миллиграммах (мг)
- * - Курсы металлов (rates) — цена за 1 мг
- * - Формула: Price = Content_MG * Rate_Per_MG (без деления на 1000)
+ * - Золото (Au), Платина (Pt), Палладий (Pd) — в миллиграммах (мг), курсы за 1 мг
+ * - Серебро (Ag) — в граммах (г), курс за 1 г
+ * - Формула: Price = Content * Rate (универсальная, единицы должны совпадать)
  */
 
 // ============================================================================
@@ -13,7 +13,8 @@
 
 /**
  * Глобальные курсы металлов (из таблицы MetalRate)
- * Курсы хранятся как цена за 1 мг
+ * - Au, Pt, Pd — цена за 1 мг
+ * - Ag — цена за 1 г
  */
 export interface MetalRates {
   gold: unknown;      // Prisma Decimal | number
@@ -34,7 +35,9 @@ export interface CategoryCustomRates {
 }
 
 /**
- * Содержание металлов в товаре (в мг)
+ * Содержание металлов в товаре
+ * - Au, Pt, Pd — в мг
+ * - Ag — в г
  */
 export interface MetalContent {
   // Содержание для НОВЫХ товаров (мг)
@@ -77,7 +80,8 @@ export interface ProductPrices {
 
 /**
  * Разрешённые курсы металлов (после применения кастомных курсов категории)
- * Все курсы — цена за 1 мг
+ * - Au, Pt, Pd — цена за 1 мг
+ * - Ag — цена за 1 г
  */
 export interface ResolvedRates {
   gold: number;
@@ -120,14 +124,14 @@ export function resolveRates(
 /**
  * Рассчитывает базовую стоимость по содержанию металлов
  * 
- * Формула: Price = (Content_Au_MG * Rate_Au) + (Content_Ag_MG * Rate_Ag) + 
- *                  (Content_Pt_MG * Rate_Pt) + (Content_Pd_MG * Rate_Pd)
+ * Формула: Price = (Content_Au * Rate_Au) + (Content_Ag * Rate_Ag) + 
+ *                  (Content_Pt * Rate_Pt) + (Content_Pd * Rate_Pd)
  * 
  * @param contentAu - Содержание золота (мг)
- * @param contentAg - Содержание серебра (мг)
+ * @param contentAg - Содержание серебра (г)
  * @param contentPt - Содержание платины (мг)
  * @param contentPd - Содержание палладия (мг)
- * @param rates - Разрешённые курсы (цена за 1 мг)
+ * @param rates - Разрешённые курсы (Au/Pt/Pd — за 1 мг, Ag — за 1 г)
  * @returns Базовая стоимость в рублях
  */
 export function calculateBasePrice(
@@ -142,7 +146,7 @@ export function calculateBasePrice(
   const pt = Number(contentPt) || 0;
   const pd = Number(contentPd) || 0;
 
-  // Формула: Content_MG * Rate_Per_MG (без деления на 1000)
+  // Формула: Content * Rate (универсальная)
   const price =
     au * rates.gold +
     ag * rates.silver +
@@ -157,7 +161,7 @@ export function calculateBasePrice(
  * 
  * Алгоритм:
  * 1. Определяем курсы (customRate категории > глобальный курс)
- * 2. Рассчитываем базовую цену: Content_MG * Rate_Per_MG
+ * 2. Рассчитываем базовую цену: Content * Rate
  * 3. Применяем наценку товара: Base * priceMarkup
  * 4. Для isSingleType: считаем только по полям New, возвращаем одинаковую цену
  * 
@@ -259,6 +263,7 @@ export function formatPrice(price: number): string {
 
 /**
  * Форматирует содержание металла для отображения
+ * Подходит только для Au, Pt, Pd (в мг). Для Ag используйте formatSilverContent.
  * @param content - Содержание в мг
  * @returns Отформатированная строка
  */
@@ -277,4 +282,22 @@ export function formatMetalContent(content: unknown): string {
   // Для значений >= 1000 мг показываем в граммах
   const grams = value / 1000;
   return `${grams.toFixed(3)} г`;
+}
+
+/**
+ * Форматирует содержание серебра (Ag) для отображения
+ * @param content - Содержание в граммах
+ * @returns Отформатированная строка
+ */
+export function formatSilverContent(content: unknown): string {
+  const value = Number(content);
+  if (value === 0) return "—";
+  
+  if (value < 1) {
+    return `${value.toFixed(4)} г`;
+  } else if (value < 10) {
+    return `${value.toFixed(3)} г`;
+  } else {
+    return `${value.toFixed(2)} г`;
+  }
 }

@@ -145,7 +145,7 @@ export function PinnedCategoryRatesForm({
                 <div className="relative">
                   <input
                     type="number"
-                    step="0.01"
+                    step="any"
                     min="0"
                     value={cat.customRateAu}
                     onChange={(e) =>
@@ -168,7 +168,7 @@ export function PinnedCategoryRatesForm({
                 <div className="relative">
                   <input
                     type="number"
-                    step="0.01"
+                    step="any"
                     min="0"
                     value={cat.customRateAg}
                     onChange={(e) =>
@@ -191,7 +191,7 @@ export function PinnedCategoryRatesForm({
                 <div className="relative">
                   <input
                     type="number"
-                    step="0.01"
+                    step="any"
                     min="0"
                     value={cat.customRatePt}
                     onChange={(e) =>
@@ -214,7 +214,7 @@ export function PinnedCategoryRatesForm({
                 <div className="relative">
                   <input
                     type="number"
-                    step="0.01"
+                    step="any"
                     min="0"
                     value={cat.customRatePd}
                     onChange={(e) =>

@@ -781,7 +781,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
                         <input
                           type="number"
                           id={metal.key}
-                          step="0.000001"
+                          step="any"
                           min="0"
                           {...register(metal.key, { valueAsNumber: true, min: 0 })}
                           className="w-full pl-11 pr-14 py-2 text-sm rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white"
@@ -856,7 +856,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
                           <input
                             type="number"
                             id={metal.key}
-                            step="0.000001"
+                            step="any"
                             min="0"
                             {...register(metal.key, { valueAsNumber: true, min: 0 })}
                             className="w-full pl-11 pr-14 py-2 text-sm rounded-lg border border-amber-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white"

@@ -419,7 +419,7 @@ export function CategoryFormDialog({
                       <input
                         type="number"
                         id="cat-customRateAu"
-                        step="0.01"
+                        step="any"
                         min="0"
                         {...register("customRateAu")}
                         className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 pr-16"
@@ -443,14 +443,14 @@ export function CategoryFormDialog({
                       <input
                         type="number"
                         id="cat-customRateAg"
-                        step="0.01"
+                        step="any"
                         min="0"
                         {...register("customRateAg")}
                         className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 pr-16"
                         placeholder="—"
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
-                        ₽/мг
+                        ₽/г
                       </span>
                     </div>
                   </div>
@@ -467,7 +467,7 @@ export function CategoryFormDialog({
                       <input
                         type="number"
                         id="cat-customRatePt"
-                        step="0.01"
+                        step="any"
                         min="0"
                         {...register("customRatePt")}
                         className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 pr-16"
@@ -491,7 +491,7 @@ export function CategoryFormDialog({
                       <input
                         type="number"
                         id="cat-customRatePd"
-                        step="0.01"
+                        step="any"
                         min="0"
                         {...register("customRatePd")}
                         className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 pr-16"

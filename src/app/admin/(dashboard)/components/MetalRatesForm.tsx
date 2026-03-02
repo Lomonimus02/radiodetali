@@ -61,10 +61,10 @@ export function MetalRatesForm({ initialRates }: MetalRatesFormProps) {
   };
 
   const metals = [
-    { key: "gold" as const, label: "Золото (Au) — Цена за 1 мг (₽)", symbol: "Au", color: "amber" },
-    { key: "silver" as const, label: "Серебро (Ag) — Цена за 1 Грамм (₽)", symbol: "Ag", color: "slate" },
-    { key: "platinum" as const, label: "Платина (Pt) — Цена за 1 мг (₽)", symbol: "Pt", color: "cyan" },
-    { key: "palladium" as const, label: "Палладий (Pd) — Цена за 1 мг (₽)", symbol: "Pd", color: "violet" },
+    { key: "gold" as const, label: "Золото (Au) — Цена за 1 мг (₽)", symbol: "Au", color: "amber", unit: "₽/мг" },
+    { key: "silver" as const, label: "Серебро (Ag) — Цена за 1 г (₽)", symbol: "Ag", color: "slate", unit: "₽/г" },
+    { key: "platinum" as const, label: "Платина (Pt) — Цена за 1 мг (₽)", symbol: "Pt", color: "cyan", unit: "₽/мг" },
+    { key: "palladium" as const, label: "Палладий (Pd) — Цена за 1 мг (₽)", symbol: "Pd", color: "violet", unit: "₽/мг" },
   ];
 
   return (
@@ -106,7 +106,7 @@ export function MetalRatesForm({ initialRates }: MetalRatesFormProps) {
               <input
                 type="number"
                 id={metal.key}
-                step="0.01"
+                step="any"
                 min="0"
                 {...register(metal.key, {
                   required: "Обязательное поле",
@@ -126,7 +126,7 @@ export function MetalRatesForm({ initialRates }: MetalRatesFormProps) {
                 placeholder="0.00"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
-                ₽/мг
+                {metal.unit}
               </span>
             </div>
             {errors[metal.key] && (

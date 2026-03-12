@@ -11,6 +11,7 @@ import {
   Clock,
   Sparkles,
   Package,
+  ChevronRight,
 } from "lucide-react";
 import { getCategoryShowcase, getGlobalSettings } from "@/app/actions";
 import { prisma } from "@/lib/prisma";
@@ -257,13 +258,19 @@ function HeroSection() {
   );
 }
 
-// Categories Section - 9 category blocks linking to category pages
+// Categories Section - horizontal cards like catalog page
 async function CategoriesSection() {
-  // Получаем только корневые категории (без подкатегорий)
+  // Получаем только корневые категории с фото витрины
   const categories = await prisma.category.findMany({
     where: { parentId: null },
-    take: 9,
     orderBy: { sortOrder: "asc" },
+    include: {
+      products: {
+        where: { isShowcaseFace: true, image: { not: null } },
+        select: { image: true },
+        take: 1,
+      },
+    },
   });
 
   type CategoryType = typeof categories[number];
@@ -293,22 +300,46 @@ async function CategoriesSection() {
           </Link>
         </div>
 
-        {/* Grid: 1 column mobile, 3 md, 9 xl (1 row) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-9 gap-3">
-          {categories.map((category: CategoryType, index: number) => (
-            <Link
-              key={category.id}
-              href={`/catalog/${category.slug}`}
-              className={`group block bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-lg transition-all duration-300 p-3 md:p-4 text-center ${index === 8 ? 'hidden xl:block' : ''}`}
-            >
-              <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-[var(--accent-100)] flex items-center justify-center group-hover:bg-[var(--accent-200)] transition-colors">
-                <Package className="w-5 h-5 text-[var(--accent-600)]" />
-              </div>
-              <h3 className="font-semibold text-sm text-[var(--gray-900)] group-hover:text-[var(--primary-600)] transition-colors leading-tight">
-                {category.name}
-              </h3>
-            </Link>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {categories.map((category: CategoryType) => {
+            const displayImage = category.imageUrl || category.products[0]?.image || null;
+            return (
+              <Link
+                key={category.id}
+                href={`/catalog/${category.slug}`}
+                className="group flex items-center bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-lg hover:translate-x-1 transition-all duration-300 overflow-hidden"
+              >
+                {/* Квадратное фото слева */}
+                <div className="w-24 h-24 md:w-28 md:h-28 shrink-0 bg-[var(--gray-100)] overflow-hidden">
+                  {displayImage ? (
+                    <Image
+                      src={displayImage}
+                      alt={category.name}
+                      width={112}
+                      height={112}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package className="w-12 h-12 text-[var(--gray-300)]" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Название категории */}
+                <div className="flex-1 min-w-0 px-4">
+                  <h3 className="font-semibold text-lg md:text-xl text-[var(--gray-900)] group-hover:text-[var(--primary-600)] transition-colors">
+                    {category.name}
+                  </h3>
+                </div>
+
+                {/* Стрелка справа */}
+                <div className="pr-4 shrink-0">
+                  <ChevronRight className="w-5 h-5 text-[var(--gray-400)] group-hover:text-[var(--primary-600)] group-hover:translate-x-1 transition-all" />
+                </div>
+              </Link>
+            );
+          })}
         </div>
 
         <Link
@@ -411,19 +442,19 @@ async function CatalogSection() {
                   ) : (
                     <>
                       {item.priceNew !== null && (
-                        <div className="flex items-center justify-between px-2 py-1.5 rounded-md bg-green-50">
-                          <span className="text-xs font-medium text-green-700">
+                        <div className="flex items-center justify-between px-2 py-1 rounded-md bg-gray-900">
+                          <span className="text-xs font-medium text-white">
                             {item.isSingleType ? 'Цена' : 'Новый'}
                           </span>
-                          <span className="font-bold text-green-700">
+                          <span className="font-bold text-white">
                             {formatPrice(item.priceNew)}{getPriceUnitSuffix(item.unitType)}
                           </span>
                         </div>
                       )}
                       {item.priceUsed !== null && !item.isSingleType && (
-                        <div className="flex items-center justify-between bg-amber-50 px-2 py-1.5 rounded-md">
-                          <span className="text-xs font-medium text-amber-700">Б/У</span>
-                          <span className="font-bold text-amber-700">
+                        <div className="flex items-center justify-between bg-gray-900 px-2 py-1 rounded-md">
+                          <span className="text-xs font-medium text-white">Б/У</span>
+                          <span className="font-bold text-white">
                             {formatPrice(item.priceUsed)}{getPriceUnitSuffix(item.unitType)}
                           </span>
                         </div>

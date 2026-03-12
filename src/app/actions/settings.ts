@@ -52,6 +52,8 @@ export interface GlobalSettingsData {
   // Настройки Telegram-бота
   telegramBotToken: string;
   telegramChatId: string;
+  // Фото магазина
+  storePhotoUrl: string | null;
 }
 
 /**
@@ -66,6 +68,7 @@ export interface UpdateGlobalSettingsInput {
   workSchedule?: string;
   telegramBotToken?: string;
   telegramChatId?: string;
+  storePhotoUrl?: string | null;
 }
 
 /**
@@ -260,6 +263,7 @@ export async function getGlobalSettings(): Promise<GlobalSettingsResult> {
         workSchedule: settings.workSchedule,
         telegramBotToken: settings.telegramBotToken,
         telegramChatId: settings.telegramChatId,
+        storePhotoUrl: settings.storePhotoUrl ?? null,
       },
     };
   } catch (error) {
@@ -307,6 +311,7 @@ export async function updateGlobalSettings(
     if (input.workSchedule !== undefined) updateData.workSchedule = input.workSchedule;
     if (input.telegramBotToken !== undefined) updateData.telegramBotToken = input.telegramBotToken;
     if (input.telegramChatId !== undefined) updateData.telegramChatId = input.telegramChatId;
+    if (input.storePhotoUrl !== undefined) updateData.storePhotoUrl = input.storePhotoUrl;
 
     // Обновляем или создаём запись (upsert)
     const settings = await prisma.globalSettings.upsert({
@@ -322,6 +327,7 @@ export async function updateGlobalSettings(
         workSchedule: input.workSchedule ?? "",
         telegramBotToken: input.telegramBotToken ?? "",
         telegramChatId: input.telegramChatId ?? "",
+        storePhotoUrl: input.storePhotoUrl ?? null,
       },
     });
 
@@ -345,6 +351,7 @@ export async function updateGlobalSettings(
         workSchedule: settings.workSchedule,
         telegramBotToken: settings.telegramBotToken,
         telegramChatId: settings.telegramChatId,
+        storePhotoUrl: settings.storePhotoUrl ?? null,
       },
     };
   } catch (error) {

@@ -31,6 +31,7 @@ interface ProductFormProps {
   metalRates: MetalRatesData;
   defaultCategoryId?: string;
   redirectPath?: string;
+  showcaseFaceInfo?: { productName: string; productId: string } | null;
 }
 
 interface FormData {
@@ -47,6 +48,7 @@ interface FormData {
   priceMarkupUsed: number;
   isSingleType: boolean;
   isPriceOnRequest: boolean;
+  isShowcaseFace: boolean;
   // Содержание металлов для НОВЫХ
   contentGold: number;
   contentSilver: number;
@@ -81,7 +83,7 @@ function generateSlug(name: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-export function ProductForm({ product, categories, metalRates, defaultCategoryId, redirectPath }: ProductFormProps) {
+export function ProductForm({ product, categories, metalRates, defaultCategoryId, redirectPath, showcaseFaceInfo }: ProductFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [notification, setNotification] = useState<{
@@ -119,6 +121,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
       priceMarkupUsed: product?.priceMarkupUsed ?? 1.0,
       isSingleType: product?.isSingleType ?? false,
       isPriceOnRequest: product?.isPriceOnRequest ?? false,
+      isShowcaseFace: product?.isShowcaseFace ?? false,
       // Содержание металлов для НОВЫХ
       contentGold: product?.contentGold || 0,
       contentSilver: product?.contentSilver || 0,
@@ -181,7 +184,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
     const markup = watchPriceMarkup || 1.0;
     const markupUsed = watchPriceMarkupUsed || 1.0;
     
-    // Цена за НОВОЕ (содержание в мг, курсы в руб/мг)
+    // Цена за НОВОЕ (Au/Pt/Pd — мг*руб/мг, Ag — г*руб/г)
     const priceNew = (
       (watchContentGold || 0) * rateAu +
       (watchContentSilver || 0) * rateAg +
@@ -319,6 +322,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
           priceMarkupUsed: data.priceMarkupUsed,
           isSingleType: data.isSingleType,
           isPriceOnRequest: data.isPriceOnRequest,
+          isShowcaseFace: data.isShowcaseFace,
           contentGold: data.contentGold,
           contentSilver: data.contentSilver,
           contentPlatinum: data.contentPlatinum,
@@ -345,6 +349,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
           priceMarkupUsed: data.priceMarkupUsed,
           isSingleType: data.isSingleType,
           isPriceOnRequest: data.isPriceOnRequest,
+          isShowcaseFace: data.isShowcaseFace,
           contentGold: data.contentGold,
           contentSilver: data.contentSilver,
           contentPlatinum: data.contentPlatinum,
@@ -729,6 +734,30 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
                   </div>
                 </label>
               </div>
+
+              {/* Showcase Face Toggle */}
+              <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    {...register("isShowcaseFace")}
+                    className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-indigo-800">
+                      Сделать лицом категории на Главной странице
+                    </span>
+                    <p className="text-xs text-indigo-600 mt-0.5">
+                      Этот товар будет отображаться как представитель категории в витрине на главной
+                    </p>
+                  </div>
+                </label>
+                {showcaseFaceInfo && showcaseFaceInfo.productId !== product?.id && (
+                  <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-1.5">
+                    Сейчас образцом витрины назначен: <strong>{showcaseFaceInfo.productName}</strong>. При включении галочки он будет заменён.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -762,8 +791,8 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
                   {[
                     { key: "contentGold" as const, label: "Золото", symbol: "Au", unit: "мг" },
                     { key: "contentSilver" as const, label: "Серебро", symbol: "Ag", unit: "г" },
-                    { key: "contentPlatinum" as const, label: "Платина", symbol: "Pt", unit: "мг" },
-                    { key: "contentPalladium" as const, label: "Палладий", symbol: "Pd", unit: "мг" },
+                    { key: "contentPlatinum" as const, label: "Платина", symbol: "Pt", unit: "г" },
+                    { key: "contentPalladium" as const, label: "Палладий", symbol: "Pd", unit: "г" },
                   ].map((metal) => (
                     <div key={metal.key}>
                       <label
@@ -837,8 +866,8 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
                     {[
                       { key: "contentGoldUsed" as const, label: "Золото", symbol: "Au", unit: "мг" },
                       { key: "contentSilverUsed" as const, label: "Серебро", symbol: "Ag", unit: "г" },
-                      { key: "contentPlatinumUsed" as const, label: "Платина", symbol: "Pt", unit: "мг" },
-                      { key: "contentPalladiumUsed" as const, label: "Палладий", symbol: "Pd", unit: "мг" },
+                      { key: "contentPlatinumUsed" as const, label: "Платина", symbol: "Pt", unit: "г" },
+                      { key: "contentPalladiumUsed" as const, label: "Палладий", symbol: "Pd", unit: "г" },
                     ].map((metal) => (
                       <div key={metal.key}>
                         <label

@@ -1,4 +1,4 @@
-import { getCategories, getMetalRates } from "@/app/actions";
+import { getCategories, getMetalRates, getShowcaseFaceForCategory } from "@/app/actions";
 import { ProductForm } from "../components/ProductForm";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -21,6 +21,11 @@ export default async function NewProductPage({ searchParams }: PageProps) {
   // Находим категорию если передан categoryId
   const selectedCategory = categoryId && categoriesResult.success
     ? categoriesResult.data.find((c) => c.id === categoryId)
+    : null;
+
+  // Получаем инфо о текущем образце витрины
+  const showcaseFaceInfo = categoryId
+    ? await getShowcaseFaceForCategory(categoryId)
     : null;
 
   // URL для возврата - в папку каталога или общий список
@@ -92,6 +97,7 @@ export default async function NewProductPage({ searchParams }: PageProps) {
         metalRates={metalRatesResult.data}
         defaultCategoryId={categoryId}
         redirectPath={backUrl}
+        showcaseFaceInfo={showcaseFaceInfo}
       />
     </div>
   );

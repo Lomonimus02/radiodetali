@@ -40,6 +40,7 @@ export {
   getProductsByIds,
   getAllProductSlugs,
   findBestMatchProduct,
+  getShowcaseFaceForCategory,
   createProduct,
   updateProduct,
   deleteProduct,

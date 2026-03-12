@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { updateGlobalSettings, GlobalSettingsData } from "@/app/actions";
-import { Phone, Mail, MapPin, Clock, Send, Loader2, Check } from "lucide-react";
+import { Phone, Mail, MapPin, Clock, Send, Loader2, Check, Upload, X, ImageIcon } from "lucide-react";
+import Image from "next/image";
 
 interface ContactSettingsFormProps {
   initialData: GlobalSettingsData;
@@ -16,6 +17,9 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
     address: initialData.address || "",
     workSchedule: initialData.workSchedule || "",
   });
+  const [storePhotoUrl, setStorePhotoUrl] = useState(initialData.storePhotoUrl || "");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -24,6 +28,33 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
   ) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
     setMessage(null);
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch("/api/upload", { method: "POST", body: formData });
+      const result = await response.json();
+      if (result.success) {
+        setStorePhotoUrl(result.url);
+        setMessage({ type: "success", text: "Фото загружено" });
+      } else {
+        setMessage({ type: "error", text: result.error || "Ошибка загрузки" });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Ошибка при загрузке файла" });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setStorePhotoUrl("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,6 +69,7 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
         telegramUsername: form.telegramUsername,
         address: form.address,
         workSchedule: form.workSchedule,
+        storePhotoUrl: storePhotoUrl || null,
       });
 
       if (result.success) {
@@ -136,6 +168,55 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
         <p className="text-xs text-slate-500 mt-1">
           Каждая строка — отдельный день/период
         </p>
+      </div>
+
+      {/* Store Photo */}
+      <div>
+        <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1.5">
+          <ImageIcon className="w-4 h-4 text-slate-400" />
+          Фото магазина (для страницы контактов)
+        </label>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">
+              <Upload className="w-5 h-5 text-slate-500" />
+              <span className="text-sm text-slate-700">
+                {isUploading ? "Загрузка..." : "Выбрать файл"}
+              </span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={handleFileSelect}
+                disabled={isUploading}
+                className="hidden"
+              />
+            </label>
+            {storePhotoUrl && (
+              <button
+                type="button"
+                onClick={handleRemovePhoto}
+                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                title="Удалить фото"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+          <p className="text-xs text-slate-500">
+            JPG, PNG, WebP или GIF. Максимум 5MB.
+          </p>
+          {storePhotoUrl && (
+            <div className="relative w-48 h-32 rounded-lg overflow-hidden border border-slate-200">
+              <Image
+                src={storePhotoUrl}
+                alt="Фото магазина"
+                fill
+                className="object-cover"
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Message */}

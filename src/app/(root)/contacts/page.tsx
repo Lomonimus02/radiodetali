@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Phone,
   Mail,
   MapPin,
   Clock,
-  MessageCircle,
   Send,
   ChevronRight,
 } from "lucide-react";
@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Контакты",
   description:
-    "Свяжитесь с нами для оценки радиодеталей. Телефон, WhatsApp, Telegram, адрес пункта приёма.",
+    "Свяжитесь с нами для оценки радиодеталей. Телефон, ВКонтакте, Telegram, адрес пункта приёма.",
 };
 
 // Дефолтные контактные данные
@@ -53,6 +53,7 @@ export default async function ContactsPage() {
       ? settings.workSchedule.split("\n").filter(line => line.trim())
       : DEFAULT_CONTACTS.workSchedule,
     coordinates: DEFAULT_CONTACTS.coordinates,
+    storePhotoUrl: settings?.storePhotoUrl || null,
   };
   return (
     <div className="min-h-screen bg-[var(--gray-50)]">
@@ -81,6 +82,22 @@ export default async function ContactsPage() {
           </p>
         </div>
 
+        {/* Store Photo */}
+        {CONTACTS.storePhotoUrl && (
+          <div className="mb-10 md:mb-14">
+            <div className="relative w-full max-w-3xl mx-auto aspect-[16/9] rounded-2xl overflow-hidden shadow-lg">
+              <Image
+                src={CONTACTS.storePhotoUrl}
+                alt="Фото магазина"
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 768px"
+                priority
+              />
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Contact Cards */}
           <div className="space-y-4">
@@ -100,20 +117,22 @@ export default async function ContactsPage() {
               </div>
             </a>
 
-            {/* WhatsApp */}
+            {/* ВКонтакте */}
             <a
-              href={`https://wa.me/${CONTACTS.phoneRaw}?text=Здравствуйте, хочу узнать о скупке радиодеталей.`}
+              href="https://vk.com/dragsoyuz"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-4 p-6 bg-white rounded-xl border border-[var(--gray-200)] hover:border-green-400 hover:shadow-md transition-all"
+              className="flex items-center gap-4 p-6 bg-white rounded-xl border border-[var(--gray-200)] hover:border-blue-400 hover:shadow-md transition-all"
             >
-              <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center shrink-0">
-                <MessageCircle className="w-7 h-7 text-green-600" />
+              <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
+                <svg className="w-7 h-7 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M21.547 7h-3.29a.743.743 0 0 0-.655.392s-1.312 2.416-1.734 3.23C14.734 12.813 14 12.126 14 11.11V7.603A1.104 1.104 0 0 0 12.896 6.5h-2.474a1.982 1.982 0 0 0-1.75.813s1.255-.204 1.255 1.49c0 .42.017 1.7.03 2.78a.664.664 0 0 1-1.082.57C7.63 10.719 6.633 8.36 6.633 8.36A.743.743 0 0 0 5.978 7H2.453a.742.742 0 0 0-.69 1.016s2.81 6.345 6.007 8.29c2.695 1.64 5.758 1.194 5.758 1.194h1.6a.742.742 0 0 0 .742-.742v-1.932a.742.742 0 0 1 1.265-.525l2.563 2.414a.742.742 0 0 0 .509.201h2.953a.742.742 0 0 0 .656-1.082s-2.159-2.352-2.563-2.828a.707.707 0 0 1 .09-.975c.476-.525 2.13-2.414 2.851-3.832A.742.742 0 0 0 21.547 7z"/>
+                </svg>
               </div>
               <div>
-                <p className="text-sm text-[var(--gray-500)] mb-1">WhatsApp</p>
+                <p className="text-sm text-[var(--gray-500)] mb-1">ВКонтакте</p>
                 <p className="text-xl font-semibold text-[var(--gray-900)]">
-                  Написать в WhatsApp
+                  Написать в VK
                 </p>
               </div>
             </a>

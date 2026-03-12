@@ -47,6 +47,8 @@ export interface ProductWithPrice {
   isSingleType: boolean;
   // Цена по запросу
   isPriceOnRequest: boolean;
+  // Лицо категории на Главной
+  isShowcaseFace: boolean;
   // Содержание металлов для НОВЫХ
   contentGold: number;
   contentSilver: number;
@@ -87,6 +89,7 @@ export interface CreateProductInput {
   priceMarkupUsed?: number;
   isSingleType?: boolean;
   isPriceOnRequest?: boolean;
+  isShowcaseFace?: boolean;
   // Содержание металлов для НОВЫХ
   contentGold?: number;
   contentSilver?: number;
@@ -121,6 +124,7 @@ export interface UpdateProductInput {
   priceMarkupUsed?: number;
   isSingleType?: boolean;
   isPriceOnRequest?: boolean;
+  isShowcaseFace?: boolean;
   // Содержание металлов для НОВЫХ
   contentGold?: number;
   contentSilver?: number;
@@ -188,6 +192,7 @@ interface DbProductWithCategory {
   priceMarkupUsed: number;
   isSingleType: boolean;
   isPriceOnRequest: boolean;
+  isShowcaseFace: boolean;
   // Содержание металлов для НОВЫХ
   contentGold: unknown; // Prisma Decimal
   contentSilver: unknown;
@@ -289,6 +294,7 @@ function serializeProduct(
     priceMarkupUsed: product.priceMarkupUsed,
     isSingleType: product.isSingleType,
     isPriceOnRequest: product.isPriceOnRequest,
+    isShowcaseFace: product.isShowcaseFace,
     contentGold: toNumber(product.contentGold),
     contentSilver: toNumber(product.contentSilver),
     contentPlatinum: toNumber(product.contentPlatinum),
@@ -387,9 +393,83 @@ async function reorderProductsInCategory(
   await Promise.all(updates);
 }
 
+/**
+ * Сбросить isShowcaseFace у всех товаров корневой категории (и подкатегорий),
+ * кроме указанного товара. Витрина на главной работает по корневым категориям,
+ * поэтому "лицо" должно быть только одно на всю корневую категорию.
+ */
+async function resetShowcaseFaceInRootCategory(
+  categoryId: string,
+  excludeProductId: string
+): Promise<void> {
+  // Определяем корневую категорию
+  const category = await prisma.category.findUnique({
+    where: { id: categoryId },
+    select: { id: true, parentId: true },
+  });
+  if (!category) return;
+
+  const rootCategoryId = category.parentId ?? category.id;
+
+  // Собираем ID всех категорий внутри корневой (сама корневая + подкатегории)
+  const subcategories = await prisma.category.findMany({
+    where: { parentId: rootCategoryId },
+    select: { id: true },
+  });
+  const allCategoryIds = [rootCategoryId, ...subcategories.map(c => c.id)];
+
+  // Сбрасываем флаг у всех товаров этих категорий, кроме текущего
+  await prisma.product.updateMany({
+    where: {
+      categoryId: { in: allCategoryIds },
+      id: { not: excludeProductId },
+      isShowcaseFace: true,
+    },
+    data: { isShowcaseFace: false },
+  });
+}
+
 // ============================================================================
 // SERVER ACTIONS
 // ============================================================================
+
+/**
+ * Получить имя текущего товара-образца витрины для корневой категории.
+ * Возвращает null, если образец не назначен.
+ */
+export async function getShowcaseFaceForCategory(
+  categoryId: string
+): Promise<{ productName: string; productId: string } | null> {
+  try {
+    const category = await prisma.category.findUnique({
+      where: { id: categoryId },
+      select: { id: true, parentId: true },
+    });
+    if (!category) return null;
+
+    const rootCategoryId = category.parentId ?? category.id;
+
+    const subcategories = await prisma.category.findMany({
+      where: { parentId: rootCategoryId },
+      select: { id: true },
+    });
+    const allCategoryIds = [rootCategoryId, ...subcategories.map(c => c.id)];
+
+    const showcaseProduct = await prisma.product.findFirst({
+      where: {
+        categoryId: { in: allCategoryIds },
+        isShowcaseFace: true,
+      },
+      select: { id: true, name: true },
+    });
+
+    return showcaseProduct
+      ? { productName: showcaseProduct.name, productId: showcaseProduct.id }
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Получить список товаров с рассчитанными ценами
@@ -405,10 +485,12 @@ function normalizeSearchQuery(query: string): string {
 }
 
 /**
- * Создает версию без пробелов для сравнения "КМ 604" vs "КМ604"
+ * Создаёт «склеенную» строку: только буквы (вкл. кириллицу) и цифры, нижний регистр.
+ * Убирает пробелы, дефисы, точки, запятые и любые спецсимволы.
+ * "КМ-6б 04.07" → "км6б0407"
  */
-function removeSpaces(str: string): string {
-  return str.replace(/\s+/g, '');
+function stripToAlphanumeric(str: string): string {
+  return str.toLowerCase().replace(/[^a-zа-яё0-9]/gi, '').toLowerCase();
 }
 
 export async function getProducts(
@@ -456,7 +538,7 @@ export async function getProducts(
     // ========================================================================
     if (search && search.trim()) {
       const normalizedSearch = normalizeSearchQuery(search);
-      const searchWithoutSpaces = removeSpaces(normalizedSearch);
+      const normalizedQuery = stripToAlphanumeric(search);
       
       // Получаем ВСЕ товары для fuzzy-поиска (с учётом фильтра по категории)
       const [allProducts, rates, priceMarkup] = await Promise.all([
@@ -484,36 +566,42 @@ export async function getProducts(
       // Подготавливаем данные для Fuse.js с нормализованными полями
       const productsForSearch = allProducts.map((product) => ({
         ...product,
-        // Добавляем нормализованные версии для лучшего поиска
-        nameNormalized: removeSpaces(product.name.toLowerCase()),
-        slugNormalized: removeSpaces(product.slug.toLowerCase()),
-        descriptionNormalized: product.description 
-          ? removeSpaces(product.description.toLowerCase()) 
+        // Объединяем Название + Slug (маркировка) без пробелов/спецсимволов
+        normalizedSearchString: stripToAlphanumeric(
+          product.name + ' ' + product.slug + (product.description ? ' ' + product.description : '')
+        ),
+        nameNormalized: stripToAlphanumeric(product.name),
+        slugNormalized: stripToAlphanumeric(product.slug),
+        descriptionNormalized: product.description
+          ? stripToAlphanumeric(product.description)
           : '',
       }));
 
       // Настройка Fuse.js
       const fuse = new Fuse(productsForSearch, {
         keys: [
-          { name: 'name', weight: 2 },           // Название — высокий приоритет
-          { name: 'nameNormalized', weight: 2 }, // Нормализованное название (без пробелов)
-          { name: 'slug', weight: 1.5 },         // Слаг
-          { name: 'slugNormalized', weight: 1.5 },
-          { name: 'description', weight: 1 },   // Описание
-          { name: 'descriptionNormalized', weight: 1 },
+          { name: 'name', weight: 2 },                    // Оригинальное название
+          { name: 'nameNormalized', weight: 2 },          // Склеенное название
+          { name: 'normalizedSearchString', weight: 1.8 }, // Название+Slug+Описание склеенные
+          { name: 'slug', weight: 1.5 },                  // Оригинальный слаг
+          { name: 'slugNormalized', weight: 1.5 },        // Склеенный слаг
+          { name: 'description', weight: 1 },             // Описание
+          { name: 'descriptionNormalized', weight: 1 },   // Склеенное описание
         ],
-        threshold: 0.3,          // Порог нечеткости (0 = точное совпадение, 1 = любое)
+        threshold: 0.3,          // Допуск для опечаток (0 = точное, 1 = любое)
+        distance: 100,           // Максимальная дистанция для нечёткого совпадения
         ignoreLocation: true,    // Искать совпадение в любом месте строки
         minMatchCharLength: 2,   // Минимум 2 символа для совпадения
         includeScore: true,      // Включить оценку релевантности
         findAllMatches: true,    // Найти все совпадения в строке
-        // Extended search позволяет использовать спецсимволы
-        // но для простоты используем обычный режим
+        useExtendedSearch: true, // Расширенный поиск
       });
 
-      // Выполняем поиск по обоим вариантам запроса
+      // Комбинированный поиск: оригинальный запрос + нормализованный (без спецсимволов)
       const results1 = fuse.search(normalizedSearch);
-      const results2 = fuse.search(searchWithoutSpaces);
+      const results2 = normalizedQuery !== normalizedSearch
+        ? fuse.search(normalizedQuery)
+        : [];
       
       // Объединяем результаты и убираем дубликаты
       const seenIds = new Set<string>();
@@ -537,7 +625,7 @@ export async function getProducts(
       // Преобразуем товары с рассчитанными ценами
       const productsWithPrices = paginatedResults.map(({ item }) => {
         // Убираем временные нормализованные поля
-        const { nameNormalized, slugNormalized, descriptionNormalized, ...product } = item;
+        const { nameNormalized, slugNormalized, descriptionNormalized, normalizedSearchString, ...product } = item;
         return serializeProduct(product as DbProductWithCategory, rates, priceMarkup);
       });
 
@@ -787,6 +875,7 @@ export async function createProduct(
         priceMarkupUsed: input.priceMarkupUsed ?? 1.0,
         isSingleType: input.isSingleType ?? false,
         isPriceOnRequest: input.isPriceOnRequest ?? false,
+        isShowcaseFace: input.isShowcaseFace ?? false,
         // Содержание металлов для НОВЫХ (обрабатываем null и NaN как 0)
         contentGold: (input.contentGold == null || Number.isNaN(input.contentGold)) ? 0 : input.contentGold,
         contentSilver: (input.contentSilver == null || Number.isNaN(input.contentSilver)) ? 0 : input.contentSilver,
@@ -816,6 +905,11 @@ export async function createProduct(
         },
       },
     });
+
+    // Если этот товар — лицо категории, сбрасываем флаг у остальных
+    if (product.isShowcaseFace) {
+      await resetShowcaseFaceInRootCategory(product.categoryId, product.id);
+    }
 
     const [rates, priceMarkup] = await Promise.all([
       getCurrentRates(),
@@ -897,6 +991,7 @@ export async function updateProduct(
       priceMarkupUsed?: number;
       isSingleType?: boolean;
       isPriceOnRequest?: boolean;
+      isShowcaseFace?: boolean;
       // Содержание металлов для НОВЫХ
       contentGold?: number;
       contentSilver?: number;
@@ -926,6 +1021,7 @@ export async function updateProduct(
     if (input.priceMarkupUsed !== undefined) updateData.priceMarkupUsed = input.priceMarkupUsed;
     if (input.isSingleType !== undefined) updateData.isSingleType = input.isSingleType;
     if (input.isPriceOnRequest !== undefined) updateData.isPriceOnRequest = input.isPriceOnRequest;
+    if (input.isShowcaseFace !== undefined) updateData.isShowcaseFace = input.isShowcaseFace;
     // sortOrder обрабатывается отдельно через reorder
     // НОВЫЕ - обрабатываем null и NaN как 0
     if (input.contentGold !== undefined) updateData.contentGold = (input.contentGold == null || Number.isNaN(input.contentGold)) ? 0 : input.contentGold;
@@ -965,6 +1061,11 @@ export async function updateProduct(
     if (input.sortOrder !== undefined && input.sortOrder !== existingProduct.sortOrder) {
       const categoryId = input.categoryId ?? existingProduct.categoryId;
       await reorderProductsInCategory(categoryId, input.id, input.sortOrder);
+    }
+
+    // Если этот товар стал лицом категории — сбрасываем флаг у остальных
+    if (input.isShowcaseFace === true) {
+      await resetShowcaseFaceInRootCategory(product.categoryId, product.id);
     }
 
     const [rates, priceMarkup] = await Promise.all([

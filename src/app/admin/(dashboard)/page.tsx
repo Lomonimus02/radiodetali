@@ -55,7 +55,7 @@ export default async function AdminDashboard() {
         <StatCard
           icon={<TrendingUp className="w-6 h-6" />}
           label="Платина (Pt)"
-          value={rates ? `${rates.platinum.toLocaleString("ru-RU")} ₽/мг` : "—"}
+          value={rates ? `${rates.platinum.toLocaleString("ru-RU")} ₽/г` : "—"}
           color="cyan"
         />
       </div>

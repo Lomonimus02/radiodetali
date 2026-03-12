@@ -1,9 +1,10 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
 import Link from "next/link";
-import { Package } from "lucide-react";
-import { getCategories } from "@/app/actions";
+import Image from "next/image";
+import { Package, ChevronRight } from "lucide-react";
 import { ProductGridSkeleton } from "../components";
+import { prisma } from "@/lib/prisma";
 
 // Отключаем статический пререндеринг (требуется БД)
 export const dynamic = "force-dynamic";
@@ -14,22 +15,27 @@ export const metadata: Metadata = {
     "Полный каталог радиодеталей с актуальными ценами скупки. Транзисторы, конденсаторы, микросхемы, реле и другие детали.",
 };
 
-// Categories Grid
-async function CategoriesGrid() {
-  // Получаем только корневые категории (rootOnly = true)
-  const result = await getCategories(true);
+// Categories List
+async function CategoriesList() {
+  // Получаем корневые категории с фото витрины (isShowcaseFace товар)
+  const categories = await prisma.category.findMany({
+    where: { parentId: null },
+    orderBy: { sortOrder: "asc" },
+    include: {
+      _count: { select: { products: true } },
+      children: {
+        select: { _count: { select: { products: true } } },
+      },
+      // Ищем товар-лицо категории для фото
+      products: {
+        where: { isShowcaseFace: true, image: { not: null } },
+        select: { image: true },
+        take: 1,
+      },
+    },
+  });
 
-  if (!result.success) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-[var(--gray-500)]">
-          Ошибка загрузки категорий: {result.error}
-        </p>
-      </div>
-    );
-  }
-
-  if (result.data.length === 0) {
+  if (categories.length === 0) {
     return (
       <div className="text-center py-12">
         <Package className="w-16 h-16 text-[var(--gray-300)] mx-auto mb-4" />
@@ -44,31 +50,53 @@ async function CategoriesGrid() {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
-      {result.data.map((category) => (
-        <Link
-          key={category.id}
-          href={`/catalog/${category.slug}`}
-          className="group block bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-lg transition-all duration-300 overflow-hidden p-3 md:p-6"
-        >
-          <div className="flex items-center gap-2 md:gap-3 md:mb-3">
-            <div className="hidden md:flex w-12 h-12 rounded-full bg-[var(--accent-100)] items-center justify-center group-hover:bg-[var(--accent-200)] transition-colors shrink-0">
-              <Package className="w-6 h-6 text-[var(--accent-600)]" />
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      {categories.map((category) => {
+        const showcaseImage = category.products[0]?.image ?? null;
+        // Приоритет: собственная картинка категории > витринный товар > заглушка
+        const displayImage = category.imageUrl || showcaseImage;
+        const childrenProducts = category.children?.reduce(
+          (sum, child) => sum + child._count.products, 0
+        ) ?? 0;
+        const totalProducts = category._count.products + childrenProducts;
+
+        return (
+          <Link
+            key={category.id}
+            href={`/catalog/${category.slug}`}
+            className="group flex items-center bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-lg hover:translate-x-1 transition-all duration-300 overflow-hidden"
+          >
+            {/* Квадратное фото слева */}
+            <div className="w-24 h-24 md:w-28 md:h-28 shrink-0 bg-[var(--gray-100)] overflow-hidden">
+              {displayImage ? (
+                <Image
+                  src={displayImage}
+                  alt={category.name}
+                  width={112}
+                  height={112}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Package className="w-12 h-12 text-[var(--gray-300)]" />
+                </div>
+              )}
             </div>
-            <div className="min-w-0 w-full">
-              <h3 className="font-semibold text-sm md:text-base text-[var(--gray-800)] group-hover:text-[var(--primary-600)] transition-colors line-clamp-2 md:truncate md:line-clamp-none">
+
+            {/* Название категории */}
+            <div className="flex-1 min-w-0 px-4">
+              <h3 className="font-semibold text-lg md:text-xl text-[var(--gray-900)] group-hover:text-[var(--primary-600)] transition-colors">
                 {category.name}
               </h3>
-              <p className="hidden md:block text-sm text-[var(--gray-500)]">
-                {category.productCount} {category.productCount === 1 ? 'товар' : category.productCount < 5 ? 'товара' : 'товаров'}
-              </p>
             </div>
-          </div>
-          <p className="hidden md:block text-sm text-[var(--primary-600)] font-medium group-hover:underline">
-            Открыть раздел →
-          </p>
-        </Link>
-      ))}
+
+            {/* Стрелка справа */}
+            <div className="pr-4 shrink-0">
+              <ChevronRight className="w-5 h-5 text-[var(--gray-400)] group-hover:text-[var(--primary-600)] group-hover:translate-x-1 transition-all" />
+            </div>
+          </Link>
+        );
+      })}
     </div>
   );
 }
@@ -94,7 +122,7 @@ export default async function CatalogPage() {
           Выберите категорию
         </h2>
         <Suspense fallback={<ProductGridSkeleton count={8} />}>
-          <CategoriesGrid />
+          <CategoriesList />
         </Suspense>
       </div>
     </div>

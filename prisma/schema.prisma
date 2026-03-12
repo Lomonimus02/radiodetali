@@ -32,6 +32,9 @@ model GlobalSettings {
   telegramBotToken String @default("") // Токен бота (от @BotFather)
   telegramChatId   String @default("") // Chat ID для отправки уведомлений
 
+  // Фото магазина (для страницы контактов)
+  storePhotoUrl String? // URL фото магазина
+
   @@map("global_settings")
 }
 
@@ -53,6 +56,7 @@ model Category {
   id             String  @id @default(cuid())
   name           String
   slug           String  @unique
+  imageUrl       String? // URL изображения категории
   parentId       String?
   sortOrder      Int     @default(0) // Поле для сортировки на странице /catalog (корневые категории)
   childSortOrder Int     @default(0) // Позиция родительской категории среди своих подкатегорий для отображения товаров
@@ -106,6 +110,8 @@ model Product {
   isSingleType Boolean @default(false)
   // Цена по запросу (скрывает цену, показывает "Цена по запросу")
   isPriceOnRequest Boolean @default(false)
+  // Лицо категории на Главной (Showcase)
+  isShowcaseFace Boolean @default(false)
 
   // Содержание металлов в граммах для НОВЫХ товаров
   contentGold      Decimal @default(0) @db.Decimal(18, 10)

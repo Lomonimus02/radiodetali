@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   createCategory,
   updateCategory,
@@ -13,6 +14,8 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
+  Upload,
+  X,
 } from "lucide-react";
 
 interface CategoryFormProps {
@@ -68,6 +71,10 @@ export function CategoryForm({
     type: NotificationType;
     message: string;
   } | null>(null);
+  const [imagePreview, setImagePreview] = useState(editCategory?.imageUrl || "");
+  const [imageUrl, setImageUrl] = useState(editCategory?.imageUrl || "");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = !!editCategory;
 
@@ -104,6 +111,61 @@ export function CategoryForm({
     }
   };
 
+  // Загрузка изображения
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+    setIsUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setImageUrl(result.url);
+        setImagePreview(result.url);
+        setNotification({
+          type: "success",
+          message: "Изображение загружено",
+        });
+      } else {
+        setNotification({
+          type: "error",
+          message: result.error || "Ошибка загрузки",
+        });
+        setImagePreview(imageUrl);
+      }
+    } catch {
+      setNotification({
+        type: "error",
+        message: "Ошибка при загрузке файла",
+      });
+      setImagePreview(imageUrl);
+    } finally {
+      setIsUploading(false);
+      URL.revokeObjectURL(previewUrl);
+    }
+  };
+
+  // Удаление изображения
+  const handleRemoveImage = () => {
+    setImageUrl("");
+    setImagePreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const onSubmit = (data: FormData) => {
     setNotification(null);
 
@@ -127,6 +189,7 @@ export function CategoryForm({
           sortOrder: data.sortOrder,
           childSortOrder: data.childSortOrder,
           warningMessage: data.warningMessage || null,
+          imageUrl: imageUrl || null,
           isPinnedToDashboard: data.isPinnedToDashboard,
           customRateAu: parseRate(data.customRateAu),
           customRateAg: parseRate(data.customRateAg),
@@ -141,6 +204,7 @@ export function CategoryForm({
           sortOrder: data.sortOrder,
           childSortOrder: data.childSortOrder,
           warningMessage: data.warningMessage || null,
+          imageUrl: imageUrl || null,
           isPinnedToDashboard: data.isPinnedToDashboard,
           customRateAu: parseRate(data.customRateAu),
           customRateAg: parseRate(data.customRateAg),
@@ -348,6 +412,59 @@ export function CategoryForm({
             </p>
           </div>
 
+          {/* Image Upload */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Изображение категории
+            </label>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition-colors">
+                  <Upload className="w-5 h-5 text-slate-500" />
+                  <span className="text-sm text-slate-700">
+                    {isUploading ? "Загрузка..." : "Выбрать файл"}
+                  </span>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    onChange={handleFileSelect}
+                    disabled={isUploading}
+                    className="hidden"
+                  />
+                </label>
+                {imageUrl && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Удалить изображение"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-slate-500">
+                JPG, PNG, WebP или GIF. Максимум 5MB.
+              </p>
+              {imagePreview && (
+                <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-slate-200">
+                  <Image
+                    src={imagePreview}
+                    alt="Превью"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              )}
+              {imageUrl && (
+                <p className="text-xs text-green-600 truncate">
+                  ✓ {imageUrl}
+                </p>
+              )}
+            </div>
+          </div>
+
           {/* Pin to Dashboard */}
           <div className="flex items-center gap-3 pt-2">
             <input
@@ -403,7 +520,7 @@ export function CategoryForm({
             </div>
           </div>
 
-          {/* Ag - Серебро */}
+          {/* Ag - Серебро (г) */}
           <div>
             <label
               htmlFor="cat-customRateAg"
@@ -427,7 +544,7 @@ export function CategoryForm({
             </div>
           </div>
 
-          {/* Pt - Платина */}
+          {/* Pt - Платина (г) */}
           <div>
             <label
               htmlFor="cat-customRatePt"
@@ -446,12 +563,12 @@ export function CategoryForm({
                 placeholder="—"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
-                ₽/мг
+                ₽/г
               </span>
             </div>
           </div>
 
-          {/* Pd - Палладий */}
+          {/* Pd - Палладий (г) */}
           <div>
             <label
               htmlFor="cat-customRatePd"
@@ -470,7 +587,7 @@ export function CategoryForm({
                 placeholder="—"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
-                ₽/мг
+                ₽/г
               </span>
             </div>
           </div>

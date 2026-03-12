@@ -6,10 +6,13 @@ import Link from "next/link";
 import { Package, ZoomIn } from "lucide-react";
 import type { ProductWithPrice, UnitType } from "@/app/actions";
 import { ImageModal } from "./ImageModal";
+import { SellModal } from "./SellModal";
+import type { SellModalContactInfo } from "./SellModal";
 
 interface ProductCardCompactProps {
   product: ProductWithPrice;
   categorySlug: string;
+  contactInfo?: SellModalContactInfo;
 }
 
 // Получить суффикс единицы измерения для цены
@@ -31,7 +34,7 @@ function formatPrice(price: number): string {
   }).format(price);
 }
 
-export function ProductCardCompact({ product, categorySlug }: ProductCardCompactProps) {
+export function ProductCardCompact({ product, categorySlug, contactInfo }: ProductCardCompactProps) {
   const hasNewPrice = product.priceNew !== null;
   const hasUsedPrice = product.priceUsed !== null;
   
@@ -110,11 +113,11 @@ export function ProductCardCompact({ product, categorySlug }: ProductCardCompact
             <>
               {/* Цена за Новый / Единая цена */}
               {hasNewPrice && (
-                <div className="flex items-center justify-between px-2 py-1.5 rounded-md bg-green-50">
-                  <span className="text-xs font-medium text-green-700">
+                <div className="flex items-center justify-between px-2 py-1 rounded-md bg-gray-900">
+                  <span className="text-xs font-medium text-white">
                     {product.isSingleType ? 'Цена' : 'Новый'}
                   </span>
-                  <span className="font-bold text-green-700">
+                  <span className="font-bold text-white">
                     {formatPrice(product.priceNew!)}{getPriceUnitSuffix(product.unitType)}
                   </span>
                 </div>
@@ -122,9 +125,9 @@ export function ProductCardCompact({ product, categorySlug }: ProductCardCompact
               
               {/* Цена за Б/У (скрываем для единой цены) */}
               {hasUsedPrice && !product.isSingleType && (
-                <div className="flex items-center justify-between bg-amber-50 px-2 py-1.5 rounded-md">
-                  <span className="text-xs font-medium text-amber-700">Б/У</span>
-                  <span className="font-bold text-amber-700">
+                <div className="flex items-center justify-between bg-gray-900 px-2 py-1 rounded-md">
+                  <span className="text-xs font-medium text-white">Б/У</span>
+                  <span className="font-bold text-white">
                     {formatPrice(product.priceUsed!)}{getPriceUnitSuffix(product.unitType)}
                   </span>
                 </div>
@@ -138,6 +141,10 @@ export function ProductCardCompact({ product, categorySlug }: ProductCardCompact
               )}
             </>
           )}
+        </div>
+
+        <div className="mt-3">
+          <SellModal contactInfo={contactInfo} />
         </div>
       </div>
     </div>

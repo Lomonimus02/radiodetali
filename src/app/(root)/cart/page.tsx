@@ -16,8 +16,8 @@ import {
 import { useCartStore, type ItemCondition } from "@/store";
 import { getProductsByIds, type ProductWithPrice } from "@/app/actions";
 
-// WhatsApp номер для отправки заявки
-const WHATSAPP_NUMBER = "79001234567";
+// VK ссылка для отправки заявки
+const VK_GROUP_URL = "https://vk.com/dragsoyuz";
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat("ru-RU", {
@@ -102,23 +102,9 @@ export default function CartPage() {
     0
   );
 
-  const handleSendToWhatsApp = () => {
+  const handleSendToVK = () => {
     if (cartItems.length === 0) return;
-
-    let message = "Привет, хочу сдать:\n\n";
-    
-    cartItems.forEach((item) => {
-      const itemTotal = getItemPrice(item.product, item.condition) * item.quantity;
-      const conditionLabel = getConditionLabel(item.condition);
-      message += `- ${item.product.name} [${conditionLabel}] (x${item.quantity}) - ${formatPrice(itemTotal)}\n`;
-    });
-    
-    message += `\nИтого: ${formatPrice(totalSum)}`;
-
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
-    
-    window.open(whatsappUrl, "_blank");
+    window.open(VK_GROUP_URL, "_blank");
   };
 
   if (loading) {
@@ -327,11 +313,11 @@ export default function CartPage() {
 
                 <div className="space-y-3">
                   <button
-                    onClick={handleSendToWhatsApp}
-                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition-colors"
+                    onClick={handleSendToVK}
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors"
                   >
                     <Send className="w-5 h-5" />
-                    Отправить в WhatsApp
+                    Написать в VK
                   </button>
                   
                   <Link

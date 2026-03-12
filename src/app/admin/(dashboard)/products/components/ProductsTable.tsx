@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { deleteProduct, type ProductWithPrice } from "@/app/actions";
-import { Edit, Trash2, Loader2, AlertCircle, Package } from "lucide-react";
+import { Edit, Trash2, Loader2, AlertCircle, Package, Star } from "lucide-react";
 
 interface ProductsTableProps {
   products: ProductWithPrice[];
@@ -38,8 +38,8 @@ export function ProductsTable({ products }: ProductsTableProps) {
     const metals = [];
     if (product.contentGold > 0) metals.push(`Au: ${product.contentGold}мг`);
     if (product.contentSilver > 0) metals.push(`Ag: ${product.contentSilver}г`);
-    if (product.contentPlatinum > 0) metals.push(`Pt: ${product.contentPlatinum}мг`);
-    if (product.contentPalladium > 0) metals.push(`Pd: ${product.contentPalladium}мг`);
+    if (product.contentPlatinum > 0) metals.push(`Pt: ${product.contentPlatinum}г`);
+    if (product.contentPalladium > 0) metals.push(`Pd: ${product.contentPalladium}г`);
     return metals.length > 0 ? metals.join(", ") : "—";
   };
 
@@ -125,9 +125,16 @@ export function ProductsTable({ products }: ProductsTableProps) {
                     </div>
                     {/* Name */}
                     <div className="min-w-0">
-                      <p className="font-medium text-slate-800 truncate">
-                        {product.name}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-medium text-slate-800 truncate">
+                          {product.name}
+                        </p>
+                        {product.isShowcaseFace && (
+                          <span title="Лицо категории на главной" className="flex-shrink-0">
+                            <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-slate-500 truncate">
                         {product.slug}
                       </p>

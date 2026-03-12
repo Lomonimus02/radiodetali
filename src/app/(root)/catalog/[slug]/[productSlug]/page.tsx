@@ -11,8 +11,9 @@ import {
   Info,
   Phone,
 } from "lucide-react";
-import { getProductBySlug, getProducts, getCategoryBySlug, type UnitType } from "@/app/actions";
-import { ProductCard, ProductGridSkeleton } from "../../../components";
+import { getProductBySlug, getProducts, getCategoryBySlug, getGlobalSettings, type UnitType } from "@/app/actions";
+import { ProductCard, ProductGridSkeleton, SellModal } from "../../../components";
+import type { SellModalContactInfo } from "../../../components";
 
 interface ProductPageProps {
   params: Promise<{ slug: string; productSlug: string }>;
@@ -240,6 +241,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const product = result.data;
   const displayPrice = getDisplayPrice(product);
 
+  // Получаем контактные данные для SellModal
+  const settingsResult = await getGlobalSettings();
+  const settings = settingsResult.success ? settingsResult.data : null;
+  const sellContactInfo: SellModalContactInfo | undefined = settings ? {
+    phoneNumber: settings.phoneNumber || "+7 (812) 983-49-76",
+    phoneHref: `tel:${(settings.phoneNumber || "+78129834976").replace(/[^\d+]/g, "")}`,
+    telegramHref: `https://t.me/${(settings.telegramUsername || "dragsoyuz").replace(/^@/, "").replace(/^https?:\/\/t\.me\//, "")}`,
+    vkHref: "https://vk.com/dragsoyuz",
+  } : undefined;
+
   return (
     <>
       {/* JSON-LD Schema.org structured data */}
@@ -399,6 +410,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
             {/* CTA buttons */}
             <div className="flex flex-col gap-3 mb-8">
+              <SellModal contactInfo={sellContactInfo} />
               <div className="flex flex-col sm:flex-row gap-3">
                 <a
                   href="tel:+79001234567"

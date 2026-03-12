@@ -14,20 +14,19 @@ export interface CategoryData {
   id: string;
   name: string;
   slug: string;
+  imageUrl: string | null;
   parentId: string | null;
   parentName: string | null;
   sortOrder: number;
-  childSortOrder: number; // Позиция родительской категории среди подкатегорий
+  childSortOrder: number;
   warningMessage: string | null;
-  // Закрепить управление курсом на Дашборде
   isPinnedToDashboard: boolean;
-  // Кастомные курсы металлов (null = использовать глобальные)
   customRateAu: number | null;
   customRateAg: number | null;
   customRatePt: number | null;
   customRatePd: number | null;
   productCount: number;
-  childrenCount?: number; // Количество подкатегорий
+  childrenCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,13 +37,12 @@ export interface CategoryData {
 export interface CreateCategoryInput {
   name: string;
   slug: string;
+  imageUrl?: string | null;
   parentId?: string | null;
   sortOrder?: number;
-  childSortOrder?: number; // Позиция родительской категории среди подкатегорий
+  childSortOrder?: number;
   warningMessage?: string | null;
-  // Закрепить управление курсом на Дашборде
   isPinnedToDashboard?: boolean;
-  // Кастомные курсы металлов (null/undefined = использовать глобальные)
   customRateAu?: number | null;
   customRateAg?: number | null;
   customRatePt?: number | null;
@@ -58,13 +56,12 @@ export interface UpdateCategoryInput {
   id: string;
   name?: string;
   slug?: string;
+  imageUrl?: string | null;
   parentId?: string | null;
   sortOrder?: number;
-  childSortOrder?: number; // Позиция родительской категории среди подкатегорий
+  childSortOrder?: number;
   warningMessage?: string | null;
-  // Закрепить управление курсом на Дашборде
   isPinnedToDashboard?: boolean;
-  // Кастомные курсы металлов (null = использовать глобальные)
   customRateAu?: number | null;
   customRateAg?: number | null;
   customRatePt?: number | null;
@@ -173,6 +170,7 @@ export async function getCategories(rootOnly: boolean = false): Promise<Categori
         id: cat.id,
         name: cat.name,
         slug: cat.slug,
+        imageUrl: cat.imageUrl,
         parentId: cat.parentId,
         parentName: cat.parent?.name ?? null,
         sortOrder: cat.sortOrder,
@@ -226,6 +224,7 @@ export async function getCategoryBySlug(slug: string): Promise<CategoryResult> {
         id: category.id,
         name: category.name,
         slug: category.slug,
+        imageUrl: category.imageUrl,
         parentId: category.parentId,
         parentName: category.parent?.name ?? null,
         sortOrder: category.sortOrder,
@@ -273,6 +272,7 @@ export async function getCategoryById(id: string): Promise<CategoryResult> {
         id: category.id,
         name: category.name,
         slug: category.slug,
+        imageUrl: category.imageUrl,
         parentId: category.parentId,
         parentName: category.parent?.name ?? null,
         sortOrder: category.sortOrder,
@@ -347,6 +347,7 @@ export async function createCategory(
       data: {
         name: input.name.trim(),
         slug: input.slug.trim(),
+        imageUrl: input.imageUrl ?? null,
         parentId: input.parentId ?? null,
         sortOrder,
         childSortOrder: input.childSortOrder ?? 0,
@@ -373,6 +374,7 @@ export async function createCategory(
         id: category.id,
         name: category.name,
         slug: category.slug,
+        imageUrl: category.imageUrl,
         parentId: category.parentId,
         parentName: category.parent?.name ?? null,
         sortOrder: category.sortOrder,
@@ -443,6 +445,7 @@ export async function updateCategory(
     const updateData: {
       name?: string;
       slug?: string;
+      imageUrl?: string | null;
       warningMessage?: string | null;
       isPinnedToDashboard?: boolean;
       childSortOrder?: number;
@@ -455,6 +458,7 @@ export async function updateCategory(
     
     if (input.name !== undefined) updateData.name = input.name.trim();
     if (input.slug !== undefined) updateData.slug = input.slug.trim();
+    if (input.imageUrl !== undefined) updateData.imageUrl = input.imageUrl;
     if (input.warningMessage !== undefined) updateData.warningMessage = input.warningMessage?.trim() || null;
     if (input.isPinnedToDashboard !== undefined) updateData.isPinnedToDashboard = input.isPinnedToDashboard;
     if (input.childSortOrder !== undefined) updateData.childSortOrder = input.childSortOrder;
@@ -498,6 +502,7 @@ export async function updateCategory(
         id: category.id,
         name: category.name,
         slug: category.slug,
+        imageUrl: category.imageUrl,
         parentId: category.parentId,
         parentName: category.parent?.name ?? null,
         sortOrder: category.sortOrder,
@@ -651,6 +656,7 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
             isUsedAvailable: true,
             isSingleType: true,
             isPriceOnRequest: true,
+            isShowcaseFace: true,
             priceMarkup: true,
             priceMarkupUsed: true,
             // Ручные цены
@@ -686,6 +692,7 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
                 isUsedAvailable: true,
                 isSingleType: true,
                 isPriceOnRequest: true,
+                isShowcaseFace: true,
                 priceMarkup: true,
                 priceMarkupUsed: true,
                 manualPriceNew: true,
@@ -738,80 +745,87 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
         continue;
       }
 
-      // Рассчитываем цены для каждого товара и находим самый дорогой
-      let maxEffectivePrice = -Infinity;
-      let mostExpensiveProduct: typeof allProducts[0] | null = null;
-      let bestPriceNew: number | null = null;
-      let bestPriceUsed: number | null = null;
+      // Сначала ищем товар с флагом isShowcaseFace
+      const showcaseFaceProduct = allProducts.find(p => p.isShowcaseFace);
 
-      for (const product of allProducts) {
-        // Эффективная наценка = наценка товара * глобальная наценка
+      // Хелпер для расчёта цен товара
+      const calcPrices = (product: typeof allProducts[0]) => {
         const effectiveMarkup = (product.priceMarkup ?? 1) * markup;
         const effectiveMarkupUsed = (product.priceMarkupUsed ?? 1) * markup;
-        
-        // Получаем курсы с учётом кастомных курсов категории товара
         const rates = resolveRates(metalRates, product.categoryRates);
         
-        // Рассчитываем priceNew
         let priceNew: number | null = null;
         if (product.isNewAvailable) {
           if (product.manualPriceNew !== null) {
             priceNew = Number(product.manualPriceNew);
           } else {
             const basePrice = calculateBasePrice(
-              product.contentGold,
-              product.contentSilver,
-              product.contentPlatinum,
-              product.contentPalladium,
-              rates
+              product.contentGold, product.contentSilver,
+              product.contentPlatinum, product.contentPalladium, rates
             );
             priceNew = Math.round(basePrice * effectiveMarkup * 100) / 100;
           }
         }
-
-        // Рассчитываем priceUsed
+        
         let priceUsed: number | null = null;
         if (product.isUsedAvailable) {
           if (product.manualPriceUsed !== null) {
             priceUsed = Number(product.manualPriceUsed);
           } else {
             const basePriceUsed = calculateBasePrice(
-              product.contentGoldUsed,
-              product.contentSilverUsed,
-              product.contentPlatinumUsed,
-              product.contentPalladiumUsed,
-              rates
+              product.contentGoldUsed, product.contentSilverUsed,
+              product.contentPlatinumUsed, product.contentPalladiumUsed, rates
             );
             priceUsed = Math.round(basePriceUsed * effectiveMarkupUsed * 100) / 100;
           }
         }
+        
+        return { priceNew, priceUsed };
+      };
 
-        // Находим товар с максимальной ценой (priceNew или priceUsed - берём большую)
-        const effectivePrice = Math.max(priceNew ?? 0, priceUsed ?? 0);
-        if (effectivePrice > maxEffectivePrice) {
-          maxEffectivePrice = effectivePrice;
-          mostExpensiveProduct = product;
-          bestPriceNew = priceNew;
-          bestPriceUsed = priceUsed;
+      let chosenProduct: typeof allProducts[0] | null = null;
+      let chosenPriceNew: number | null = null;
+      let chosenPriceUsed: number | null = null;
+
+      if (showcaseFaceProduct) {
+        // Используем товар, выбранный вручную как лицо категории
+        chosenProduct = showcaseFaceProduct;
+        const prices = calcPrices(showcaseFaceProduct);
+        chosenPriceNew = prices.priceNew;
+        chosenPriceUsed = prices.priceUsed;
+      } else {
+        // Fallback: находим самый дорогой товар
+        let maxEffectivePrice = -Infinity;
+        for (const product of allProducts) {
+          const { priceNew, priceUsed } = calcPrices(product);
+          const effectivePrice = Math.max(priceNew ?? 0, priceUsed ?? 0);
+          if (effectivePrice > maxEffectivePrice) {
+            maxEffectivePrice = effectivePrice;
+            chosenProduct = product;
+            chosenPriceNew = priceNew;
+            chosenPriceUsed = priceUsed;
+          }
         }
       }
 
+      const maxEffectivePrice = Math.max(chosenPriceNew ?? 0, chosenPriceUsed ?? 0);
+
       // Добавляем товар в результат, если нашли (с любой ценой > 0)
-      if (mostExpensiveProduct && maxEffectivePrice > 0) {
+      if (chosenProduct && maxEffectivePrice > 0) {
         showcaseItems.push({
           // Данные товара
-          id: mostExpensiveProduct.id,
-          name: mostExpensiveProduct.name,
-          slug: mostExpensiveProduct.slug,
-          description: mostExpensiveProduct.description,
-          image: mostExpensiveProduct.image,
-          priceNew: bestPriceNew,
-          priceUsed: bestPriceUsed,
-          isNewAvailable: mostExpensiveProduct.isNewAvailable,
-          isUsedAvailable: mostExpensiveProduct.isUsedAvailable,
-          isSingleType: mostExpensiveProduct.isSingleType,
-          isPriceOnRequest: mostExpensiveProduct.isPriceOnRequest,
-          unitType: mostExpensiveProduct.unitType,
+          id: chosenProduct.id,
+          name: chosenProduct.name,
+          slug: chosenProduct.slug,
+          description: chosenProduct.description,
+          image: chosenProduct.image,
+          priceNew: chosenPriceNew,
+          priceUsed: chosenPriceUsed,
+          isNewAvailable: chosenProduct.isNewAvailable,
+          isUsedAvailable: chosenProduct.isUsedAvailable,
+          isSingleType: chosenProduct.isSingleType,
+          isPriceOnRequest: chosenProduct.isPriceOnRequest,
+          unitType: chosenProduct.unitType,
           // Данные категории
           categorySlug: category.slug,
           categoryName: category.name,
@@ -853,6 +867,7 @@ export async function getSubcategories(parentId: string | null): Promise<Categor
       id: cat.id,
       name: cat.name,
       slug: cat.slug,
+      imageUrl: cat.imageUrl,
       parentId: cat.parentId,
       parentName: cat.parent?.name ?? null,
       sortOrder: cat.sortOrder,
@@ -941,6 +956,7 @@ export async function getPinnedCategories(): Promise<CategoriesResult> {
       id: cat.id,
       name: cat.name,
       slug: cat.slug,
+      imageUrl: cat.imageUrl,
       parentId: cat.parentId,
       parentName: cat.parent?.name ?? null,
       sortOrder: cat.sortOrder,

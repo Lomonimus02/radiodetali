@@ -71,8 +71,8 @@ export function CategoryForm({
     type: NotificationType;
     message: string;
   } | null>(null);
-  const [imagePreview, setImagePreview] = useState(editCategory?.imageUrl || "");
-  const [imageUrl, setImageUrl] = useState(editCategory?.imageUrl || "");
+  const [imagePreview, setImagePreview] = useState("");
+  const [imageUrl, setImageUrl] = useState<string>(editCategory?.imageUrl || "");
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -133,7 +133,6 @@ export function CategoryForm({
 
       if (result.success) {
         setImageUrl(result.url);
-        setImagePreview(result.url);
         setNotification({
           type: "success",
           message: "Изображение загружено",
@@ -143,27 +142,23 @@ export function CategoryForm({
           type: "error",
           message: result.error || "Ошибка загрузки",
         });
-        setImagePreview(imageUrl);
       }
     } catch {
       setNotification({
         type: "error",
         message: "Ошибка при загрузке файла",
       });
-      setImagePreview(imageUrl);
     } finally {
       setIsUploading(false);
+      setImagePreview("");
       URL.revokeObjectURL(previewUrl);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
   // Удаление изображения
   const handleRemoveImage = () => {
     setImageUrl("");
-    setImagePreview("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
   };
 
   const onSubmit = (data: FormData) => {
@@ -418,49 +413,58 @@ export function CategoryForm({
               Изображение категории
             </label>
             <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition-colors">
-                  <Upload className="w-5 h-5 text-slate-500" />
-                  <span className="text-sm text-slate-700">
-                    {isUploading ? "Загрузка..." : "Выбрать файл"}
-                  </span>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    onChange={handleFileSelect}
-                    disabled={isUploading}
-                    className="hidden"
-                  />
-                </label>
-                {imageUrl && (
-                  <button
-                    type="button"
-                    onClick={handleRemoveImage}
-                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Удалить изображение"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                )}
-              </div>
+              {!imageUrl && (
+                <div className="flex items-center gap-3">
+                  <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition-colors">
+                    <Upload className="w-5 h-5 text-slate-500" />
+                    <span className="text-sm text-slate-700">
+                      {isUploading ? "Загрузка..." : "Загрузить фото"}
+                    </span>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif"
+                      onChange={handleFileSelect}
+                      disabled={isUploading}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              )}
               <p className="text-xs text-slate-500">
-                JPG, PNG, WebP или GIF. Максимум 5MB.
+                JPG, PNG, WebP, GIF или HEIC. Максимум 5MB.
               </p>
-              {imagePreview && (
-                <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-slate-200">
+              {/* Превью загрузки */}
+              {imagePreview && isUploading && (
+                <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-slate-200 opacity-50">
                   <Image
                     src={imagePreview}
-                    alt="Превью"
+                    alt="Загрузка..."
                     fill
                     className="object-cover"
                   />
                 </div>
               )}
+              {/* Загруженное фото */}
               {imageUrl && (
-                <p className="text-xs text-green-600 truncate">
-                  ✓ {imageUrl}
-                </p>
+                <div className="relative group inline-block">
+                  <div className="w-32 h-32 rounded-lg overflow-hidden border border-slate-200">
+                    <Image
+                      src={imageUrl}
+                      alt="Фото категории"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                    title="Удалить"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               )}
             </div>
           </div>

@@ -1,14 +1,14 @@
-"use server";
+﻿"use server";
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 // ============================================================================
-// ТИПЫ
+// Ð¢Ð˜ÐŸÐ«
 // ============================================================================
 
 /**
- * Данные категории для API
+ * Ð”Ð°Ð½Ð½Ñ‹Ðµ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ð´Ð»Ñ API
  */
 export interface CategoryData {
   id: string;
@@ -32,7 +32,7 @@ export interface CategoryData {
 }
 
 /**
- * Входные данные для создания категории
+ * Ð’Ñ…Ð¾Ð´Ð½Ñ‹Ðµ Ð´Ð°Ð½Ð½Ñ‹Ðµ Ð´Ð»Ñ ÑÐ¾Ð·Ð´Ð°Ð½Ð¸Ñ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸
  */
 export interface CreateCategoryInput {
   name: string;
@@ -50,7 +50,7 @@ export interface CreateCategoryInput {
 }
 
 /**
- * Входные данные для обновления категории
+ * Ð’Ñ…Ð¾Ð´Ð½Ñ‹Ðµ Ð´Ð°Ð½Ð½Ñ‹Ðµ Ð´Ð»Ñ Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ñ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸
  */
 export interface UpdateCategoryInput {
   id: string;
@@ -69,58 +69,58 @@ export interface UpdateCategoryInput {
 }
 
 /**
- * Результат операции со списком категорий
+ * Ð ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚ Ð¾Ð¿ÐµÑ€Ð°Ñ†Ð¸Ð¸ ÑÐ¾ ÑÐ¿Ð¸ÑÐºÐ¾Ð¼ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹
  */
 export type CategoriesResult =
   | { success: true; data: CategoryData[]; total: number }
   | { success: false; error: string };
 
 /**
- * Результат операции с одной категорией
+ * Ð ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚ Ð¾Ð¿ÐµÑ€Ð°Ñ†Ð¸Ð¸ Ñ Ð¾Ð´Ð½Ð¾Ð¹ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸ÐµÐ¹
  */
 export type CategoryResult =
   | { success: true; data: CategoryData }
   | { success: false; error: string };
 
 /**
- * Результат операции удаления
+ * Ð ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚ Ð¾Ð¿ÐµÑ€Ð°Ñ†Ð¸Ð¸ ÑƒÐ´Ð°Ð»ÐµÐ½Ð¸Ñ
  */
 export type DeleteCategoryResult =
   | { success: true }
   | { success: false; error: string };
 
 /**
- * Пересчитать sortOrder для всех категорий с одинаковым parentId после изменения позиции одной
- * @param parentId - ID родительской категории (null для корневых)
- * @param movedCategoryId - ID перемещённой категории
- * @param newPosition - новая позиция (1-based)
+ * ÐŸÐµÑ€ÐµÑÑ‡Ð¸Ñ‚Ð°Ñ‚ÑŒ sortOrder Ð´Ð»Ñ Ð²ÑÐµÑ… ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹ Ñ Ð¾Ð´Ð¸Ð½Ð°ÐºÐ¾Ð²Ñ‹Ð¼ parentId Ð¿Ð¾ÑÐ»Ðµ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ñ Ð¿Ð¾Ð·Ð¸Ñ†Ð¸Ð¸ Ð¾Ð´Ð½Ð¾Ð¹
+ * @param parentId - ID Ñ€Ð¾Ð´Ð¸Ñ‚ÐµÐ»ÑŒÑÐºÐ¾Ð¹ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ (null Ð´Ð»Ñ ÐºÐ¾Ñ€Ð½ÐµÐ²Ñ‹Ñ…)
+ * @param movedCategoryId - ID Ð¿ÐµÑ€ÐµÐ¼ÐµÑ‰Ñ‘Ð½Ð½Ð¾Ð¹ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸
+ * @param newPosition - Ð½Ð¾Ð²Ð°Ñ Ð¿Ð¾Ð·Ð¸Ñ†Ð¸Ñ (1-based)
  */
 async function reorderCategoriesByParent(
   parentId: string | null,
   movedCategoryId: string,
   newPosition: number
 ): Promise<void> {
-  // Получаем все категории с тем же parentId
+  // ÐŸÐ¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ Ð²ÑÐµ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ñ Ñ‚ÐµÐ¼ Ð¶Ðµ parentId
   const categories = await prisma.category.findMany({
     where: { parentId },
     orderBy: { sortOrder: "asc" },
     select: { id: true, sortOrder: true },
   });
 
-  // Удаляем перемещаемую категорию из списка
+  // Ð£Ð´Ð°Ð»ÑÐµÐ¼ Ð¿ÐµÑ€ÐµÐ¼ÐµÑ‰Ð°ÐµÐ¼ÑƒÑŽ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸ÑŽ Ð¸Ð· ÑÐ¿Ð¸ÑÐºÐ°
   const otherCategories = categories.filter(c => c.id !== movedCategoryId);
   
-  // Вставляем её на новую позицию
+  // Ð’ÑÑ‚Ð°Ð²Ð»ÑÐµÐ¼ ÐµÑ‘ Ð½Ð° Ð½Ð¾Ð²ÑƒÑŽ Ð¿Ð¾Ð·Ð¸Ñ†Ð¸ÑŽ
   const movedCategory = categories.find(c => c.id === movedCategoryId);
   if (!movedCategory) return;
 
-  // Корректируем позицию в допустимых границах
+  // ÐšÐ¾Ñ€Ñ€ÐµÐºÑ‚Ð¸Ñ€ÑƒÐµÐ¼ Ð¿Ð¾Ð·Ð¸Ñ†Ð¸ÑŽ Ð² Ð´Ð¾Ð¿ÑƒÑÑ‚Ð¸Ð¼Ñ‹Ñ… Ð³Ñ€Ð°Ð½Ð¸Ñ†Ð°Ñ…
   const clampedPosition = Math.max(1, Math.min(newPosition, categories.length));
   
-  // Вставляем на нужную позицию
+  // Ð’ÑÑ‚Ð°Ð²Ð»ÑÐµÐ¼ Ð½Ð° Ð½ÑƒÐ¶Ð½ÑƒÑŽ Ð¿Ð¾Ð·Ð¸Ñ†Ð¸ÑŽ
   otherCategories.splice(clampedPosition - 1, 0, movedCategory);
 
-  // Обновляем sortOrder для всех
+  // ÐžÐ±Ð½Ð¾Ð²Ð»ÑÐµÐ¼ sortOrder Ð´Ð»Ñ Ð²ÑÐµÑ…
   const updates = otherCategories.map((category, index) => 
     prisma.category.update({
       where: { id: category.id },
@@ -136,8 +136,8 @@ async function reorderCategoriesByParent(
 // ============================================================================
 
 /**
- * Получить список категорий
- * @param rootOnly - если true, возвращает только корневые категории (без подкатегорий)
+ * ÐŸÐ¾Ð»ÑƒÑ‡Ð¸Ñ‚ÑŒ ÑÐ¿Ð¸ÑÐ¾Ðº ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹
+ * @param rootOnly - ÐµÑÐ»Ð¸ true, Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‰Ð°ÐµÑ‚ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ ÐºÐ¾Ñ€Ð½ÐµÐ²Ñ‹Ðµ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ (Ð±ÐµÐ· Ð¿Ð¾Ð´ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹)
  */
 export async function getCategories(rootOnly: boolean = false): Promise<CategoriesResult> {
   try {
@@ -146,7 +146,7 @@ export async function getCategories(rootOnly: boolean = false): Promise<Categori
       include: {
         parent: { select: { name: true } },
         _count: { select: { products: true } },
-        // Включаем подкатегории для подсчёта их товаров
+        // Ð’ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼ Ð¿Ð¾Ð´ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ð´Ð»Ñ Ð¿Ð¾Ð´ÑÑ‡Ñ‘Ñ‚Ð° Ð¸Ñ… Ñ‚Ð¾Ð²Ð°Ñ€Ð¾Ð²
         children: {
           select: {
             _count: { select: { products: true } },
@@ -159,7 +159,7 @@ export async function getCategories(rootOnly: boolean = false): Promise<Categori
     });
 
     const data: CategoryData[] = categories.map((cat) => {
-      // Считаем товары в категории + товары во всех подкатегориях
+      // Ð¡Ñ‡Ð¸Ñ‚Ð°ÐµÐ¼ Ñ‚Ð¾Ð²Ð°Ñ€Ñ‹ Ð² ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ + Ñ‚Ð¾Ð²Ð°Ñ€Ñ‹ Ð²Ð¾ Ð²ÑÐµÑ… Ð¿Ð¾Ð´ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸ÑÑ…
       const ownProducts = cat._count.products;
       const childrenProducts = cat.children?.reduce(
         (sum, child) => sum + child._count.products, 
@@ -193,16 +193,16 @@ export async function getCategories(rootOnly: boolean = false): Promise<Categori
       total: categories.length,
     };
   } catch (error) {
-    console.error("Ошибка при получении категорий:", error);
+    console.error("ÐžÑˆÐ¸Ð±ÐºÐ° Ð¿Ñ€Ð¸ Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½Ð¸Ð¸ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Неизвестная ошибка",
+      error: error instanceof Error ? error.message : "ÐÐµÐ¸Ð·Ð²ÐµÑÑ‚Ð½Ð°Ñ Ð¾ÑˆÐ¸Ð±ÐºÐ°",
     };
   }
 }
 
 /**
- * Получить категорию по slug
+ * ÐŸÐ¾Ð»ÑƒÑ‡Ð¸Ñ‚ÑŒ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸ÑŽ Ð¿Ð¾ slug
  */
 export async function getCategoryBySlug(slug: string): Promise<CategoryResult> {
   try {
@@ -215,7 +215,7 @@ export async function getCategoryBySlug(slug: string): Promise<CategoryResult> {
     });
 
     if (!category) {
-      return { success: false, error: "Категория не найдена" };
+      return { success: false, error: "ÐšÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ñ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ð°" };
     }
 
     return {
@@ -241,16 +241,16 @@ export async function getCategoryBySlug(slug: string): Promise<CategoryResult> {
       },
     };
   } catch (error) {
-    console.error("Ошибка при получении категории:", error);
+    console.error("ÐžÑˆÐ¸Ð±ÐºÐ° Ð¿Ñ€Ð¸ Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½Ð¸Ð¸ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Неизвестная ошибка",
+      error: error instanceof Error ? error.message : "ÐÐµÐ¸Ð·Ð²ÐµÑÑ‚Ð½Ð°Ñ Ð¾ÑˆÐ¸Ð±ÐºÐ°",
     };
   }
 }
 
 /**
- * Получить категорию по ID
+ * ÐŸÐ¾Ð»ÑƒÑ‡Ð¸Ñ‚ÑŒ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸ÑŽ Ð¿Ð¾ ID
  */
 export async function getCategoryById(id: string): Promise<CategoryResult> {
   try {
@@ -263,7 +263,7 @@ export async function getCategoryById(id: string): Promise<CategoryResult> {
     });
 
     if (!category) {
-      return { success: false, error: "Категория не найдена" };
+      return { success: false, error: "ÐšÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ñ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ð°" };
     }
 
     return {
@@ -289,57 +289,57 @@ export async function getCategoryById(id: string): Promise<CategoryResult> {
       },
     };
   } catch (error) {
-    console.error("Ошибка при получении категории:", error);
+    console.error("ÐžÑˆÐ¸Ð±ÐºÐ° Ð¿Ñ€Ð¸ Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½Ð¸Ð¸ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Неизвестная ошибка",
+      error: error instanceof Error ? error.message : "ÐÐµÐ¸Ð·Ð²ÐµÑÑ‚Ð½Ð°Ñ Ð¾ÑˆÐ¸Ð±ÐºÐ°",
     };
   }
 }
 
 /**
- * Создать категорию
+ * Ð¡Ð¾Ð·Ð´Ð°Ñ‚ÑŒ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸ÑŽ
  */
 export async function createCategory(
   input: CreateCategoryInput
 ): Promise<CategoryResult> {
   try {
     if (!input.name?.trim()) {
-      return { success: false, error: "Название категории обязательно" };
+      return { success: false, error: "ÐÐ°Ð·Ð²Ð°Ð½Ð¸Ðµ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ð¾Ð±ÑÐ·Ð°Ñ‚ÐµÐ»ÑŒÐ½Ð¾" };
     }
 
     if (!input.slug?.trim()) {
-      return { success: false, error: "Slug категории обязателен" };
+      return { success: false, error: "Slug ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ð¾Ð±ÑÐ·Ð°Ñ‚ÐµÐ»ÐµÐ½" };
     }
 
-    // Проверяем уникальность slug
+    // ÐŸÑ€Ð¾Ð²ÐµÑ€ÑÐµÐ¼ ÑƒÐ½Ð¸ÐºÐ°Ð»ÑŒÐ½Ð¾ÑÑ‚ÑŒ slug
     const existing = await prisma.category.findUnique({
       where: { slug: input.slug },
     });
 
     if (existing) {
-      return { success: false, error: "Категория с таким slug уже существует" };
+      return { success: false, error: "ÐšÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ñ Ñ Ñ‚Ð°ÐºÐ¸Ð¼ slug ÑƒÐ¶Ðµ ÑÑƒÑ‰ÐµÑÑ‚Ð²ÑƒÐµÑ‚" };
     }
 
-    // Если есть parentId — проверяем существование родителя
+    // Ð•ÑÐ»Ð¸ ÐµÑÑ‚ÑŒ parentId â€” Ð¿Ñ€Ð¾Ð²ÐµÑ€ÑÐµÐ¼ ÑÑƒÑ‰ÐµÑÑ‚Ð²Ð¾Ð²Ð°Ð½Ð¸Ðµ Ñ€Ð¾Ð´Ð¸Ñ‚ÐµÐ»Ñ
     if (input.parentId) {
       const parent = await prisma.category.findUnique({
         where: { id: input.parentId },
       });
       if (!parent) {
-        return { success: false, error: "Родительская категория не найдена" };
+        return { success: false, error: "Ð Ð¾Ð´Ð¸Ñ‚ÐµÐ»ÑŒÑÐºÐ°Ñ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ñ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ð°" };
       }
     }
 
-    // Автоматическое определение sortOrder если не указан или равен 0
+    // ÐÐ²Ñ‚Ð¾Ð¼Ð°Ñ‚Ð¸Ñ‡ÐµÑÐºÐ¾Ðµ Ð¾Ð¿Ñ€ÐµÐ´ÐµÐ»ÐµÐ½Ð¸Ðµ sortOrder ÐµÑÐ»Ð¸ Ð½Ðµ ÑƒÐºÐ°Ð·Ð°Ð½ Ð¸Ð»Ð¸ Ñ€Ð°Ð²ÐµÐ½ 0
     let sortOrder = input.sortOrder;
     if (!sortOrder || sortOrder <= 0) {
-      // Находим максимальный sortOrder среди категорий с тем же parentId
+      // ÐÐ°Ñ…Ð¾Ð´Ð¸Ð¼ Ð¼Ð°ÐºÑÐ¸Ð¼Ð°Ð»ÑŒÐ½Ñ‹Ð¹ sortOrder ÑÑ€ÐµÐ´Ð¸ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹ Ñ Ñ‚ÐµÐ¼ Ð¶Ðµ parentId
       const maxSortOrderResult = await prisma.category.aggregate({
         where: { parentId: input.parentId ?? null },
         _max: { sortOrder: true },
       });
-      // Новая категория получает sortOrder = max + 1 (или 1 если категорий нет)
+      // ÐÐ¾Ð²Ð°Ñ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ñ Ð¿Ð¾Ð»ÑƒÑ‡Ð°ÐµÑ‚ sortOrder = max + 1 (Ð¸Ð»Ð¸ 1 ÐµÑÐ»Ð¸ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹ Ð½ÐµÑ‚)
       sortOrder = (maxSortOrderResult._max.sortOrder ?? 0) + 1;
     }
 
@@ -353,7 +353,7 @@ export async function createCategory(
         childSortOrder: input.childSortOrder ?? 0,
         warningMessage: input.warningMessage?.trim() || null,
         isPinnedToDashboard: input.isPinnedToDashboard ?? false,
-        // Кастомные курсы: если пустое/undefined — пишем null
+        // ÐšÐ°ÑÑ‚Ð¾Ð¼Ð½Ñ‹Ðµ ÐºÑƒÑ€ÑÑ‹: ÐµÑÐ»Ð¸ Ð¿ÑƒÑÑ‚Ð¾Ðµ/undefined â€” Ð¿Ð¸ÑˆÐµÐ¼ null
         customRateAu: input.customRateAu ?? null,
         customRateAg: input.customRateAg ?? null,
         customRatePt: input.customRatePt ?? null,
@@ -391,23 +391,23 @@ export async function createCategory(
       },
     };
   } catch (error) {
-    console.error("Ошибка при создании категории:", error);
+    console.error("ÐžÑˆÐ¸Ð±ÐºÐ° Ð¿Ñ€Ð¸ ÑÐ¾Ð·Ð´Ð°Ð½Ð¸Ð¸ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Неизвестная ошибка",
+      error: error instanceof Error ? error.message : "ÐÐµÐ¸Ð·Ð²ÐµÑÑ‚Ð½Ð°Ñ Ð¾ÑˆÐ¸Ð±ÐºÐ°",
     };
   }
 }
 
 /**
- * Обновить категорию
+ * ÐžÐ±Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸ÑŽ
  */
 export async function updateCategory(
   input: UpdateCategoryInput
 ): Promise<CategoryResult> {
   try {
     if (!input.id) {
-      return { success: false, error: "ID категории обязателен" };
+      return { success: false, error: "ID ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ð¾Ð±ÑÐ·Ð°Ñ‚ÐµÐ»ÐµÐ½" };
     }
 
     const existing = await prisma.category.findUnique({
@@ -415,33 +415,33 @@ export async function updateCategory(
     });
 
     if (!existing) {
-      return { success: false, error: "Категория не найдена" };
+      return { success: false, error: "ÐšÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ñ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ð°" };
     }
 
-    // Проверяем уникальность slug
+    // ÐŸÑ€Ð¾Ð²ÐµÑ€ÑÐµÐ¼ ÑƒÐ½Ð¸ÐºÐ°Ð»ÑŒÐ½Ð¾ÑÑ‚ÑŒ slug
     if (input.slug && input.slug !== existing.slug) {
       const slugExists = await prisma.category.findUnique({
         where: { slug: input.slug },
       });
       if (slugExists) {
-        return { success: false, error: "Категория с таким slug уже существует" };
+        return { success: false, error: "ÐšÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ñ Ñ Ñ‚Ð°ÐºÐ¸Ð¼ slug ÑƒÐ¶Ðµ ÑÑƒÑ‰ÐµÑÑ‚Ð²ÑƒÐµÑ‚" };
       }
     }
 
-    // Проверяем родителя
+    // ÐŸÑ€Ð¾Ð²ÐµÑ€ÑÐµÐ¼ Ñ€Ð¾Ð´Ð¸Ñ‚ÐµÐ»Ñ
     if (input.parentId) {
       if (input.parentId === input.id) {
-        return { success: false, error: "Категория не может быть родителем самой себя" };
+        return { success: false, error: "ÐšÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ñ Ð½Ðµ Ð¼Ð¾Ð¶ÐµÑ‚ Ð±Ñ‹Ñ‚ÑŒ Ñ€Ð¾Ð´Ð¸Ñ‚ÐµÐ»ÐµÐ¼ ÑÐ°Ð¼Ð¾Ð¹ ÑÐµÐ±Ñ" };
       }
       const parent = await prisma.category.findUnique({
         where: { id: input.parentId },
       });
       if (!parent) {
-        return { success: false, error: "Родительская категория не найдена" };
+        return { success: false, error: "Ð Ð¾Ð´Ð¸Ñ‚ÐµÐ»ÑŒÑÐºÐ°Ñ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ñ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ð°" };
       }
     }
 
-    // Формируем данные для обновления
+    // Ð¤Ð¾Ñ€Ð¼Ð¸Ñ€ÑƒÐµÐ¼ Ð´Ð°Ð½Ð½Ñ‹Ðµ Ð´Ð»Ñ Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ñ
     const updateData: {
       name?: string;
       slug?: string;
@@ -462,13 +462,13 @@ export async function updateCategory(
     if (input.warningMessage !== undefined) updateData.warningMessage = input.warningMessage?.trim() || null;
     if (input.isPinnedToDashboard !== undefined) updateData.isPinnedToDashboard = input.isPinnedToDashboard;
     if (input.childSortOrder !== undefined) updateData.childSortOrder = input.childSortOrder;
-    // Кастомные курсы: если поле передано — обновляем (включая null для сброса)
+    // ÐšÐ°ÑÑ‚Ð¾Ð¼Ð½Ñ‹Ðµ ÐºÑƒÑ€ÑÑ‹: ÐµÑÐ»Ð¸ Ð¿Ð¾Ð»Ðµ Ð¿ÐµÑ€ÐµÐ´Ð°Ð½Ð¾ â€” Ð¾Ð±Ð½Ð¾Ð²Ð»ÑÐµÐ¼ (Ð²ÐºÐ»ÑŽÑ‡Ð°Ñ null Ð´Ð»Ñ ÑÐ±Ñ€Ð¾ÑÐ°)
     if (input.customRateAu !== undefined) updateData.customRateAu = input.customRateAu;
     if (input.customRateAg !== undefined) updateData.customRateAg = input.customRateAg;
     if (input.customRatePt !== undefined) updateData.customRatePt = input.customRatePt;
     if (input.customRatePd !== undefined) updateData.customRatePd = input.customRatePd;
     
-    // Обработка родительской категории через relation syntax
+    // ÐžÐ±Ñ€Ð°Ð±Ð¾Ñ‚ÐºÐ° Ñ€Ð¾Ð´Ð¸Ñ‚ÐµÐ»ÑŒÑÐºÐ¾Ð¹ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ñ‡ÐµÑ€ÐµÐ· relation syntax
     if (input.parentId !== undefined) {
       if (input.parentId === null) {
         updateData.parent = { disconnect: true };
@@ -476,7 +476,7 @@ export async function updateCategory(
         updateData.parent = { connect: { id: input.parentId } };
       }
     }
-    // sortOrder обрабатывается отдельно через reorder
+    // sortOrder Ð¾Ð±Ñ€Ð°Ð±Ð°Ñ‚Ñ‹Ð²Ð°ÐµÑ‚ÑÑ Ð¾Ñ‚Ð´ÐµÐ»ÑŒÐ½Ð¾ Ñ‡ÐµÑ€ÐµÐ· reorder
 
     const category = await prisma.category.update({
       where: { id: input.id },
@@ -487,7 +487,7 @@ export async function updateCategory(
       },
     });
 
-    // Если изменился sortOrder — пересчитываем порядок всех категорий с тем же parentId
+    // Ð•ÑÐ»Ð¸ Ð¸Ð·Ð¼ÐµÐ½Ð¸Ð»ÑÑ sortOrder â€” Ð¿ÐµÑ€ÐµÑÑ‡Ð¸Ñ‚Ñ‹Ð²Ð°ÐµÐ¼ Ð¿Ð¾Ñ€ÑÐ´Ð¾Ðº Ð²ÑÐµÑ… ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹ Ñ Ñ‚ÐµÐ¼ Ð¶Ðµ parentId
     if (input.sortOrder !== undefined && input.sortOrder !== existing.sortOrder) {
       const parentId = input.parentId !== undefined ? input.parentId : existing.parentId;
       await reorderCategoriesByParent(parentId, input.id, input.sortOrder);
@@ -519,21 +519,21 @@ export async function updateCategory(
       },
     };
   } catch (error) {
-    console.error("Ошибка при обновлении категории:", error);
+    console.error("ÐžÑˆÐ¸Ð±ÐºÐ° Ð¿Ñ€Ð¸ Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ð¸ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Неизвестная ошибка",
+      error: error instanceof Error ? error.message : "ÐÐµÐ¸Ð·Ð²ÐµÑÑ‚Ð½Ð°Ñ Ð¾ÑˆÐ¸Ð±ÐºÐ°",
     };
   }
 }
 
 /**
- * Удалить категорию
+ * Ð£Ð´Ð°Ð»Ð¸Ñ‚ÑŒ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸ÑŽ
  */
 export async function deleteCategory(id: string): Promise<DeleteCategoryResult> {
   try {
     if (!id) {
-      return { success: false, error: "ID категории обязателен" };
+      return { success: false, error: "ID ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ð¾Ð±ÑÐ·Ð°Ñ‚ÐµÐ»ÐµÐ½" };
     }
 
     const category = await prisma.category.findUnique({
@@ -542,13 +542,13 @@ export async function deleteCategory(id: string): Promise<DeleteCategoryResult> 
     });
 
     if (!category) {
-      return { success: false, error: "Категория не найдена" };
+      return { success: false, error: "ÐšÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ñ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ð°" };
     }
 
     if (category._count.products > 0) {
       return {
         success: false,
-        error: `Невозможно удалить категорию: в ней ${category._count.products} товар(ов)`,
+        error: `ÐÐµÐ²Ð¾Ð·Ð¼Ð¾Ð¶Ð½Ð¾ ÑƒÐ´Ð°Ð»Ð¸Ñ‚ÑŒ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸ÑŽ: Ð² Ð½ÐµÐ¹ ${category._count.products} Ñ‚Ð¾Ð²Ð°Ñ€(Ð¾Ð²)`,
       };
     }
 
@@ -559,80 +559,80 @@ export async function deleteCategory(id: string): Promise<DeleteCategoryResult> 
 
     return { success: true };
   } catch (error) {
-    console.error("Ошибка при удалении категории:", error);
+    console.error("ÐžÑˆÐ¸Ð±ÐºÐ° Ð¿Ñ€Ð¸ ÑƒÐ´Ð°Ð»ÐµÐ½Ð¸Ð¸ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Неизвестная ошибка",
+      error: error instanceof Error ? error.message : "ÐÐµÐ¸Ð·Ð²ÐµÑÑ‚Ð½Ð°Ñ Ð¾ÑˆÐ¸Ð±ÐºÐ°",
     };
   }
 }
 
 // ============================================================================
-// ВИТРИНА КАТЕГОРИЙ (для главной страницы)
+// Ð’Ð˜Ð¢Ð Ð˜ÐÐ ÐšÐÐ¢Ð•Ð“ÐžÐ Ð˜Ð™ (Ð´Ð»Ñ Ð³Ð»Ð°Ð²Ð½Ð¾Ð¹ ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ñ‹)
 // ============================================================================
 
 /**
- * Данные витрины для главной страницы
- * Содержит информацию о ТОВАРЕ (самом дорогом в категории) + slug категории для ссылки
+ * Ð”Ð°Ð½Ð½Ñ‹Ðµ Ð²Ð¸Ñ‚Ñ€Ð¸Ð½Ñ‹ Ð´Ð»Ñ Ð³Ð»Ð°Ð²Ð½Ð¾Ð¹ ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ñ‹
+ * Ð¡Ð¾Ð´ÐµÑ€Ð¶Ð¸Ñ‚ Ð¸Ð½Ñ„Ð¾Ñ€Ð¼Ð°Ñ†Ð¸ÑŽ Ð¾ Ð¢ÐžÐ’ÐÐ Ð• (ÑÐ°Ð¼Ð¾Ð¼ Ð´Ð¾Ñ€Ð¾Ð³Ð¾Ð¼ Ð² ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸) + slug ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ð´Ð»Ñ ÑÑÑ‹Ð»ÐºÐ¸
  */
 export interface CategoryShowcaseItem {
-  // Данные ТОВАРА
-  id: string;              // id товара
-  name: string;            // название товара
-  slug: string;            // slug товара
-  description: string | null; // описание товара
-  image: string | null;    // фото товара
-  priceNew: number | null; // цена товара (Новый)
-  priceUsed: number | null;// цена товара (Б/У)
+  // Ð”Ð°Ð½Ð½Ñ‹Ðµ Ð¢ÐžÐ’ÐÐ Ð
+  id: string;              // id Ñ‚Ð¾Ð²Ð°Ñ€Ð°
+  name: string;            // Ð½Ð°Ð·Ð²Ð°Ð½Ð¸Ðµ Ñ‚Ð¾Ð²Ð°Ñ€Ð°
+  slug: string;            // slug Ñ‚Ð¾Ð²Ð°Ñ€Ð°
+  description: string | null; // Ð¾Ð¿Ð¸ÑÐ°Ð½Ð¸Ðµ Ñ‚Ð¾Ð²Ð°Ñ€Ð°
+  image: string | null;    // Ñ„Ð¾Ñ‚Ð¾ Ñ‚Ð¾Ð²Ð°Ñ€Ð°
+  priceNew: number | null; // Ñ†ÐµÐ½Ð° Ñ‚Ð¾Ð²Ð°Ñ€Ð° (ÐÐ¾Ð²Ñ‹Ð¹)
+  priceUsed: number | null;// Ñ†ÐµÐ½Ð° Ñ‚Ð¾Ð²Ð°Ñ€Ð° (Ð‘/Ð£)
   isNewAvailable: boolean;
   isUsedAvailable: boolean;
-  isSingleType: boolean;   // Единая цена (без разделения на Б/У)
-  isPriceOnRequest: boolean; // Цена по запросу
-  unitType: "PIECE" | "GRAM" | "KG"; // Единица измерения
-  // Данные категории для ссылки
-  categorySlug: string;    // slug категории
-  categoryName: string;    // название категории
+  isSingleType: boolean;   // Ð•Ð´Ð¸Ð½Ð°Ñ Ñ†ÐµÐ½Ð° (Ð±ÐµÐ· Ñ€Ð°Ð·Ð´ÐµÐ»ÐµÐ½Ð¸Ñ Ð½Ð° Ð‘/Ð£)
+  isPriceOnRequest: boolean; // Ð¦ÐµÐ½Ð° Ð¿Ð¾ Ð·Ð°Ð¿Ñ€Ð¾ÑÑƒ
+  unitType: "PIECE" | "GRAM" | "KG"; // Ð•Ð´Ð¸Ð½Ð¸Ñ†Ð° Ð¸Ð·Ð¼ÐµÑ€ÐµÐ½Ð¸Ñ
+  // Ð”Ð°Ð½Ð½Ñ‹Ðµ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ð´Ð»Ñ ÑÑÑ‹Ð»ÐºÐ¸
+  categorySlug: string;    // slug ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸
+  categoryName: string;    // Ð½Ð°Ð·Ð²Ð°Ð½Ð¸Ðµ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸
 }
 
 /**
- * Результат запроса витрины категорий
+ * Ð ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚ Ð·Ð°Ð¿Ñ€Ð¾ÑÐ° Ð²Ð¸Ñ‚Ñ€Ð¸Ð½Ñ‹ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹
  */
 export type CategoryShowcaseResult =
   | { success: true; data: CategoryShowcaseItem[] }
   | { success: false; error: string };
 
 /**
- * Получить витрину категорий для главной страницы.
+ * ÐŸÐ¾Ð»ÑƒÑ‡Ð¸Ñ‚ÑŒ Ð²Ð¸Ñ‚Ñ€Ð¸Ð½Ñƒ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹ Ð´Ð»Ñ Ð³Ð»Ð°Ð²Ð½Ð¾Ð¹ ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ñ‹.
  * 
- * Алгоритм:
- * 1. Получает ВСЕ категории (отсортированные по sortOrder asc)
- * 2. Для КАЖДОЙ категории находит ОДИН товар с самой высокой ценой (priceNew desc)
- * 3. Пропускает категории без товаров
- * 4. Возвращает данные ТОВАРА (название, фото, цена) + categorySlug для ссылки
+ * ÐÐ»Ð³Ð¾Ñ€Ð¸Ñ‚Ð¼:
+ * 1. ÐŸÐ¾Ð»ÑƒÑ‡Ð°ÐµÑ‚ Ð’Ð¡Ð• ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ (Ð¾Ñ‚ÑÐ¾Ñ€Ñ‚Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð½Ñ‹Ðµ Ð¿Ð¾ sortOrder asc)
+ * 2. Ð”Ð»Ñ ÐšÐÐ–Ð”ÐžÐ™ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ð½Ð°Ñ…Ð¾Ð´Ð¸Ñ‚ ÐžÐ”Ð˜Ð Ñ‚Ð¾Ð²Ð°Ñ€ Ñ ÑÐ°Ð¼Ð¾Ð¹ Ð²Ñ‹ÑÐ¾ÐºÐ¾Ð¹ Ñ†ÐµÐ½Ð¾Ð¹ (priceNew desc)
+ * 3. ÐŸÑ€Ð¾Ð¿ÑƒÑÐºÐ°ÐµÑ‚ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ð±ÐµÐ· Ñ‚Ð¾Ð²Ð°Ñ€Ð¾Ð²
+ * 4. Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‰Ð°ÐµÑ‚ Ð´Ð°Ð½Ð½Ñ‹Ðµ Ð¢ÐžÐ’ÐÐ Ð (Ð½Ð°Ð·Ð²Ð°Ð½Ð¸Ðµ, Ñ„Ð¾Ñ‚Ð¾, Ñ†ÐµÐ½Ð°) + categorySlug Ð´Ð»Ñ ÑÑÑ‹Ð»ÐºÐ¸
  * 
- * @param limit - максимальное количество результатов (по умолчанию 10)
+ * @param limit - Ð¼Ð°ÐºÑÐ¸Ð¼Ð°Ð»ÑŒÐ½Ð¾Ðµ ÐºÐ¾Ð»Ð¸Ñ‡ÐµÑÑ‚Ð²Ð¾ Ñ€ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚Ð¾Ð² (Ð¿Ð¾ ÑƒÐ¼Ð¾Ð»Ñ‡Ð°Ð½Ð¸ÑŽ 10)
  */
 export async function getCategoryShowcase(limit: number = 10): Promise<CategoryShowcaseResult> {
   try {
-    // Получаем курсы металлов и глобальные настройки для расчёта цен
+    // ÐŸÐ¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ ÐºÑƒÑ€ÑÑ‹ Ð¼ÐµÑ‚Ð°Ð»Ð»Ð¾Ð² Ð¸ Ð³Ð»Ð¾Ð±Ð°Ð»ÑŒÐ½Ñ‹Ðµ Ð½Ð°ÑÑ‚Ñ€Ð¾Ð¹ÐºÐ¸ Ð´Ð»Ñ Ñ€Ð°ÑÑ‡Ñ‘Ñ‚Ð° Ñ†ÐµÐ½
     const [metalRates, globalSettings] = await Promise.all([
       prisma.metalRate.findFirst(),
       prisma.globalSettings.findFirst(),
     ]);
 
-    // Если нет курсов металлов, расчёт цен невозможен
+    // Ð•ÑÐ»Ð¸ Ð½ÐµÑ‚ ÐºÑƒÑ€ÑÐ¾Ð² Ð¼ÐµÑ‚Ð°Ð»Ð»Ð¾Ð², Ñ€Ð°ÑÑ‡Ñ‘Ñ‚ Ñ†ÐµÐ½ Ð½ÐµÐ²Ð¾Ð·Ð¼Ð¾Ð¶ÐµÐ½
     if (!metalRates) {
-      return { success: false, error: "Курсы металлов не настроены" };
+      return { success: false, error: "ÐšÑƒÑ€ÑÑ‹ Ð¼ÐµÑ‚Ð°Ð»Ð»Ð¾Ð² Ð½Ðµ Ð½Ð°ÑÑ‚Ñ€Ð¾ÐµÐ½Ñ‹" };
     }
 
     const markup = globalSettings?.priceMarkup ? Number(globalSettings.priceMarkup) : 1;
 
-    // Получаем только корневые категории с товарами (включая товары подкатегорий)
+    // ÐŸÐ¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ ÐºÐ¾Ñ€Ð½ÐµÐ²Ñ‹Ðµ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ñ Ñ‚Ð¾Ð²Ð°Ñ€Ð°Ð¼Ð¸ (Ð²ÐºÐ»ÑŽÑ‡Ð°Ñ Ñ‚Ð¾Ð²Ð°Ñ€Ñ‹ Ð¿Ð¾Ð´ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹)
     const categories = await prisma.category.findMany({
       where: { parentId: null },
       orderBy: { sortOrder: "asc" },
       include: {
-        // Товары самой категории
+        // Ð¢Ð¾Ð²Ð°Ñ€Ñ‹ ÑÐ°Ð¼Ð¾Ð¹ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸
         products: {
           select: {
             id: true,
@@ -641,17 +641,17 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
             description: true,
             image: true,
             unitType: true,
-            // Содержание металлов для Новых
+            // Ð¡Ð¾Ð´ÐµÑ€Ð¶Ð°Ð½Ð¸Ðµ Ð¼ÐµÑ‚Ð°Ð»Ð»Ð¾Ð² Ð´Ð»Ñ ÐÐ¾Ð²Ñ‹Ñ…
             contentGold: true,
             contentSilver: true,
             contentPlatinum: true,
             contentPalladium: true,
-            // Содержание металлов для Б/У
+            // Ð¡Ð¾Ð´ÐµÑ€Ð¶Ð°Ð½Ð¸Ðµ Ð¼ÐµÑ‚Ð°Ð»Ð»Ð¾Ð² Ð´Ð»Ñ Ð‘/Ð£
             contentGoldUsed: true,
             contentSilverUsed: true,
             contentPlatinumUsed: true,
             contentPalladiumUsed: true,
-            // Доступность
+            // Ð”Ð¾ÑÑ‚ÑƒÐ¿Ð½Ð¾ÑÑ‚ÑŒ
             isNewAvailable: true,
             isUsedAvailable: true,
             isSingleType: true,
@@ -659,15 +659,15 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
             isShowcaseFace: true,
             priceMarkup: true,
             priceMarkupUsed: true,
-            // Ручные цены
+            // Ð ÑƒÑ‡Ð½Ñ‹Ðµ Ñ†ÐµÐ½Ñ‹
             manualPriceNew: true,
             manualPriceUsed: true,
           },
         },
-        // Подкатегории с их товарами и кастомными курсами
+        // ÐŸÐ¾Ð´ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ñ Ð¸Ñ… Ñ‚Ð¾Ð²Ð°Ñ€Ð°Ð¼Ð¸ Ð¸ ÐºÐ°ÑÑ‚Ð¾Ð¼Ð½Ñ‹Ð¼Ð¸ ÐºÑƒÑ€ÑÐ°Ð¼Ð¸
         children: {
           select: {
-            // Кастомные курсы подкатегории
+            // ÐšÐ°ÑÑ‚Ð¾Ð¼Ð½Ñ‹Ðµ ÐºÑƒÑ€ÑÑ‹ Ð¿Ð¾Ð´ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸
             customRateAu: true,
             customRateAg: true,
             customRatePt: true,
@@ -704,13 +704,13 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
       },
     });
 
-    // Импортируем функции расчёта цен
+    // Ð˜Ð¼Ð¿Ð¾Ñ€Ñ‚Ð¸Ñ€ÑƒÐµÐ¼ Ñ„ÑƒÐ½ÐºÑ†Ð¸Ð¸ Ñ€Ð°ÑÑ‡Ñ‘Ñ‚Ð° Ñ†ÐµÐ½
     const { calculateBasePrice, resolveRates } = await import("@/lib/price-calculator");
 
     const showcaseItems: CategoryShowcaseItem[] = [];
 
     for (const category of categories) {
-      // Кастомные курсы родительской категории
+      // ÐšÐ°ÑÑ‚Ð¾Ð¼Ð½Ñ‹Ðµ ÐºÑƒÑ€ÑÑ‹ Ñ€Ð¾Ð´Ð¸Ñ‚ÐµÐ»ÑŒÑÐºÐ¾Ð¹ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸
       const parentCategoryRates = {
         customRateAu: category.customRateAu,
         customRateAg: category.customRateAg,
@@ -718,13 +718,13 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
         customRatePd: category.customRatePd,
       };
       
-      // Товары из родительской категории + информация о курсах
+      // Ð¢Ð¾Ð²Ð°Ñ€Ñ‹ Ð¸Ð· Ñ€Ð¾Ð´Ð¸Ñ‚ÐµÐ»ÑŒÑÐºÐ¾Ð¹ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ + Ð¸Ð½Ñ„Ð¾Ñ€Ð¼Ð°Ñ†Ð¸Ñ Ð¾ ÐºÑƒÑ€ÑÐ°Ñ…
       const productsWithRates = category.products.map(p => ({
         ...p,
         categoryRates: parentCategoryRates,
       }));
       
-      // Товары из подкатегорий + их кастомные курсы
+      // Ð¢Ð¾Ð²Ð°Ñ€Ñ‹ Ð¸Ð· Ð¿Ð¾Ð´ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹ + Ð¸Ñ… ÐºÐ°ÑÑ‚Ð¾Ð¼Ð½Ñ‹Ðµ ÐºÑƒÑ€ÑÑ‹
       const childProductsWithRates = category.children.flatMap(child => 
         child.products.map(p => ({
           ...p,
@@ -737,18 +737,18 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
         }))
       );
       
-      // Объединяем все товары с привязкой к их курсам
+      // ÐžÐ±ÑŠÐµÐ´Ð¸Ð½ÑÐµÐ¼ Ð²ÑÐµ Ñ‚Ð¾Ð²Ð°Ñ€Ñ‹ Ñ Ð¿Ñ€Ð¸Ð²ÑÐ·ÐºÐ¾Ð¹ Ðº Ð¸Ñ… ÐºÑƒÑ€ÑÐ°Ð¼
       const allProducts = [...productsWithRates, ...childProductsWithRates];
 
-      // Пропускаем категории без товаров
+      // ÐŸÑ€Ð¾Ð¿ÑƒÑÐºÐ°ÐµÐ¼ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ð±ÐµÐ· Ñ‚Ð¾Ð²Ð°Ñ€Ð¾Ð²
       if (allProducts.length === 0) {
         continue;
       }
 
-      // Сначала ищем товар с флагом isShowcaseFace
+      // Ð¡Ð½Ð°Ñ‡Ð°Ð»Ð° Ð¸Ñ‰ÐµÐ¼ Ñ‚Ð¾Ð²Ð°Ñ€ Ñ Ñ„Ð»Ð°Ð³Ð¾Ð¼ isShowcaseFace
       const showcaseFaceProduct = allProducts.find(p => p.isShowcaseFace);
 
-      // Хелпер для расчёта цен товара
+      // Ð¥ÐµÐ»Ð¿ÐµÑ€ Ð´Ð»Ñ Ñ€Ð°ÑÑ‡Ñ‘Ñ‚Ð° Ñ†ÐµÐ½ Ñ‚Ð¾Ð²Ð°Ñ€Ð°
       const calcPrices = (product: typeof allProducts[0]) => {
         const effectiveMarkup = (product.priceMarkup ?? 1) * markup;
         const effectiveMarkupUsed = (product.priceMarkupUsed ?? 1) * markup;
@@ -788,13 +788,13 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
       let chosenPriceUsed: number | null = null;
 
       if (showcaseFaceProduct) {
-        // Используем товар, выбранный вручную как лицо категории
+        // Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐµÐ¼ Ñ‚Ð¾Ð²Ð°Ñ€, Ð²Ñ‹Ð±Ñ€Ð°Ð½Ð½Ñ‹Ð¹ Ð²Ñ€ÑƒÑ‡Ð½ÑƒÑŽ ÐºÐ°Ðº Ð»Ð¸Ñ†Ð¾ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸
         chosenProduct = showcaseFaceProduct;
         const prices = calcPrices(showcaseFaceProduct);
         chosenPriceNew = prices.priceNew;
         chosenPriceUsed = prices.priceUsed;
       } else {
-        // Fallback: находим самый дорогой товар
+        // Fallback: Ð½Ð°Ñ…Ð¾Ð´Ð¸Ð¼ ÑÐ°Ð¼Ñ‹Ð¹ Ð´Ð¾Ñ€Ð¾Ð³Ð¾Ð¹ Ñ‚Ð¾Ð²Ð°Ñ€
         let maxEffectivePrice = -Infinity;
         for (const product of allProducts) {
           const { priceNew, priceUsed } = calcPrices(product);
@@ -810,10 +810,10 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
 
       const maxEffectivePrice = Math.max(chosenPriceNew ?? 0, chosenPriceUsed ?? 0);
 
-      // Добавляем товар в результат, если нашли (с любой ценой > 0)
+      // Ð”Ð¾Ð±Ð°Ð²Ð»ÑÐµÐ¼ Ñ‚Ð¾Ð²Ð°Ñ€ Ð² Ñ€ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚, ÐµÑÐ»Ð¸ Ð½Ð°ÑˆÐ»Ð¸ (Ñ Ð»ÑŽÐ±Ð¾Ð¹ Ñ†ÐµÐ½Ð¾Ð¹ > 0)
       if (chosenProduct && maxEffectivePrice > 0) {
         showcaseItems.push({
-          // Данные товара
+          // Ð”Ð°Ð½Ð½Ñ‹Ðµ Ñ‚Ð¾Ð²Ð°Ñ€Ð°
           id: chosenProduct.id,
           name: chosenProduct.name,
           slug: chosenProduct.slug,
@@ -826,13 +826,13 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
           isSingleType: chosenProduct.isSingleType,
           isPriceOnRequest: chosenProduct.isPriceOnRequest,
           unitType: chosenProduct.unitType,
-          // Данные категории
+          // Ð”Ð°Ð½Ð½Ñ‹Ðµ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸
           categorySlug: category.slug,
           categoryName: category.name,
         });
       }
 
-      // Прерываем если достигли лимита
+      // ÐŸÑ€ÐµÑ€Ñ‹Ð²Ð°ÐµÐ¼ ÐµÑÐ»Ð¸ Ð´Ð¾ÑÑ‚Ð¸Ð³Ð»Ð¸ Ð»Ð¸Ð¼Ð¸Ñ‚Ð°
       if (showcaseItems.length >= limit) {
         break;
       }
@@ -840,17 +840,17 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
 
     return { success: true, data: showcaseItems };
   } catch (error) {
-    console.error("Ошибка при получении витрины категорий:", error);
+    console.error("ÐžÑˆÐ¸Ð±ÐºÐ° Ð¿Ñ€Ð¸ Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½Ð¸Ð¸ Ð²Ð¸Ñ‚Ñ€Ð¸Ð½Ñ‹ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Неизвестная ошибка",
+      error: error instanceof Error ? error.message : "ÐÐµÐ¸Ð·Ð²ÐµÑÑ‚Ð½Ð°Ñ Ð¾ÑˆÐ¸Ð±ÐºÐ°",
     };
   }
 }
 
 /**
- * Получить подкатегории по ID родительской категории
- * Если parentId = null, возвращает корневые категории
+ * ÐŸÐ¾Ð»ÑƒÑ‡Ð¸Ñ‚ÑŒ Ð¿Ð¾Ð´ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ð¿Ð¾ ID Ñ€Ð¾Ð´Ð¸Ñ‚ÐµÐ»ÑŒÑÐºÐ¾Ð¹ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸
+ * Ð•ÑÐ»Ð¸ parentId = null, Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‰Ð°ÐµÑ‚ ÐºÐ¾Ñ€Ð½ÐµÐ²Ñ‹Ðµ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸
  */
 export async function getSubcategories(parentId: string | null): Promise<CategoriesResult> {
   try {
@@ -890,23 +890,23 @@ export async function getSubcategories(parentId: string | null): Promise<Categor
       total: categories.length,
     };
   } catch (error) {
-    console.error("Ошибка при получении подкатегорий:", error);
+    console.error("ÐžÑˆÐ¸Ð±ÐºÐ° Ð¿Ñ€Ð¸ Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½Ð¸Ð¸ Ð¿Ð¾Ð´ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Неизвестная ошибка",
+      error: error instanceof Error ? error.message : "ÐÐµÐ¸Ð·Ð²ÐµÑÑ‚Ð½Ð°Ñ Ð¾ÑˆÐ¸Ð±ÐºÐ°",
     };
   }
 }
 
 /**
- * Получить цепочку категорий от корня до текущей (для хлебных крошек)
+ * ÐŸÐ¾Ð»ÑƒÑ‡Ð¸Ñ‚ÑŒ Ñ†ÐµÐ¿Ð¾Ñ‡ÐºÑƒ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹ Ð¾Ñ‚ ÐºÐ¾Ñ€Ð½Ñ Ð´Ð¾ Ñ‚ÐµÐºÑƒÑ‰ÐµÐ¹ (Ð´Ð»Ñ Ñ…Ð»ÐµÐ±Ð½Ñ‹Ñ… ÐºÑ€Ð¾ÑˆÐµÐº)
  */
 export async function getCategoryBreadcrumbs(categoryId: string): Promise<{ success: true; data: Array<{ id: string; name: string; slug: string }> } | { success: false; error: string }> {
   try {
     const breadcrumbs: Array<{ id: string; name: string; slug: string }> = [];
     let currentId: string | null = categoryId;
 
-    // Поднимаемся вверх по дереву категорий
+    // ÐŸÐ¾Ð´Ð½Ð¸Ð¼Ð°ÐµÐ¼ÑÑ Ð²Ð²ÐµÑ€Ñ… Ð¿Ð¾ Ð´ÐµÑ€ÐµÐ²Ñƒ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹
     while (currentId) {
       const category: { id: string; name: string; slug: string; parentId: string | null } | null = await prisma.category.findUnique({
         where: { id: currentId },
@@ -926,20 +926,20 @@ export async function getCategoryBreadcrumbs(categoryId: string): Promise<{ succ
 
     return { success: true, data: breadcrumbs };
   } catch (error) {
-    console.error("Ошибка при получении хлебных крошек:", error);
+    console.error("ÐžÑˆÐ¸Ð±ÐºÐ° Ð¿Ñ€Ð¸ Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½Ð¸Ð¸ Ñ…Ð»ÐµÐ±Ð½Ñ‹Ñ… ÐºÑ€Ð¾ÑˆÐµÐº:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Неизвестная ошибка",
+      error: error instanceof Error ? error.message : "ÐÐµÐ¸Ð·Ð²ÐµÑÑ‚Ð½Ð°Ñ Ð¾ÑˆÐ¸Ð±ÐºÐ°",
     };
   }
 }
 
 // ============================================================================
-// ДАШБОРД: ЗАКРЕПЛЁННЫЕ КАТЕГОРИИ
+// Ð”ÐÐ¨Ð‘ÐžÐ Ð”: Ð—ÐÐšÐ Ð•ÐŸÐ›ÐÐÐÐ«Ð• ÐšÐÐ¢Ð•Ð“ÐžÐ Ð˜Ð˜
 // ============================================================================
 
 /**
- * Получить категории, закреплённые на дашборде (isPinnedToDashboard: true)
+ * ÐŸÐ¾Ð»ÑƒÑ‡Ð¸Ñ‚ÑŒ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸, Ð·Ð°ÐºÑ€ÐµÐ¿Ð»Ñ‘Ð½Ð½Ñ‹Ðµ Ð½Ð° Ð´Ð°ÑˆÐ±Ð¾Ñ€Ð´Ðµ (isPinnedToDashboard: true)
  */
 export async function getPinnedCategories(): Promise<CategoriesResult> {
   try {
@@ -978,16 +978,16 @@ export async function getPinnedCategories(): Promise<CategoriesResult> {
       total: categories.length,
     };
   } catch (error) {
-    console.error("Ошибка при получении закреплённых категорий:", error);
+    console.error("ÐžÑˆÐ¸Ð±ÐºÐ° Ð¿Ñ€Ð¸ Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½Ð¸Ð¸ Ð·Ð°ÐºÑ€ÐµÐ¿Ð»Ñ‘Ð½Ð½Ñ‹Ñ… ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Неизвестная ошибка",
+      error: error instanceof Error ? error.message : "ÐÐµÐ¸Ð·Ð²ÐµÑÑ‚Ð½Ð°Ñ Ð¾ÑˆÐ¸Ð±ÐºÐ°",
     };
   }
 }
 
 /**
- * Входные данные для обновления курсов категории с дашборда
+ * Ð’Ñ…Ð¾Ð´Ð½Ñ‹Ðµ Ð´Ð°Ð½Ð½Ñ‹Ðµ Ð´Ð»Ñ Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ñ ÐºÑƒÑ€ÑÐ¾Ð² ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ñ Ð´Ð°ÑˆÐ±Ð¾Ñ€Ð´Ð°
  */
 export interface UpdateCategoryRatesInput {
   id: string;
@@ -998,13 +998,13 @@ export interface UpdateCategoryRatesInput {
 }
 
 /**
- * Обновить курсы металлов для нескольких категорий (для дашборда)
+ * ÐžÐ±Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ ÐºÑƒÑ€ÑÑ‹ Ð¼ÐµÑ‚Ð°Ð»Ð»Ð¾Ð² Ð´Ð»Ñ Ð½ÐµÑÐºÐ¾Ð»ÑŒÐºÐ¸Ñ… ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹ (Ð´Ð»Ñ Ð´Ð°ÑˆÐ±Ð¾Ñ€Ð´Ð°)
  */
 export async function updateCategoryRates(
   inputs: UpdateCategoryRatesInput[]
 ): Promise<{ success: true } | { success: false; error: string }> {
   try {
-    // Обновляем все категории в транзакции
+    // ÐžÐ±Ð½Ð¾Ð²Ð»ÑÐµÐ¼ Ð²ÑÐµ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ð² Ñ‚Ñ€Ð°Ð½Ð·Ð°ÐºÑ†Ð¸Ð¸
     await prisma.$transaction(
       inputs.map((input) =>
         prisma.category.update({
@@ -1024,10 +1024,10 @@ export async function updateCategoryRates(
 
     return { success: true };
   } catch (error) {
-    console.error("Ошибка при обновлении курсов категорий:", error);
+    console.error("ÐžÑˆÐ¸Ð±ÐºÐ° Ð¿Ñ€Ð¸ Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ð¸ ÐºÑƒÑ€ÑÐ¾Ð² ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¹:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Неизвестная ошибка",
+      error: error instanceof Error ? error.message : "ÐÐµÐ¸Ð·Ð²ÐµÑÑ‚Ð½Ð°Ñ Ð¾ÑˆÐ¸Ð±ÐºÐ°",
     };
   }
 }

@@ -3,7 +3,8 @@ import { MetalRatesForm } from "./components/MetalRatesForm";
 import { PinnedCategoryRatesForm } from "./components/PinnedCategoryRatesForm";
 import { ContactSettingsForm } from "./components/ContactSettingsForm";
 import { TelegramSettingsForm } from "./components/TelegramSettingsForm";
-import { Package, TrendingUp, Phone, Bot } from "lucide-react";
+import { AboutTextForm } from "./components/AboutTextForm";
+import { Package, TrendingUp, Phone, Bot, FileText } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -128,6 +129,31 @@ export default async function AdminDashboard() {
         </div>
         {globalSettings ? (
           <TelegramSettingsForm initialData={globalSettings} />
+        ) : (
+          <div className="text-red-500">
+            Ошибка загрузки настроек:{" "}
+            {!globalSettingsResult.success && globalSettingsResult.error}
+          </div>
+        )}
+      </div>
+
+      {/* About Text Settings */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-emerald-50 rounded-lg">
+            <FileText className="w-5 h-5 text-emerald-600" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-slate-800">
+              Текст для страницы «О нас»
+            </h2>
+            <p className="text-sm text-slate-500">
+              Отображается на публичной странице /about
+            </p>
+          </div>
+        </div>
+        {globalSettings ? (
+          <AboutTextForm initialData={globalSettings} />
         ) : (
           <div className="text-red-500">
             Ошибка загрузки настроек:{" "}

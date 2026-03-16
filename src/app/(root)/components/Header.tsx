@@ -129,6 +129,7 @@ export function Header({ contactInfo }: HeaderProps) {
     { href: "/", label: "Главная", icon: Home },
     { href: "/catalog", label: "Каталог", icon: Package },
     { href: "/postal", label: "Почтовые отправления", icon: Mail },
+    { href: "/about", label: "О нас", icon: Zap },
     { href: "/contacts", label: "Контакты", icon: MapPin },
   ];
 
@@ -282,6 +283,13 @@ export function Header({ contactInfo }: HeaderProps) {
               >
                 <Mail className="w-5 h-5" />
                 Почтовые отправления
+              </Link>
+              <Link
+                href="/about"
+                className="flex items-center gap-2 hover:text-[var(--accent-400)] transition-colors"
+              >
+                <Zap className="w-5 h-5" />
+                О нас
               </Link>
               <Link
                 href="/contacts"

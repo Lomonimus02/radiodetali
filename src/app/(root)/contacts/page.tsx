@@ -53,7 +53,7 @@ export default async function ContactsPage() {
       ? settings.workSchedule.split("\n").filter(line => line.trim())
       : DEFAULT_CONTACTS.workSchedule,
     coordinates: DEFAULT_CONTACTS.coordinates,
-    storePhotoUrl: settings?.storePhotoUrl || null,
+    storePhotoUrls: settings?.storePhotoUrls ?? [],
   };
   return (
     <div className="min-h-screen bg-[var(--gray-50)]">
@@ -82,18 +82,30 @@ export default async function ContactsPage() {
           </p>
         </div>
 
-        {/* Store Photo */}
-        {CONTACTS.storePhotoUrl && (
+        {/* Store Photos */}
+        {CONTACTS.storePhotoUrls.length > 0 && (
           <div className="mb-10 md:mb-14">
-            <div className="relative w-full max-w-3xl mx-auto aspect-[16/9] rounded-2xl overflow-hidden shadow-lg">
-              <Image
-                src={CONTACTS.storePhotoUrl}
-                alt="Фото магазина"
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 768px"
-                priority
-              />
+            <div className={`grid gap-4 max-w-4xl mx-auto ${
+              CONTACTS.storePhotoUrls.length === 1 
+                ? "grid-cols-1 max-w-3xl" 
+                : CONTACTS.storePhotoUrls.length === 2 
+                  ? "grid-cols-1 md:grid-cols-2" 
+                  : "grid-cols-1 md:grid-cols-3"
+            }`}>
+              {CONTACTS.storePhotoUrls.map((url, index) => (
+                <div key={url} className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden shadow-lg">
+                  <Image
+                    src={url}
+                    alt={`Фото магазина ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes={CONTACTS.storePhotoUrls.length === 1 
+                      ? "(max-width: 768px) 100vw, 768px" 
+                      : "(max-width: 768px) 100vw, 400px"}
+                    priority={index === 0}
+                  />
+                </div>
+              ))}
             </div>
           </div>
         )}

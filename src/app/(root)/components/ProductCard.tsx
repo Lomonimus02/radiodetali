@@ -169,13 +169,13 @@ export function ProductCard({ product, categorySlug, categoryName, variant = "de
             </div>
           ) : (
             <>
-              {/* Цена за Новый / Единая цена */}
+              {/* Цена за Новые / Единая цена */}
               {hasNewPrice && (
-                <div className="flex items-center justify-between px-2 py-1 rounded-md bg-gray-900">
-                  <span className="text-xs font-medium text-white">
-                    {product.isSingleType ? 'Цена' : 'Новый'}
+                <div className="flex items-center justify-between px-2 py-1 bg-[var(--gray-100)] border border-[var(--gray-900)] rounded-md">
+                  <span className="text-sm font-medium text-[var(--gray-900)]">
+                    {product.isSingleType ? 'Цена' : 'Новые'}
                   </span>
-                  <span className="font-bold text-white">
+                  <span className="text-sm font-bold text-[var(--gray-900)]">
                     {formatPrice(product.priceNew!)}{getPriceUnitSuffix(product.unitType)}
                   </span>
                 </div>
@@ -183,9 +183,9 @@ export function ProductCard({ product, categorySlug, categoryName, variant = "de
               
               {/* Цена за Б/У (скрываем для единой цены) */}
               {hasUsedPrice && !product.isSingleType && (
-                <div className="flex items-center justify-between bg-gray-900 px-2 py-1 rounded-md">
-                  <span className="text-xs font-medium text-white">Б/У</span>
-                  <span className="font-bold text-white">
+                <div className="flex items-center justify-between px-2 py-1 bg-[var(--gray-100)] border border-[var(--gray-900)] rounded-md">
+                  <span className="text-sm font-medium text-[var(--gray-900)]">Б/У</span>
+                  <span className="text-sm font-bold text-[var(--gray-900)]">
                     {formatPrice(product.priceUsed!)}{getPriceUnitSuffix(product.unitType)}
                   </span>
                 </div>

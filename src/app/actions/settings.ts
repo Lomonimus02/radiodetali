@@ -53,7 +53,10 @@ export interface GlobalSettingsData {
   telegramBotToken: string;
   telegramChatId: string;
   // Фото магазина
-  storePhotoUrl: string | null;
+  storePhotoUrls: string[];
+  // Текст и фото для страницы "О нас"
+  aboutText: string;
+  aboutPhotoUrl: string;
 }
 
 /**
@@ -68,7 +71,9 @@ export interface UpdateGlobalSettingsInput {
   workSchedule?: string;
   telegramBotToken?: string;
   telegramChatId?: string;
-  storePhotoUrl?: string | null;
+  storePhotoUrls?: string[];
+  aboutText?: string;
+  aboutPhotoUrl?: string;
 }
 
 /**
@@ -263,7 +268,9 @@ export async function getGlobalSettings(): Promise<GlobalSettingsResult> {
         workSchedule: settings.workSchedule,
         telegramBotToken: settings.telegramBotToken,
         telegramChatId: settings.telegramChatId,
-        storePhotoUrl: settings.storePhotoUrl ?? null,
+        storePhotoUrls: settings.storePhotoUrls ?? [],
+        aboutText: settings.aboutText ?? "",
+        aboutPhotoUrl: settings.aboutPhotoUrl ?? "",
       },
     };
   } catch (error) {
@@ -311,7 +318,9 @@ export async function updateGlobalSettings(
     if (input.workSchedule !== undefined) updateData.workSchedule = input.workSchedule;
     if (input.telegramBotToken !== undefined) updateData.telegramBotToken = input.telegramBotToken;
     if (input.telegramChatId !== undefined) updateData.telegramChatId = input.telegramChatId;
-    if (input.storePhotoUrl !== undefined) updateData.storePhotoUrl = input.storePhotoUrl;
+    if (input.storePhotoUrls !== undefined) updateData.storePhotoUrls = input.storePhotoUrls;
+    if (input.aboutText !== undefined) updateData.aboutText = input.aboutText;
+    if (input.aboutPhotoUrl !== undefined) updateData.aboutPhotoUrl = input.aboutPhotoUrl;
 
     // Обновляем или создаём запись (upsert)
     const settings = await prisma.globalSettings.upsert({
@@ -327,7 +336,9 @@ export async function updateGlobalSettings(
         workSchedule: input.workSchedule ?? "",
         telegramBotToken: input.telegramBotToken ?? "",
         telegramChatId: input.telegramChatId ?? "",
-        storePhotoUrl: input.storePhotoUrl ?? null,
+        storePhotoUrls: input.storePhotoUrls ?? [],
+        aboutText: input.aboutText ?? "",
+        aboutPhotoUrl: input.aboutPhotoUrl ?? "",
       },
     });
 
@@ -337,6 +348,7 @@ export async function updateGlobalSettings(
     revalidatePath("/products");
     revalidatePath("/catalog");
     revalidatePath("/contacts");
+    revalidatePath("/about");
 
     return {
       success: true,
@@ -351,7 +363,9 @@ export async function updateGlobalSettings(
         workSchedule: settings.workSchedule,
         telegramBotToken: settings.telegramBotToken,
         telegramChatId: settings.telegramChatId,
-        storePhotoUrl: settings.storePhotoUrl ?? null,
+        storePhotoUrls: settings.storePhotoUrls ?? [],
+        aboutText: settings.aboutText ?? "",
+        aboutPhotoUrl: settings.aboutPhotoUrl ?? "",
       },
     };
   } catch (error) {

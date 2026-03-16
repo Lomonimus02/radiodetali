@@ -4,17 +4,14 @@ import type { Metadata } from "next";
 import {
   ArrowRight,
   Scale,
-  Banknote,
   TrendingUp,
-  Shield,
   Truck,
   Clock,
   Sparkles,
   Package,
-  ChevronRight,
 } from "lucide-react";
 import { getCategoryShowcase, getGlobalSettings } from "@/app/actions";
-import { prisma } from "@/lib/prisma";
+import { BenefitsSection } from "./components/BenefitCard";
 
 // Отключаем статический пререндеринг (требуется БД)
 export const dynamic = "force-dynamic";
@@ -258,102 +255,6 @@ function HeroSection() {
   );
 }
 
-// Categories Section - horizontal cards like catalog page
-async function CategoriesSection() {
-  // Получаем только корневые категории с фото витрины
-  const categories = await prisma.category.findMany({
-    where: { parentId: null },
-    orderBy: { sortOrder: "asc" },
-    include: {
-      products: {
-        where: { isShowcaseFace: true, image: { not: null } },
-        select: { image: true },
-        take: 1,
-      },
-    },
-  });
-
-  type CategoryType = typeof categories[number];
-
-  if (categories.length === 0) {
-    return null;
-  }
-
-  return (
-    <section className="py-16 md:py-20">
-      <div className="container mx-auto px-4">
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-[var(--gray-900)]">
-              Категории
-            </h2>
-            <p className="text-[var(--gray-600)] mt-2">
-              Выберите тип радиодеталей
-            </p>
-          </div>
-          <Link
-            href="/catalog"
-            className="hidden md:flex items-center gap-2 text-[var(--primary-600)] hover:text-[var(--primary-700)] font-medium"
-          >
-            Все категории
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-          {categories.map((category: CategoryType) => {
-            const displayImage = category.imageUrl || category.products[0]?.image || null;
-            return (
-              <Link
-                key={category.id}
-                href={`/catalog/${category.slug}`}
-                className="group flex items-center bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-lg hover:translate-x-1 transition-all duration-300 overflow-hidden"
-              >
-                {/* Квадратное фото слева */}
-                <div className="w-24 h-24 md:w-28 md:h-28 shrink-0 bg-[var(--gray-100)] overflow-hidden">
-                  {displayImage ? (
-                    <Image
-                      src={displayImage}
-                      alt={category.name}
-                      width={112}
-                      height={112}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Package className="w-12 h-12 text-[var(--gray-300)]" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Название категории */}
-                <div className="flex-1 min-w-0 px-4">
-                  <h3 className="font-semibold text-lg md:text-xl text-[var(--gray-900)] group-hover:text-[var(--primary-600)] transition-colors">
-                    {category.name}
-                  </h3>
-                </div>
-
-                {/* Стрелка справа */}
-                <div className="pr-4 shrink-0">
-                  <ChevronRight className="w-5 h-5 text-[var(--gray-400)] group-hover:text-[var(--primary-600)] group-hover:translate-x-1 transition-all" />
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-
-        <Link
-          href="/catalog"
-          className="md:hidden flex items-center justify-center gap-2 mt-6 text-[var(--primary-600)] hover:text-[var(--primary-700)] font-medium"
-        >
-          Все категории
-          <ArrowRight className="w-4 h-4" />
-        </Link>
-      </div>
-    </section>
-  );
-}
-
 // Catalog Section - 10 cards with most expensive product per category (5 in a row)
 async function CatalogSection() {
   const result = await getCategoryShowcase(10);
@@ -442,19 +343,19 @@ async function CatalogSection() {
                   ) : (
                     <>
                       {item.priceNew !== null && (
-                        <div className="flex items-center justify-between px-2 py-1 rounded-md bg-gray-900">
-                          <span className="text-xs font-medium text-white">
-                            {item.isSingleType ? 'Цена' : 'Новый'}
+                        <div className="flex items-center justify-between px-2 py-1 bg-[var(--gray-100)] border border-[var(--gray-900)] rounded-md">
+                          <span className="text-sm font-medium text-[var(--gray-900)]">
+                            {item.isSingleType ? 'Цена' : 'Новые'}
                           </span>
-                          <span className="font-bold text-white">
+                          <span className="text-sm font-bold text-[var(--gray-900)]">
                             {formatPrice(item.priceNew)}{getPriceUnitSuffix(item.unitType)}
                           </span>
                         </div>
                       )}
                       {item.priceUsed !== null && !item.isSingleType && (
-                        <div className="flex items-center justify-between bg-gray-900 px-2 py-1 rounded-md">
-                          <span className="text-xs font-medium text-white">Б/У</span>
-                          <span className="font-bold text-white">
+                        <div className="flex items-center justify-between px-2 py-1 bg-[var(--gray-100)] border border-[var(--gray-900)] rounded-md">
+                          <span className="text-sm font-medium text-[var(--gray-900)]">Б/У</span>
+                          <span className="text-sm font-bold text-[var(--gray-900)]">
                             {formatPrice(item.priceUsed)}{getPriceUnitSuffix(item.unitType)}
                           </span>
                         </div>
@@ -474,6 +375,16 @@ async function CatalogSection() {
           Все категории
           <ArrowRight className="w-4 h-4" />
         </Link>
+
+        <div className="flex justify-center mt-10">
+          <Link
+            href="/catalog"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold text-lg rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all"
+          >
+            Смотреть каталог
+            <ArrowRight className="w-5 h-5" />
+          </Link>
+        </div>
       </div>
     </section>
   );
@@ -500,63 +411,6 @@ function StatsSection() {
                 {stat.value}
               </p>
               <p className="text-white/70">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// Benefits Section
-function BenefitsSection() {
-  const benefits = [
-    {
-      icon: Scale,
-      title: "Честные весы",
-    },
-    {
-      icon: Banknote,
-      title: "Оплата сразу",
-    },
-    {
-      icon: TrendingUp,
-      title: "Актуальные цены",
-    },
-    {
-      icon: Shield,
-      title: "Гарантия честности",
-    },
-    {
-      icon: Clock,
-      title: "Быстрая оценка",
-    },
-  ];
-
-  return (
-    <section className="py-16 md:py-20 bg-[var(--gray-100)]">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-[var(--gray-900)]">
-            Почему выбирают нас
-          </h2>
-          <p className="text-[var(--gray-600)] mt-2 max-w-2xl mx-auto">
-            Мы работаем честно и прозрачно, предлагая лучшие условия на рынке
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {benefits.map((benefit, index) => (
-            <div
-              key={index}
-              className="flex flex-col items-center text-center p-4 md:p-6 bg-white rounded-xl border border-[var(--gray-200)] hover:shadow-md transition-shadow"
-            >
-              <div className="w-14 h-14 rounded-full bg-[var(--accent-100)] text-[var(--accent-600)] flex items-center justify-center mb-3">
-                <benefit.icon className="w-7 h-7" />
-              </div>
-              <h3 className="font-semibold text-[var(--gray-900)]">
-                {benefit.title}
-              </h3>
             </div>
           ))}
         </div>
@@ -616,7 +470,6 @@ export default async function HomePage() {
       />
       <HeroSection />
       <CatalogSection />
-      <CategoriesSection />
       <StatsSection />
       <BenefitsSection />
       <CTASection phone={phone} phoneHref={phoneHref} />

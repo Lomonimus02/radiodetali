@@ -17,7 +17,7 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
     address: initialData.address || "",
     workSchedule: initialData.workSchedule || "",
   });
-  const [storePhotoUrl, setStorePhotoUrl] = useState(initialData.storePhotoUrl || "");
+  const [storePhotoUrls, setStorePhotoUrls] = useState<string[]>(initialData.storePhotoUrls ?? []);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,6 +33,10 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (storePhotoUrls.length >= 3) {
+      setMessage({ type: "error", text: "Максимум 3 фотографии" });
+      return;
+    }
     setIsUploading(true);
     try {
       const formData = new FormData();
@@ -40,7 +44,7 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
       const response = await fetch("/api/upload", { method: "POST", body: formData });
       const result = await response.json();
       if (result.success) {
-        setStorePhotoUrl(result.url);
+        setStorePhotoUrls(prev => [...prev, result.url]);
         setMessage({ type: "success", text: "Фото загружено" });
       } else {
         setMessage({ type: "error", text: result.error || "Ошибка загрузки" });
@@ -49,12 +53,12 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
       setMessage({ type: "error", text: "Ошибка при загрузке файла" });
     } finally {
       setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
-  const handleRemovePhoto = () => {
-    setStorePhotoUrl("");
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  const handleRemovePhoto = (index: number) => {
+    setStorePhotoUrls(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,7 +73,7 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
         telegramUsername: form.telegramUsername,
         address: form.address,
         workSchedule: form.workSchedule,
-        storePhotoUrl: storePhotoUrl || null,
+        storePhotoUrls: storePhotoUrls,
       });
 
       if (result.success) {
@@ -170,50 +174,59 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
         </p>
       </div>
 
-      {/* Store Photo */}
+      {/* Store Photos */}
       <div>
         <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1.5">
           <ImageIcon className="w-4 h-4 text-slate-400" />
-          Фото магазина (для страницы контактов)
+          Фото магазина ({storePhotoUrls.length}/3)
         </label>
         <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">
-              <Upload className="w-5 h-5 text-slate-500" />
-              <span className="text-sm text-slate-700">
-                {isUploading ? "Загрузка..." : "Выбрать файл"}
-              </span>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                onChange={handleFileSelect}
-                disabled={isUploading}
-                className="hidden"
-              />
-            </label>
-            {storePhotoUrl && (
-              <button
-                type="button"
-                onClick={handleRemovePhoto}
-                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                title="Удалить фото"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            )}
-          </div>
+          {storePhotoUrls.length < 3 && (
+            <div className="flex items-center gap-3">
+              <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">
+                <Upload className="w-5 h-5 text-slate-500" />
+                <span className="text-sm text-slate-700">
+                  {isUploading ? "Загрузка..." : "Добавить фото"}
+                </span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif"
+                  onChange={handleFileSelect}
+                  disabled={isUploading}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          )}
           <p className="text-xs text-slate-500">
-            JPG, PNG, WebP или GIF. Максимум 5MB.
+            JPG, PNG, WebP, GIF или HEIC. Максимум 5MB. До 3 фотографий.
           </p>
-          {storePhotoUrl && (
-            <div className="relative w-48 h-32 rounded-lg overflow-hidden border border-slate-200">
-              <Image
-                src={storePhotoUrl}
-                alt="Фото магазина"
-                fill
-                className="object-cover"
-              />
+          {storePhotoUrls.length > 0 && (
+            <div className="flex flex-wrap gap-3">
+              {storePhotoUrls.map((url, index) => (
+                <div key={url} className="relative group">
+                  <div className="w-48 h-32 rounded-lg overflow-hidden border border-slate-200">
+                    <Image
+                      src={url}
+                      alt={`Фото магазина ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePhoto(index)}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                    title="Удалить"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="absolute bottom-1 left-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
+                    {index + 1}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
         </div>

@@ -78,6 +78,12 @@ export function Footer({ contactInfo }: FooterProps) {
                 Все категории
               </Link>
               <Link
+                href="/about"
+                className="text-white/60 hover:text-[var(--accent-400)] transition-colors text-sm"
+              >
+                О нас
+              </Link>
+              <Link
                 href="/contacts"
                 className="text-white/60 hover:text-[var(--accent-400)] transition-colors text-sm"
               >

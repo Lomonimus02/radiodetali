@@ -33,7 +33,11 @@ model GlobalSettings {
   telegramChatId   String @default("") // Chat ID для отправки уведомлений
 
   // Фото магазина (для страницы контактов)
-  storePhotoUrl String? // URL фото магазина
+  storePhotoUrls String[] // URL фото магазина (до 3)
+
+  // Текст и фото для страницы "О нас"
+  aboutText     String? @db.Text
+  aboutPhotoUrl String? // URL фото для страницы "О компании"
 
   @@map("global_settings")
 }

@@ -343,22 +343,6 @@ export function Header({ contactInfo }: HeaderProps) {
             <div className="flex items-center lg:hidden">
               {/* Center: Phone icons and number */}
               <div className="flex items-center gap-1 flex-1 justify-center min-w-0">
-                <a
-                  href={contacts.phoneHref}
-                  className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-white/10 rounded-lg transition-colors"
-                  aria-label="Позвонить"
-                >
-                  <Phone className="w-5 h-5 text-[var(--accent-400)]" />
-                </a>
-                <a
-                  href={contacts.telegramHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-white/10 rounded-lg transition-colors"
-                  aria-label="Telegram"
-                >
-                  <TelegramIcon className="w-5 h-5 text-[var(--accent-400)]" />
-                </a>
                 {contacts.vkHref && (
                   <a
                     href={contacts.vkHref}
@@ -372,6 +356,15 @@ export function Header({ contactInfo }: HeaderProps) {
                     </svg>
                   </a>
                 )}
+                <a
+                  href={contacts.telegramHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-white/10 rounded-lg transition-colors"
+                  aria-label="Telegram"
+                >
+                  <TelegramIcon className="w-5 h-5 text-[var(--accent-400)]" />
+                </a>
                 <a
                   href={contacts.phoneHref}
                   className="text-sm sm:text-base font-bold text-[var(--accent-400)] hover:text-[var(--accent-300)] transition-colors whitespace-nowrap truncate"

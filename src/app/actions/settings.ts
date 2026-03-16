@@ -49,6 +49,8 @@ export interface GlobalSettingsData {
   telegramUsername: string;
   address: string;
   workSchedule: string;
+  // Ссылка на ВКонтакте
+  vkLink: string;
   // Настройки Telegram-бота
   telegramBotToken: string;
   telegramChatId: string;
@@ -69,6 +71,7 @@ export interface UpdateGlobalSettingsInput {
   telegramUsername?: string;
   address?: string;
   workSchedule?: string;
+  vkLink?: string;
   telegramBotToken?: string;
   telegramChatId?: string;
   storePhotoUrls?: string[];
@@ -249,6 +252,7 @@ export async function getGlobalSettings(): Promise<GlobalSettingsResult> {
           telegramUsername: "",
           address: "",
           workSchedule: "",
+          vkLink: "",
           telegramBotToken: "",
           telegramChatId: "",
         },
@@ -266,6 +270,7 @@ export async function getGlobalSettings(): Promise<GlobalSettingsResult> {
         telegramUsername: settings.telegramUsername,
         address: settings.address,
         workSchedule: settings.workSchedule,
+        vkLink: settings.vkLink ?? "",
         telegramBotToken: settings.telegramBotToken,
         telegramChatId: settings.telegramChatId,
         storePhotoUrls: settings.storePhotoUrls ?? [],
@@ -316,6 +321,7 @@ export async function updateGlobalSettings(
     if (input.telegramUsername !== undefined) updateData.telegramUsername = input.telegramUsername;
     if (input.address !== undefined) updateData.address = input.address;
     if (input.workSchedule !== undefined) updateData.workSchedule = input.workSchedule;
+    if (input.vkLink !== undefined) updateData.vkLink = input.vkLink;
     if (input.telegramBotToken !== undefined) updateData.telegramBotToken = input.telegramBotToken;
     if (input.telegramChatId !== undefined) updateData.telegramChatId = input.telegramChatId;
     if (input.storePhotoUrls !== undefined) updateData.storePhotoUrls = input.storePhotoUrls;
@@ -334,6 +340,7 @@ export async function updateGlobalSettings(
         telegramUsername: input.telegramUsername ?? "",
         address: input.address ?? "",
         workSchedule: input.workSchedule ?? "",
+        vkLink: input.vkLink ?? "",
         telegramBotToken: input.telegramBotToken ?? "",
         telegramChatId: input.telegramChatId ?? "",
         storePhotoUrls: input.storePhotoUrls ?? [],
@@ -361,6 +368,7 @@ export async function updateGlobalSettings(
         telegramUsername: settings.telegramUsername,
         address: settings.address,
         workSchedule: settings.workSchedule,
+        vkLink: settings.vkLink ?? "",
         telegramBotToken: settings.telegramBotToken,
         telegramChatId: settings.telegramChatId,
         storePhotoUrls: settings.storePhotoUrls ?? [],

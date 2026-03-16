@@ -14,10 +14,10 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useCartStore, type ItemCondition } from "@/store";
-import { getProductsByIds, type ProductWithPrice } from "@/app/actions";
+import { getProductsByIds, getGlobalSettings, type ProductWithPrice } from "@/app/actions";
 
-// VK ссылка для отправки заявки
-const VK_GROUP_URL = "https://vk.com/dragsoyuz";
+// Дефолтная VK ссылка для отправки заявки
+const DEFAULT_VK_URL = "https://vk.com/dragsoyuz";
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat("ru-RU", {
@@ -53,6 +53,7 @@ export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartItemWithProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [vkUrl, setVkUrl] = useState(DEFAULT_VK_URL);
 
   // Загружаем актуальные данные о товарах
   useEffect(() => {
@@ -65,6 +66,12 @@ export default function CartPage() {
 
       setLoading(true);
       setError(null);
+
+      // Получаем VK ссылку из настроек
+      const settingsResult = await getGlobalSettings();
+      if (settingsResult.success && settingsResult.data.vkLink) {
+        setVkUrl(settingsResult.data.vkLink);
+      }
 
       // Уникальные ID продуктов (один продукт может быть в корзине дважды с разным condition)
       const uniqueIds = [...new Set(items.map((item) => item.id))];
@@ -104,7 +111,7 @@ export default function CartPage() {
 
   const handleSendToVK = () => {
     if (cartItems.length === 0) return;
-    window.open(VK_GROUP_URL, "_blank");
+    window.open(vkUrl, "_blank");
   };
 
   if (loading) {

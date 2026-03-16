@@ -12,6 +12,7 @@ export interface HeaderContactInfo {
   phoneNumber: string;
   phoneHref: string;
   telegramHref: string;
+  vkHref: string;
   workSchedule: string;
 }
 
@@ -20,6 +21,7 @@ const DEFAULT_CONTACTS: HeaderContactInfo = {
   phoneNumber: "+7 (812) 983-49-76",
   phoneHref: "tel:+78129834976",
   telegramHref: "https://t.me/dragsoyuz",
+  vkHref: "https://vk.com/dragsoyuz",
   workSchedule: "Ежедневно с 10:00 до 20:00",
 };
 
@@ -129,8 +131,8 @@ export function Header({ contactInfo }: HeaderProps) {
     { href: "/", label: "Главная", icon: Home },
     { href: "/catalog", label: "Каталог", icon: Package },
     { href: "/postal", label: "Почтовые отправления", icon: Mail },
-    { href: "/about", label: "О нас", icon: Zap },
     { href: "/contacts", label: "Контакты", icon: MapPin },
+    { href: "/about", label: "О нас", icon: Zap },
   ];
 
   return (
@@ -315,6 +317,19 @@ export function Header({ contactInfo }: HeaderProps) {
                 >
                   <TelegramIcon className="w-5 h-5 text-[var(--accent-400)]" />
                 </a>
+                {contacts.vkHref && (
+                  <a
+                    href={contacts.vkHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center w-9 h-9 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                    aria-label="ВКонтакте"
+                  >
+                    <svg className="w-5 h-5 text-[var(--accent-400)]" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M15.684 0H8.316C1.592 0 0 1.592 0 8.316v7.368C0 22.408 1.592 24 8.316 24h7.368C22.408 24 24 22.408 24 15.684V8.316C24 1.592 22.391 0 15.684 0zm3.692 17.123h-1.744c-.66 0-.864-.525-2.05-1.727-1.033-1-1.49-1.135-1.744-1.135-.356 0-.458.102-.458.593v1.575c0 .424-.135.678-1.253.678-1.846 0-3.896-1.118-5.335-3.202C4.624 10.857 4.03 8.57 4.03 8.096c0-.254.102-.491.593-.491h1.744c.44 0 .61.203.78.677.863 2.49 2.303 4.675 2.896 4.675.22 0 .322-.102.322-.66V9.721c-.068-1.186-.695-1.287-.695-1.71 0-.204.17-.407.44-.407h2.744c.373 0 .508.203.508.643v3.473c0 .372.17.508.271.508.22 0 .407-.136.813-.542 1.27-1.422 2.18-3.61 2.18-3.61.119-.254.322-.491.763-.491h1.744c.525 0 .644.27.525.643-.22 1.017-2.354 4.031-2.354 4.031-.186.305-.254.44 0 .78.186.254.796.779 1.203 1.253.745.847 1.32 1.558 1.473 2.05.17.49-.085.744-.576.744z"/>
+                    </svg>
+                  </a>
+                )}
                 <a
                   href={contacts.phoneHref}
                   className="text-lg font-bold text-[var(--accent-400)] hover:text-[var(--accent-300)] transition-colors"
@@ -344,6 +359,19 @@ export function Header({ contactInfo }: HeaderProps) {
                 >
                   <TelegramIcon className="w-5 h-5 text-[var(--accent-400)]" />
                 </a>
+                {contacts.vkHref && (
+                  <a
+                    href={contacts.vkHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-white/10 rounded-lg transition-colors"
+                    aria-label="ВКонтакте"
+                  >
+                    <svg className="w-5 h-5 text-[var(--accent-400)]" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M15.684 0H8.316C1.592 0 0 1.592 0 8.316v7.368C0 22.408 1.592 24 8.316 24h7.368C22.408 24 24 22.408 24 15.684V8.316C24 1.592 22.391 0 15.684 0zm3.692 17.123h-1.744c-.66 0-.864-.525-2.05-1.727-1.033-1-1.49-1.135-1.744-1.135-.356 0-.458.102-.458.593v1.575c0 .424-.135.678-1.253.678-1.846 0-3.896-1.118-5.335-3.202C4.624 10.857 4.03 8.57 4.03 8.096c0-.254.102-.491.593-.491h1.744c.44 0 .61.203.78.677.863 2.49 2.303 4.675 2.896 4.675.22 0 .322-.102.322-.66V9.721c-.068-1.186-.695-1.287-.695-1.71 0-.204.17-.407.44-.407h2.744c.373 0 .508.203.508.643v3.473c0 .372.17.508.271.508.22 0 .407-.136.813-.542 1.27-1.422 2.18-3.61 2.18-3.61.119-.254.322-.491.763-.491h1.744c.525 0 .644.27.525.643-.22 1.017-2.354 4.031-2.354 4.031-.186.305-.254.44 0 .78.186.254.796.779 1.203 1.253.745.847 1.32 1.558 1.473 2.05.17.49-.085.744-.576.744z"/>
+                    </svg>
+                  </a>
+                )}
                 <a
                   href={contacts.phoneHref}
                   className="text-sm sm:text-base font-bold text-[var(--accent-400)] hover:text-[var(--accent-300)] transition-colors whitespace-nowrap truncate"
@@ -431,6 +459,19 @@ export function Header({ contactInfo }: HeaderProps) {
               >
                 <TelegramIcon className="w-6 h-6 text-white" />
               </a>
+              {contacts.vkHref && (
+                <a
+                  href={contacts.vkHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-14 py-4 bg-gradient-to-r from-[var(--accent-500)] to-[var(--accent-600)] hover:from-[var(--accent-600)] hover:to-[var(--accent-700)] rounded-xl transition-all shadow-lg shadow-amber-500/20"
+                  aria-label="ВКонтакте"
+                >
+                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M15.684 0H8.316C1.592 0 0 1.592 0 8.316v7.368C0 22.408 1.592 24 8.316 24h7.368C22.408 24 24 22.408 24 15.684V8.316C24 1.592 22.391 0 15.684 0zm3.692 17.123h-1.744c-.66 0-.864-.525-2.05-1.727-1.033-1-1.49-1.135-1.744-1.135-.356 0-.458.102-.458.593v1.575c0 .424-.135.678-1.253.678-1.846 0-3.896-1.118-5.335-3.202C4.624 10.857 4.03 8.57 4.03 8.096c0-.254.102-.491.593-.491h1.744c.44 0 .61.203.78.677.863 2.49 2.303 4.675 2.896 4.675.22 0 .322-.102.322-.66V9.721c-.068-1.186-.695-1.287-.695-1.71 0-.204.17-.407.44-.407h2.744c.373 0 .508.203.508.643v3.473c0 .372.17.508.271.508.22 0 .407-.136.813-.542 1.27-1.422 2.18-3.61 2.18-3.61.119-.254.322-.491.763-.491h1.744c.525 0 .644.27.525.643-.22 1.017-2.354 4.031-2.354 4.031-.186.305-.254.44 0 .78.186.254.796.779 1.203 1.253.745.847 1.32 1.558 1.473 2.05.17.49-.085.744-.576.744z"/>
+                  </svg>
+                </a>
+              )}
               <a
                 href={contacts.phoneHref}
                 className="flex items-center justify-center gap-3 flex-1 py-4 bg-gradient-to-r from-[var(--accent-500)] to-[var(--accent-600)] hover:from-[var(--accent-600)] hover:to-[var(--accent-700)] rounded-xl font-bold text-lg text-white transition-all shadow-lg shadow-amber-500/20"

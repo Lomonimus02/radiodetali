@@ -35,6 +35,9 @@ model GlobalSettings {
   // Фото магазина (для страницы контактов)
   storePhotoUrls String[] // URL фото магазина (до 3)
 
+  // Ссылка на ВКонтакте
+  vkLink String @default("") // Ссылка на группу/страницу VK
+
   // Текст и фото для страницы "О нас"
   aboutText     String? @db.Text
   aboutPhotoUrl String? // URL фото для страницы "О компании"

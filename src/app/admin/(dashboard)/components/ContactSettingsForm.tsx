@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { updateGlobalSettings, GlobalSettingsData } from "@/app/actions";
-import { Phone, Mail, MapPin, Clock, Send, Loader2, Check, Upload, X, ImageIcon } from "lucide-react";
+import { Phone, Mail, MapPin, Clock, Send, Loader2, Check, Upload, X, ImageIcon, MessageCircle } from "lucide-react";
 import Image from "next/image";
 
 interface ContactSettingsFormProps {
@@ -14,6 +14,7 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
     phoneNumber: initialData.phoneNumber || "",
     email: initialData.email || "",
     telegramUsername: initialData.telegramUsername || "",
+    vkLink: initialData.vkLink || "",
     address: initialData.address || "",
     workSchedule: initialData.workSchedule || "",
   });
@@ -71,6 +72,7 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
         phoneNumber: form.phoneNumber,
         email: form.email,
         telegramUsername: form.telegramUsername,
+        vkLink: form.vkLink,
         address: form.address,
         workSchedule: form.workSchedule,
         storePhotoUrls: storePhotoUrls,
@@ -138,6 +140,24 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
         />
         <p className="text-xs text-slate-500 mt-1">
           Введите имя пользователя без @ (например: dragsoyuz)
+        </p>
+      </div>
+
+      {/* VK Link */}
+      <div>
+        <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1.5">
+          <MessageCircle className="w-4 h-4 text-slate-400" />
+          Ссылка на ВКонтакте (VK)
+        </label>
+        <input
+          type="text"
+          value={form.vkLink}
+          onChange={handleChange("vkLink")}
+          placeholder="https://vk.com/dragsoyuz"
+          className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+        />
+        <p className="text-xs text-slate-500 mt-1">
+          Например: https://vk.com/dragsoyuz
         </p>
       </div>
 

@@ -52,6 +52,7 @@ export default async function RootLayout({
     phoneNumber: settings.phoneNumber || "+7 (812) 983-49-76",
     phoneHref: formatPhoneHref(settings.phoneNumber || "+78129834976"),
     telegramHref: formatTelegramHref(settings.telegramUsername || "dragsoyuz"),
+    vkHref: settings.vkLink || "https://vk.com/dragsoyuz",
     workSchedule: settings.workSchedule?.split("\n")[0] || "Ежедневно с 10:00 до 20:00",
   } : undefined;
 
@@ -61,6 +62,7 @@ export default async function RootLayout({
     phoneRaw: (settings.phoneNumber || "+78129834976").replace(/[^\d+]/g, ""),
     email: settings.email || "info@dragsoyuz.ru",
     telegram: (settings.telegramUsername || "dragsoyuz").replace(/^@/, "").replace(/^https?:\/\/t\.me\//, ""),
+    vkLink: settings.vkLink || "https://vk.com/dragsoyuz",
     address: settings.address || "г. Санкт-Петербург",
     workSchedule: settings.workSchedule 
       ? settings.workSchedule.split("\n").filter(line => line.trim())

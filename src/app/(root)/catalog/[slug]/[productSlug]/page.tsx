@@ -248,7 +248,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     phoneNumber: settings.phoneNumber || "+7 (812) 983-49-76",
     phoneHref: `tel:${(settings.phoneNumber || "+78129834976").replace(/[^\d+]/g, "")}`,
     telegramHref: `https://t.me/${(settings.telegramUsername || "dragsoyuz").replace(/^@/, "").replace(/^https?:\/\/t\.me\//, "")}`,
-    vkHref: "https://vk.com/dragsoyuz",
+    vkHref: settings.vkLink || "https://vk.com/dragsoyuz",
   } : undefined;
 
   return (

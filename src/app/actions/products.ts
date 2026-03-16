@@ -916,10 +916,8 @@ export async function createProduct(
       getPriceMarkup(),
     ]);
 
-    // Инвалидируем кеш
-    revalidatePath("/");
-    revalidatePath("/products");
-    revalidatePath(`/products/${product.slug}`);
+    // Инвалидируем кеш всего сайта
+    revalidatePath('/', 'layout');
 
     return {
       success: true,
@@ -1076,13 +1074,8 @@ export async function updateProduct(
     const serialized = serializeProduct(product, rates, priceMarkup);
     console.log("=== updateProduct result ===", JSON.stringify({ isSingleType: serialized.isSingleType, priceNew: serialized.priceNew, priceUsed: serialized.priceUsed }, null, 2));
 
-    // Инвалидируем кеш
-    revalidatePath("/");
-    revalidatePath("/products");
-    revalidatePath(`/products/${existingProduct.slug}`);
-    if (input.slug && input.slug !== existingProduct.slug) {
-      revalidatePath(`/products/${input.slug}`);
-    }
+    // Инвалидируем кеш всего сайта
+    revalidatePath('/', 'layout');
 
     return {
       success: true,
@@ -1120,10 +1113,8 @@ export async function deleteProduct(id: string): Promise<DeleteResult> {
       where: { id },
     });
 
-    // Инвалидируем кеш
-    revalidatePath("/");
-    revalidatePath("/products");
-    revalidatePath(`/products/${product.slug}`);
+    // Инвалидируем кеш всего сайта
+    revalidatePath('/', 'layout');
 
     return { success: true };
   } catch (error) {

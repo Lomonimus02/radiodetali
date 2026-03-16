@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
@@ -365,8 +365,7 @@ export async function createCategory(
       },
     });
 
-    revalidatePath("/admin/categories");
-    revalidatePath("/");
+    revalidatePath('/', 'layout');
 
     return {
       success: true,
@@ -493,8 +492,7 @@ export async function updateCategory(
       await reorderCategoriesByParent(parentId, input.id, input.sortOrder);
     }
 
-    revalidatePath("/admin/categories");
-    revalidatePath("/");
+    revalidatePath('/', 'layout');
 
     return {
       success: true,
@@ -554,8 +552,7 @@ export async function deleteCategory(id: string): Promise<DeleteCategoryResult> 
 
     await prisma.category.delete({ where: { id } });
 
-    revalidatePath("/admin/categories");
-    revalidatePath("/");
+    revalidatePath('/', 'layout');
 
     return { success: true };
   } catch (error) {
@@ -1019,8 +1016,7 @@ export async function updateCategoryRates(
       )
     );
 
-    revalidatePath("/admin");
-    revalidatePath("/");
+    revalidatePath('/', 'layout');
 
     return { success: true };
   } catch (error) {

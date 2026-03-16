@@ -204,10 +204,8 @@ export async function updateMetalRates(
       },
     });
 
-    // Инвалидируем кеш страниц, которые зависят от курсов
-    revalidatePath("/");
-    revalidatePath("/admin");
-    revalidatePath("/products");
+    // Инвалидируем кеш всего сайта (курсы влияют на все цены)
+    revalidatePath('/', 'layout');
 
     return {
       success: true,
@@ -349,13 +347,8 @@ export async function updateGlobalSettings(
       },
     });
 
-    // Инвалидируем кеш страниц, которые зависят от цен и контактов
-    revalidatePath("/");
-    revalidatePath("/admin");
-    revalidatePath("/products");
-    revalidatePath("/catalog");
-    revalidatePath("/contacts");
-    revalidatePath("/about");
+    // Инвалидируем кеш всего сайта (настройки влияют на все страницы)
+    revalidatePath('/', 'layout');
 
     return {
       success: true,

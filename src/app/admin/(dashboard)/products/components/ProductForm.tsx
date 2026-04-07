@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, useRef, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import {
   createProduct,
@@ -21,6 +21,9 @@ import {
   Upload,
   X,
   Calculator,
+  Trash2,
+  Plus,
+  Layers,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -63,6 +66,19 @@ interface FormData {
   isUsedAvailable: boolean;
   manualPriceNew: number | null;
   manualPriceUsed: number | null;
+  // Модификации
+  hasModifications: boolean;
+  modifications: {
+    name: string;
+    contentAu: number;
+    contentAg: number;
+    contentPt: number;
+    contentPd: number;
+    contentAuUsed: number;
+    contentAgUsed: number;
+    contentPtUsed: number;
+    contentPdUsed: number;
+  }[];
 }
 
 type NotificationType = "success" | "error" | null;
@@ -105,6 +121,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
     handleSubmit,
     watch,
     setValue,
+    control,
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
@@ -136,13 +153,32 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
       isUsedAvailable: product?.isUsedAvailable ?? true,
       manualPriceNew: product?.manualPriceNew || null,
       manualPriceUsed: product?.manualPriceUsed || null,
+      // Модификации
+      hasModifications: product?.hasModifications ?? false,
+      modifications: product?.modifications?.map((m) => ({
+        name: m.name,
+        contentAu: m.contentAu,
+        contentAg: m.contentAg,
+        contentPt: m.contentPt,
+        contentPd: m.contentPd,
+        contentAuUsed: m.contentAuUsed,
+        contentAgUsed: m.contentAgUsed,
+        contentPtUsed: m.contentPtUsed,
+        contentPdUsed: m.contentPdUsed,
+      })) ?? [],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "modifications",
   });
 
   const watchName = watch("name");
   const watchIsNewAvailable = watch("isNewAvailable");
   const watchIsUsedAvailable = watch("isUsedAvailable");
   const watchIsSingleType = watch("isSingleType");
+  const watchHasModifications = watch("hasModifications");
   const watchPriceMarkup = watch("priceMarkup");
   const watchPriceMarkupUsed = watch("priceMarkupUsed");
   const watchCategoryId = watch("categoryId");
@@ -323,6 +359,8 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
           isSingleType: data.isSingleType,
           isPriceOnRequest: data.isPriceOnRequest,
           isShowcaseFace: data.isShowcaseFace,
+          hasModifications: data.hasModifications,
+          modifications: data.hasModifications ? data.modifications : [],
           contentGold: data.contentGold,
           contentSilver: data.contentSilver,
           contentPlatinum: data.contentPlatinum,
@@ -350,6 +388,8 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
           isSingleType: data.isSingleType,
           isPriceOnRequest: data.isPriceOnRequest,
           isShowcaseFace: data.isShowcaseFace,
+          hasModifications: data.hasModifications,
+          modifications: data.hasModifications ? data.modifications : [],
           contentGold: data.contentGold,
           contentSilver: data.contentSilver,
           contentPlatinum: data.contentPlatinum,
@@ -761,7 +801,184 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
             </div>
           </div>
 
+          {/* Modifications Toggle */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div className="p-4 bg-cyan-50 rounded-lg border border-cyan-200">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={watchHasModifications}
+                  onChange={(e) => setValue("hasModifications", e.target.checked)}
+                  className="w-5 h-5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+                />
+                <div>
+                  <span className="text-sm font-medium text-cyan-800 flex items-center gap-2">
+                    <Layers className="w-4 h-4" />
+                    Товар с модификациями (разное сопротивление, количество контактов и т.д.)
+                  </span>
+                  <p className="text-xs text-cyan-600 mt-0.5">
+                    Вместо стандартных полей содержания будет таблица модификаций с индивидуальными составами
+                  </p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Modifications Table (when hasModifications = true) */}
+          {watchHasModifications && (
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-cyan-600" />
+                  Модификации ({fields.length})
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => append({
+                    name: "",
+                    contentAu: 0,
+                    contentAg: 0,
+                    contentPt: 0,
+                    contentPd: 0,
+                    contentAuUsed: 0,
+                    contentAgUsed: 0,
+                    contentPtUsed: 0,
+                    contentPdUsed: 0,
+                  })}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-cyan-600 text-white text-sm rounded-lg hover:bg-cyan-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Добавить модификацию
+                </button>
+              </div>
+
+              {fields.length === 0 && (
+                <div className="text-center py-8 text-slate-400">
+                  <Layers className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Нет модификаций. Нажмите &quot;Добавить модификацию&quot;.</p>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {fields.map((field, index) => (
+                  <div key={field.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-semibold text-slate-700">
+                        #{index + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => remove(index)}
+                        className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Удалить модификацию"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Modification Name */}
+                    <div className="mb-3">
+                      <label className="block text-xs font-medium text-slate-600 mb-1">
+                        Название модификации *
+                      </label>
+                      <input
+                        type="text"
+                        {...register(`modifications.${index}.name` as const, { required: true })}
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                        placeholder="Например: ПТП-1 R=1 кОм"
+                      />
+                    </div>
+
+                    <div className={`grid grid-cols-1 ${watchIsSingleType ? "" : "md:grid-cols-2"} gap-4`}>
+                      {/* Содержание металлов — Новое */}
+                      <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                        <h4 className="text-xs font-semibold text-green-800 mb-2">
+                          {watchIsSingleType ? "Содержание (Единая цена)" : "Новое"}
+                        </h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            { key: "contentAu" as const, symbol: "Au", unit: "мг" },
+                            { key: "contentAg" as const, symbol: "Ag", unit: "г" },
+                            { key: "contentPt" as const, symbol: "Pt", unit: "г" },
+                            { key: "contentPd" as const, symbol: "Pd", unit: "г" },
+                          ].map((metal) => (
+                            <div key={metal.key}>
+                              <label className="block text-xs text-slate-500 mb-0.5">
+                                {metal.symbol} ({metal.unit})
+                              </label>
+                              <input
+                                type="number"
+                                step="any"
+                                min="0"
+                                {...register(`modifications.${index}.${metal.key}` as const, { valueAsNumber: true, min: 0 })}
+                                className="w-full px-2 py-1.5 text-sm rounded border border-green-300 focus:ring-1 focus:ring-green-500 focus:border-green-500 bg-white"
+                                placeholder="0"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Содержание металлов — Б/У (скрываем при isSingleType) */}
+                      {!watchIsSingleType && (
+                        <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                          <h4 className="text-xs font-semibold text-amber-800 mb-2">Б/У</h4>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[
+                              { key: "contentAuUsed" as const, symbol: "Au", unit: "мг" },
+                              { key: "contentAgUsed" as const, symbol: "Ag", unit: "г" },
+                              { key: "contentPtUsed" as const, symbol: "Pt", unit: "г" },
+                              { key: "contentPdUsed" as const, symbol: "Pd", unit: "г" },
+                            ].map((metal) => (
+                              <div key={metal.key}>
+                                <label className="block text-xs text-slate-500 mb-0.5">
+                                  {metal.symbol} ({metal.unit})
+                                </label>
+                                <input
+                                  type="number"
+                                  step="any"
+                                  min="0"
+                                  {...register(`modifications.${index}.${metal.key}` as const, { valueAsNumber: true, min: 0 })}
+                                  className="w-full px-2 py-1.5 text-sm rounded border border-amber-300 focus:ring-1 focus:ring-amber-500 focus:border-amber-500 bg-white"
+                                  placeholder="0"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {fields.length > 0 && (
+                <div className="mt-4 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => append({
+                      name: "",
+                      contentAu: 0,
+                      contentAg: 0,
+                      contentPt: 0,
+                      contentPd: 0,
+                      contentAuUsed: 0,
+                      contentAgUsed: 0,
+                      contentPtUsed: 0,
+                      contentPdUsed: 0,
+                    })}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-cyan-700 bg-cyan-50 border border-cyan-200 text-sm rounded-lg hover:bg-cyan-100 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Добавить модификацию
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Metal content - NEW and USED in two columns */}
+          {!watchHasModifications && (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
             <h2 className="text-lg font-semibold text-slate-800 mb-6">
               Содержание металлов ({contentSuffix})
@@ -924,6 +1141,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
               )}
             </div>
           </div>
+          )}
 
           {/* Pricing - Manual prices */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">

@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
@@ -536,7 +536,7 @@ export async function deleteCategory(id: string): Promise<DeleteCategoryResult> 
 
     const category = await prisma.category.findUnique({
       where: { id },
-      include: { _count: { select: { products: true } } },
+      include: { _count: { select: { products: true, children: true } } },
     });
 
     if (!category) {
@@ -547,6 +547,13 @@ export async function deleteCategory(id: string): Promise<DeleteCategoryResult> 
       return {
         success: false,
         error: `ÐÐµÐ²Ð¾Ð·Ð¼Ð¾Ð¶Ð½Ð¾ ÑƒÐ´Ð°Ð»Ð¸Ñ‚ÑŒ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸ÑŽ: Ð² Ð½ÐµÐ¹ ${category._count.products} Ñ‚Ð¾Ð²Ð°Ñ€(Ð¾Ð²)`,
+      };
+    }
+
+    if (category._count.children > 0) {
+      return {
+        success: false,
+        error: `Невозможно удалить категорию: в ней ${category._count.children} подкатегори${category._count.children === 1 ? 'я' : 'й'}`
       };
     }
 
@@ -586,6 +593,9 @@ export interface CategoryShowcaseItem {
   isSingleType: boolean;   // Ð•Ð´Ð¸Ð½Ð°Ñ Ñ†ÐµÐ½Ð° (Ð±ÐµÐ· Ñ€Ð°Ð·Ð´ÐµÐ»ÐµÐ½Ð¸Ñ Ð½Ð° Ð‘/Ð£)
   isPriceOnRequest: boolean; // Ð¦ÐµÐ½Ð° Ð¿Ð¾ Ð·Ð°Ð¿Ñ€Ð¾ÑÑƒ
   unitType: "PIECE" | "GRAM" | "KG"; // Ð•Ð´Ð¸Ð½Ð¸Ñ†Ð° Ð¸Ð·Ð¼ÐµÑ€ÐµÐ½Ð¸Ñ
+  // Модификации
+  hasModifications: boolean;
+  modifications: { id: string; name: string; priceNew: number; priceUsed: number }[];
   // Ð”Ð°Ð½Ð½Ñ‹Ðµ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ð´Ð»Ñ ÑÑÑ‹Ð»ÐºÐ¸
   categorySlug: string;    // slug ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸
   categoryName: string;    // Ð½Ð°Ð·Ð²Ð°Ð½Ð¸Ðµ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸
@@ -659,6 +669,9 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
             // Ð ÑƒÑ‡Ð½Ñ‹Ðµ Ñ†ÐµÐ½Ñ‹
             manualPriceNew: true,
             manualPriceUsed: true,
+            // Модификации
+            hasModifications: true,
+            modifications: true,
           },
         },
         // ÐŸÐ¾Ð´ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ñ Ð¸Ñ… Ñ‚Ð¾Ð²Ð°Ñ€Ð°Ð¼Ð¸ Ð¸ ÐºÐ°ÑÑ‚Ð¾Ð¼Ð½Ñ‹Ð¼Ð¸ ÐºÑƒÑ€ÑÐ°Ð¼Ð¸
@@ -694,6 +707,9 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
                 priceMarkupUsed: true,
                 manualPriceNew: true,
                 manualPriceUsed: true,
+            // Модификации
+            hasModifications: true,
+            modifications: true,
               },
             },
           },
@@ -702,7 +718,7 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
     });
 
     // Ð˜Ð¼Ð¿Ð¾Ñ€Ñ‚Ð¸Ñ€ÑƒÐµÐ¼ Ñ„ÑƒÐ½ÐºÑ†Ð¸Ð¸ Ñ€Ð°ÑÑ‡Ñ‘Ñ‚Ð° Ñ†ÐµÐ½
-    const { calculateBasePrice, resolveRates } = await import("@/lib/price-calculator");
+    const { calculateBasePrice, resolveRates, calculateModificationPrices } = await import("@/lib/price-calculator");
 
     const showcaseItems: CategoryShowcaseItem[] = [];
 
@@ -823,7 +839,20 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
           isSingleType: chosenProduct.isSingleType,
           isPriceOnRequest: chosenProduct.isPriceOnRequest,
           unitType: chosenProduct.unitType,
-          // Ð”Ð°Ð½Ð½Ñ‹Ðµ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸
+          // Модификации с ценами
+          hasModifications: chosenProduct.hasModifications ?? false,
+          modifications: (chosenProduct.modifications ?? []).map((mod) => {
+            const effectiveMarkup = (chosenProduct.priceMarkup ?? 1) * markup;
+            const effectiveMarkupUsed = (chosenProduct.priceMarkupUsed ?? 1) * markup;
+            const modPrices = calculateModificationPrices(
+              { contentAu: mod.contentAu, contentAg: mod.contentAg, contentPt: mod.contentPt, contentPd: mod.contentPd, contentAuUsed: mod.contentAuUsed, contentAgUsed: mod.contentAgUsed, contentPtUsed: mod.contentPtUsed, contentPdUsed: mod.contentPdUsed },
+              metalRates,
+              chosenProduct.categoryRates,
+              effectiveMarkup,
+              effectiveMarkupUsed,
+            );
+            return { id: mod.id, name: mod.name, priceNew: modPrices.priceNew, priceUsed: modPrices.priceUsed };
+          }),
           categorySlug: category.slug,
           categoryName: category.name,
         });

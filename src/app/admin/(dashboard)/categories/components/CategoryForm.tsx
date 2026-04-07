@@ -127,7 +127,18 @@ export function CategoryForm({
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
+        credentials: "same-origin",
       });
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error("Upload failed:", response.status, text);
+        setNotification({
+          type: "error",
+          message: `Ошибка загрузки (${response.status}). Проверьте размер файла.`,
+        });
+        return;
+      }
 
       const result = await response.json();
 
@@ -143,10 +154,11 @@ export function CategoryForm({
           message: result.error || "Ошибка загрузки",
         });
       }
-    } catch {
+    } catch (err) {
+      console.error("Upload error:", err);
       setNotification({
         type: "error",
-        message: "Ошибка при загрузке файла",
+        message: "Ошибка при загрузке файла. Попробуйте файл меньшего размера.",
       });
     } finally {
       setIsUploading(false);
@@ -423,7 +435,7 @@ export function CategoryForm({
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
                       onChange={handleFileSelect}
                       disabled={isUploading}
                       className="hidden"
@@ -432,7 +444,7 @@ export function CategoryForm({
                 </div>
               )}
               <p className="text-xs text-slate-500">
-                JPG, PNG, WebP, GIF или HEIC. Максимум 5MB.
+                JPG, PNG, WebP или GIF. Максимум 5MB.
               </p>
               {/* Превью загрузки */}
               {imagePreview && isUploading && (
@@ -448,12 +460,20 @@ export function CategoryForm({
               {/* Загруженное фото */}
               {imageUrl && (
                 <div className="relative group inline-block">
-                  <div className="w-32 h-32 rounded-lg overflow-hidden border border-slate-200">
+                  <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-slate-200">
                     <Image
                       src={imageUrl}
                       alt="Фото категории"
                       fill
                       className="object-cover"
+                      onError={() => {
+                        console.error("Failed to load image:", imageUrl);
+                        setNotification({
+                          type: "error",
+                          message: "Не удалось загрузить изображение. Попробуйте загрузить другой файл.",
+                        });
+                        setImageUrl("");
+                      }}
                     />
                   </div>
                   <button

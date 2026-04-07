@@ -70,6 +70,28 @@ export interface MetalContent {
 }
 
 /**
+ * Содержание металлов в модификации товара
+ */
+export interface ModificationContent {
+  contentAu: number;
+  contentAg: number;
+  contentPt: number;
+  contentPd: number;
+  contentAuUsed: number;
+  contentAgUsed: number;
+  contentPtUsed: number;
+  contentPdUsed: number;
+}
+
+/**
+ * Результат расчёта цены модификации
+ */
+export interface ModificationPrices {
+  priceNew: number;
+  priceUsed: number;
+}
+
+/**
  * Результат расчёта цены товара
  */
 export interface ProductPrices {
@@ -230,6 +252,50 @@ export function calculateProductPrices(
     priceNew: priceNew !== null ? Math.round(priceNew) : null, 
     priceUsed: priceUsed !== null ? Math.round(priceUsed) : null, 
     isSingleType 
+  };
+}
+
+/**
+ * Рассчитывает цены для модификации товара
+ * 
+ * Использует ту же логику, что и базовый расчёт:
+ * Content * Rate * markup (глобальный * товарный)
+ * 
+ * @param modification - Содержание металлов модификации
+ * @param globalRates - Глобальные курсы из MetalRate
+ * @param categoryRates - Кастомные курсы категории
+ * @param markup - Эффективная наценка для Нового (product.priceMarkup * globalMarkup)
+ * @param markupUsed - Эффективная наценка для Б/У (product.priceMarkupUsed * globalMarkup)
+ * @returns Объект { priceNew, priceUsed } — округлённые до целого
+ */
+export function calculateModificationPrices(
+  modification: ModificationContent,
+  globalRates: MetalRates,
+  categoryRates?: CategoryCustomRates | null,
+  markup: number = 1.0,
+  markupUsed: number = 1.0,
+): ModificationPrices {
+  const rates = resolveRates(globalRates, categoryRates);
+
+  const basePriceNew = calculateBasePrice(
+    modification.contentAu,
+    modification.contentAg,
+    modification.contentPt,
+    modification.contentPd,
+    rates,
+  );
+
+  const basePriceUsed = calculateBasePrice(
+    modification.contentAuUsed,
+    modification.contentAgUsed,
+    modification.contentPtUsed,
+    modification.contentPdUsed,
+    rates,
+  );
+
+  return {
+    priceNew: Math.round(basePriceNew * markup),
+    priceUsed: Math.round(basePriceUsed * markupUsed),
   };
 }
 

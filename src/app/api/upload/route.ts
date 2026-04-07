@@ -5,7 +5,7 @@ import { existsSync } from "fs";
 import { cookies } from "next/headers";
 
 // Разрешённые типы файлов
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"];
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ADMIN_COOKIE_NAME = "admin_session";
 
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     // Проверяем тип файла
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { success: false, error: "Недопустимый тип файла. Разрешены: JPG, PNG, WebP, GIF, HEIC" },
+        { success: false, error: "Недопустимый тип файла. Разрешены: JPG, PNG, WebP, GIF" },
         { status: 400 }
       );
     }

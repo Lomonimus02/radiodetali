@@ -47,6 +47,7 @@ export {
   type UnitType,
   type ProductFilters,
   type ProductWithPrice,
+  type ModificationWithPrice,
   type CreateProductInput,
   type UpdateProductInput,
   type ProductsResult,

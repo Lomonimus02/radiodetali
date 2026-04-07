@@ -140,8 +140,14 @@ model Product {
   manualPriceNew  Decimal? @db.Decimal(12, 2) // Фиксированная цена для "Нового"
   manualPriceUsed Decimal? @db.Decimal(12, 2) // Фиксированная цена для "Б/У"
 
+  // Флаг наличия модификаций (вариаций товара)
+  hasModifications Boolean @default(false)
+
   // Связь с категорией
   category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  // Связь с модификациями
+  modifications ProductModification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -149,5 +155,31 @@ model Product {
   @@index([categoryId])
   @@index([slug])
   @@map("products")
+}
+
+// Модификация товара (вариация: разные номиналы, контакты и т.д.)
+// Для каждой модификации хранится своё содержание металлов и рассчитывается своя цена
+model ProductModification {
+  id        String @id @default(cuid())
+  productId String
+  name      String // Например: "R = 1 кОм" или "Папа 10 контактов"
+
+  // Содержание металлов для НОВЫХ (Float, default 0)
+  contentAu Float @default(0)
+  contentAg Float @default(0)
+  contentPt Float @default(0)
+  contentPd Float @default(0)
+
+  // Содержание металлов для Б/У (Float, default 0)
+  contentAuUsed Float @default(0)
+  contentAgUsed Float @default(0)
+  contentPtUsed Float @default(0)
+  contentPdUsed Float @default(0)
+
+  // Связь с товаром
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_modifications")
 }
 

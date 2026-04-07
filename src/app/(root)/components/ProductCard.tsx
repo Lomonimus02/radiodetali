@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Package, ArrowRight } from "lucide-react";
-import type { ProductWithPrice, UnitType } from "@/app/actions";
+import type { ProductWithPrice, ModificationWithPrice, UnitType } from "@/app/actions";
 import { ImageModal } from "./ImageModal";
 import { SellModal } from "./SellModal";
 import type { SellModalContactInfo } from "./SellModal";
@@ -36,6 +36,64 @@ function formatPrice(price: number): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(price);
+}
+
+// Компактная таблица модификаций для карточки товара в каталоге
+function ModificationsTable({
+  modifications,
+  isSingleType,
+  isNewAvailable,
+  isUsedAvailable,
+  unitType,
+}: {
+  modifications: ModificationWithPrice[];
+  isSingleType: boolean;
+  isNewAvailable: boolean;
+  isUsedAvailable: boolean;
+  unitType: UnitType;
+}) {
+  const suffix = getPriceUnitSuffix(unitType);
+  const showUsedColumn = !isSingleType && isNewAvailable && isUsedAvailable;
+
+  return (
+    <div className="overflow-hidden">
+      {/* Заголовок */}
+      <div className="flex items-baseline text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-400)] border-b border-[var(--gray-200)] pb-0.5 mb-0.5">
+        <span className="flex-1 min-w-0"></span>
+        <span className="shrink-0 text-right w-16">{showUsedColumn ? 'Нов.' : 'Цена'}</span>
+        {showUsedColumn && <span className="shrink-0 text-right w-16">Б/У</span>}
+      </div>
+      {/* Строки */}
+      {modifications.map((mod, idx) => {
+        const singlePrice = isSingleType || isNewAvailable ? mod.priceNew : mod.priceUsed;
+        const isLast = idx === modifications.length - 1;
+        return (
+          <div
+            key={mod.id}
+            className={`flex items-baseline py-1 text-xs ${!isLast ? 'border-b border-[var(--gray-200)]' : ''}`}
+          >
+            <span className="flex-1 min-w-0 text-[var(--gray-700)] truncate pr-1">
+              {mod.name}
+            </span>
+            {showUsedColumn ? (
+              <>
+                <span className="shrink-0 w-16 text-right font-semibold text-[var(--gray-900)] whitespace-nowrap">
+                  {formatPrice(mod.priceNew)}{suffix}
+                </span>
+                <span className="shrink-0 w-16 text-right font-semibold text-[var(--gray-900)] whitespace-nowrap">
+                  {formatPrice(mod.priceUsed)}{suffix}
+                </span>
+              </>
+            ) : (
+              <span className="shrink-0 w-16 text-right font-semibold text-[var(--gray-900)] whitespace-nowrap">
+                {formatPrice(singlePrice)}{suffix}
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export function ProductCard({ product, categorySlug, categoryName, variant = "default", contactInfo }: ProductCardProps) {
@@ -158,8 +216,8 @@ export function ProductCard({ product, categorySlug, categoryName, variant = "de
           </p>
         )}
 
-        {/* Prices - показываем обе цены */}
-        <div className="mb-3 space-y-1">
+        {/* Prices */}
+        <div className="mb-3">
           {/* Цена по запросу */}
           {product.isPriceOnRequest ? (
             <div className="flex items-center justify-center px-2 py-2.5 rounded-md bg-slate-100">
@@ -167,8 +225,18 @@ export function ProductCard({ product, categorySlug, categoryName, variant = "de
                 Цена по запросу
               </span>
             </div>
+          ) : product.hasModifications && product.modifications.length > 0 ? (
+            /* === Сценарий Б: Товар с модификациями === */
+            <ModificationsTable
+              modifications={product.modifications}
+              isSingleType={product.isSingleType}
+              isNewAvailable={product.isNewAvailable}
+              isUsedAvailable={product.isUsedAvailable}
+              unitType={product.unitType}
+            />
           ) : (
-            <>
+            /* === Сценарий А: Обычный товар === */
+            <div className="space-y-1">
               {/* Цена за Новые / Единая цена */}
               {hasNewPrice && (
                 <div className="flex items-center justify-between px-2 py-1 bg-[var(--gray-100)] border border-[var(--gray-900)] rounded-md">
@@ -197,7 +265,7 @@ export function ProductCard({ product, categorySlug, categoryName, variant = "de
                   Не принимается
                 </p>
               )}
-            </>
+            </div>
           )}
         </div>
 

@@ -24,7 +24,7 @@ const advantages = [
   {
     icon: Scale,
     title: "Точная оценка",
-    description: "Прозрачное взвешивание при клиенте на сертифицированном оборудовании.",
+    description: "Прозрачное взвешивание при клиенте.",
   },
   {
     icon: Banknote,
@@ -34,7 +34,7 @@ const advantages = [
   {
     icon: Shield,
     title: "Официально",
-    description: "Работаем с физическими и юридическими лицами. Все документы в порядке.",
+    description: "Работаем с физическими и юридическими лицами.",
   },
   {
     icon: Clock,
@@ -137,9 +137,9 @@ export default async function AboutPage() {
               )}
             </div>
 
-            {/* Правая колонка — Фото */}
-            <div className="relative">
-              {aboutPhotoUrl ? (
+            {/* Правая колонка — Фото (только если установлено) */}
+            {aboutPhotoUrl && (
+              <div className="relative">
                 <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl shadow-amber-500/10 ring-1 ring-white/10">
                   <Image
                     src={aboutPhotoUrl}
@@ -149,23 +149,11 @@ export default async function AboutPage() {
                     sizes="(max-width: 1024px) 100vw, 50vw"
                   />
                 </div>
-              ) : (
-                <div className="aspect-[4/3] rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center justify-center gap-4">
-                  <div className="w-20 h-20 rounded-full bg-amber-500/20 flex items-center justify-center">
-                    <Sparkles className="w-10 h-10 text-amber-400" />
-                  </div>
-                  <span className="text-slate-500 text-lg font-medium">
-                    ДРАГСОЮЗ
-                  </span>
-                  <span className="text-slate-600 text-sm">
-                    Фото нашего магазина
-                  </span>
-                </div>
-              )}
 
-              {/* Декоративный элемент за фото */}
-              <div className="absolute -z-10 -bottom-4 -right-4 w-full h-full rounded-2xl border border-amber-500/20" />
-            </div>
+                {/* Декоративный элемент за фото */}
+                <div className="absolute -z-10 -bottom-4 -right-4 w-full h-full rounded-2xl border border-amber-500/20" />
+              </div>
+            )}
           </div>
         </div>
       </section>

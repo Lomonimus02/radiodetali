@@ -1,7 +1,8 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { calculateProductPrices } from "@/lib/price-calculator";
+import { calculateProductPrices, calculateModificationPrices } from "@/lib/price-calculator";
+import type { ModificationPrices } from "@/lib/price-calculator";
 import { revalidatePath } from "next/cache";
 import Fuse from "fuse.js";
 
@@ -23,6 +24,39 @@ export interface ProductFilters {
  * Единица измерения товара
  */
 export type UnitType = "PIECE" | "GRAM" | "KG";
+
+/**
+ * Модификация товара с рассчитанными ценами
+ */
+export interface ModificationWithPrice {
+  id: string;
+  name: string;
+  contentAu: number;
+  contentAg: number;
+  contentPt: number;
+  contentPd: number;
+  contentAuUsed: number;
+  contentAgUsed: number;
+  contentPtUsed: number;
+  contentPdUsed: number;
+  priceNew: number;
+  priceUsed: number;
+}
+
+/**
+ * Входные данные для модификации (создание/обновление)
+ */
+export interface ModificationInput {
+  name: string;
+  contentAu?: number;
+  contentAg?: number;
+  contentPt?: number;
+  contentPd?: number;
+  contentAuUsed?: number;
+  contentAgUsed?: number;
+  contentPtUsed?: number;
+  contentPdUsed?: number;
+}
 
 /**
  * Товар с рассчитанными ценами для API
@@ -49,6 +83,9 @@ export interface ProductWithPrice {
   isPriceOnRequest: boolean;
   // Лицо категории на Главной
   isShowcaseFace: boolean;
+  // Модификации
+  hasModifications: boolean;
+  modifications: ModificationWithPrice[];
   // Содержание металлов для НОВЫХ
   contentGold: number;
   contentSilver: number;
@@ -90,6 +127,9 @@ export interface CreateProductInput {
   isSingleType?: boolean;
   isPriceOnRequest?: boolean;
   isShowcaseFace?: boolean;
+  // Модификации
+  hasModifications?: boolean;
+  modifications?: ModificationInput[];
   // Содержание металлов для НОВЫХ
   contentGold?: number;
   contentSilver?: number;
@@ -125,6 +165,9 @@ export interface UpdateProductInput {
   isSingleType?: boolean;
   isPriceOnRequest?: boolean;
   isShowcaseFace?: boolean;
+  // Модификации
+  hasModifications?: boolean;
+  modifications?: ModificationInput[];
   // Содержание металлов для НОВЫХ
   contentGold?: number;
   contentSilver?: number;
@@ -193,6 +236,20 @@ interface DbProductWithCategory {
   isSingleType: boolean;
   isPriceOnRequest: boolean;
   isShowcaseFace: boolean;
+  // Модификации
+  hasModifications: boolean;
+  modifications: {
+    id: string;
+    name: string;
+    contentAu: number;
+    contentAg: number;
+    contentPt: number;
+    contentPd: number;
+    contentAuUsed: number;
+    contentAgUsed: number;
+    contentPtUsed: number;
+    contentPdUsed: number;
+  }[];
   // Содержание металлов для НОВЫХ
   contentGold: unknown; // Prisma Decimal
   contentSilver: unknown;
@@ -279,6 +336,40 @@ function serializeProduct(
     categoryRates // Передаём кастомные курсы категории
   );
 
+  // Рассчитываем цены модификаций
+  const modificationsWithPrices: ModificationWithPrice[] = (product.modifications ?? []).map((mod) => {
+    const modPrices: ModificationPrices = calculateModificationPrices(
+      {
+        contentAu: mod.contentAu,
+        contentAg: mod.contentAg,
+        contentPt: mod.contentPt,
+        contentPd: mod.contentPd,
+        contentAuUsed: mod.contentAuUsed,
+        contentAgUsed: mod.contentAgUsed,
+        contentPtUsed: mod.contentPtUsed,
+        contentPdUsed: mod.contentPdUsed,
+      },
+      rates,
+      categoryRates,
+      effectiveMarkup,
+      effectiveMarkupUsed,
+    );
+    return {
+      id: mod.id,
+      name: mod.name,
+      contentAu: mod.contentAu,
+      contentAg: mod.contentAg,
+      contentPt: mod.contentPt,
+      contentPd: mod.contentPd,
+      contentAuUsed: mod.contentAuUsed,
+      contentAgUsed: mod.contentAgUsed,
+      contentPtUsed: mod.contentPtUsed,
+      contentPdUsed: mod.contentPdUsed,
+      priceNew: modPrices.priceNew,
+      priceUsed: modPrices.priceUsed,
+    };
+  });
+
   return {
     id: product.id,
     name: product.name,
@@ -295,6 +386,8 @@ function serializeProduct(
     isSingleType: product.isSingleType,
     isPriceOnRequest: product.isPriceOnRequest,
     isShowcaseFace: product.isShowcaseFace,
+    hasModifications: product.hasModifications,
+    modifications: modificationsWithPrices,
     contentGold: toNumber(product.contentGold),
     contentSilver: toNumber(product.contentSilver),
     contentPlatinum: toNumber(product.contentPlatinum),
@@ -556,6 +649,7 @@ export async function getProducts(
                 customRatePd: true,
               },
             },
+            modifications: true,
           },
           orderBy: { sortOrder: "asc" },
         }),
@@ -656,6 +750,7 @@ export async function getProducts(
               customRatePd: true,
             },
           },
+          modifications: true,
         },
         orderBy: { sortOrder: "asc" },
         // Если включены подкатегории, загружаем больше для клиентской сортировки
@@ -736,6 +831,7 @@ export async function getProductById(id: string): Promise<ProductResult> {
               customRatePd: true,
             },
           },
+          modifications: true,
         },
       }),
       getCurrentRates(),
@@ -782,6 +878,7 @@ export async function getProductBySlug(slug: string): Promise<ProductResult> {
               customRatePd: true,
             },
           },
+          modifications: true,
         },
       }),
       getCurrentRates(),
@@ -876,6 +973,25 @@ export async function createProduct(
         isSingleType: input.isSingleType ?? false,
         isPriceOnRequest: input.isPriceOnRequest ?? false,
         isShowcaseFace: input.isShowcaseFace ?? false,
+        hasModifications: input.hasModifications ?? false,
+        // Модификации — создаём вложенно если переданы
+        ...(input.modifications?.length ? {
+          modifications: {
+            createMany: {
+              data: input.modifications.map((m) => ({
+                name: m.name,
+                contentAu: m.contentAu ?? 0,
+                contentAg: m.contentAg ?? 0,
+                contentPt: m.contentPt ?? 0,
+                contentPd: m.contentPd ?? 0,
+                contentAuUsed: m.contentAuUsed ?? 0,
+                contentAgUsed: m.contentAgUsed ?? 0,
+                contentPtUsed: m.contentPtUsed ?? 0,
+                contentPdUsed: m.contentPdUsed ?? 0,
+              })),
+            },
+          },
+        } : {}),
         // Содержание металлов для НОВЫХ (обрабатываем null и NaN как 0)
         contentGold: (input.contentGold == null || Number.isNaN(input.contentGold)) ? 0 : input.contentGold,
         contentSilver: (input.contentSilver == null || Number.isNaN(input.contentSilver)) ? 0 : input.contentSilver,
@@ -903,6 +1019,7 @@ export async function createProduct(
             customRatePd: true,
           },
         },
+        modifications: true,
       },
     });
 
@@ -990,6 +1107,7 @@ export async function updateProduct(
       isSingleType?: boolean;
       isPriceOnRequest?: boolean;
       isShowcaseFace?: boolean;
+      hasModifications?: boolean;
       // Содержание металлов для НОВЫХ
       contentGold?: number;
       contentSilver?: number;
@@ -1020,6 +1138,7 @@ export async function updateProduct(
     if (input.isSingleType !== undefined) updateData.isSingleType = input.isSingleType;
     if (input.isPriceOnRequest !== undefined) updateData.isPriceOnRequest = input.isPriceOnRequest;
     if (input.isShowcaseFace !== undefined) updateData.isShowcaseFace = input.isShowcaseFace;
+    if (input.hasModifications !== undefined) updateData.hasModifications = input.hasModifications;
     // sortOrder обрабатывается отдельно через reorder
     // НОВЫЕ - обрабатываем null и NaN как 0
     if (input.contentGold !== undefined) updateData.contentGold = (input.contentGold == null || Number.isNaN(input.contentGold)) ? 0 : input.contentGold;
@@ -1036,10 +1155,37 @@ export async function updateProduct(
     if (input.manualPriceNew !== undefined) updateData.manualPriceNew = input.manualPriceNew;
     if (input.manualPriceUsed !== undefined) updateData.manualPriceUsed = input.manualPriceUsed;
 
+    // Если переданы модификации — удаляем старые и создаём новые (deleteMany -> createMany)
+    if (input.modifications !== undefined) {
+      await prisma.productModification.deleteMany({
+        where: { productId: input.id },
+      });
+    }
+
     // Обновляем товар
     const product = await prisma.product.update({
       where: { id: input.id },
-      data: updateData,
+      data: {
+        ...updateData,
+        // Создаём новые модификации если переданы
+        ...(input.modifications?.length ? {
+          modifications: {
+            createMany: {
+              data: input.modifications.map((m) => ({
+                name: m.name,
+                contentAu: m.contentAu ?? 0,
+                contentAg: m.contentAg ?? 0,
+                contentPt: m.contentPt ?? 0,
+                contentPd: m.contentPd ?? 0,
+                contentAuUsed: m.contentAuUsed ?? 0,
+                contentAgUsed: m.contentAgUsed ?? 0,
+                contentPtUsed: m.contentPtUsed ?? 0,
+                contentPdUsed: m.contentPdUsed ?? 0,
+              })),
+            },
+          },
+        } : {}),
+      },
       include: {
         category: {
           select: {
@@ -1052,6 +1198,7 @@ export async function updateProduct(
             customRatePd: true,
           },
         },
+        modifications: true,
       },
     });
 
@@ -1153,6 +1300,7 @@ export async function getProductsByIds(ids: string[]): Promise<ProductsResult> {
               customRatePd: true,
             },
           },
+          modifications: true,
         },
       }),
       getCurrentRates(),

@@ -13,7 +13,7 @@ import {
   Info,
   Phone,
 } from "lucide-react";
-import { getProductBySlug, getProducts, getCategoryBySlug, getGlobalSettings, type UnitType } from "@/app/actions";
+import { getProductBySlug, getProducts, getCategoryBySlug, getGlobalSettings, type UnitType, type ModificationWithPrice } from "@/app/actions";
 import { ProductCard, ProductGridSkeleton, SellModal } from "../../../components";
 import type { SellModalContactInfo } from "../../../components";
 
@@ -188,6 +188,107 @@ function BreadcrumbSchema({ categoryName, categorySlug, productName, productSlug
   );
 }
 
+// Форматирование цены
+function formatDetailPrice(price: number): string {
+  return new Intl.NumberFormat("ru-RU", {
+    style: "currency",
+    currency: "RUB",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(price);
+}
+
+// Таблица модификаций для страницы товара (более просторная версия)
+function ModificationsDetailTable({
+  modifications,
+  isSingleType,
+  isNewAvailable,
+  isUsedAvailable,
+  isPriceOnRequest,
+  unitType,
+}: {
+  modifications: ModificationWithPrice[];
+  isSingleType: boolean;
+  isNewAvailable: boolean;
+  isUsedAvailable: boolean;
+  isPriceOnRequest: boolean;
+  unitType: UnitType;
+}) {
+  const suffix = getPriceUnitSuffix(unitType);
+  const showBothPrices = !isSingleType && isNewAvailable && isUsedAvailable;
+
+  return (
+    <div className="bg-gradient-to-r from-[var(--accent-50)] to-[var(--accent-100)] rounded-xl p-4 sm:p-6 mb-6 border border-[var(--accent-200)]">
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm text-[var(--gray-600)]">
+          Цены скупки за {getUnitShort(unitType)}
+        </p>
+        <Scale className="w-8 h-8 text-[var(--accent-400)] shrink-0" />
+      </div>
+
+      {isPriceOnRequest ? (
+        <p className="text-xl md:text-2xl font-medium text-slate-500 italic">
+          Цена по запросу
+        </p>
+      ) : (
+        <div className="bg-white rounded-lg border border-[var(--accent-200)] overflow-hidden">
+          {/* Заголовок таблицы */}
+          <div className={`flex items-center bg-[var(--gray-100)] text-xs sm:text-sm font-semibold text-[var(--gray-600)] border-b border-[var(--gray-200)]`}>
+            <span className="flex-1 px-3 py-2">Модификация</span>
+            {showBothPrices ? (
+              <>
+                <span className="w-24 sm:w-32 text-right px-3 py-2">Новое</span>
+                <span className="w-24 sm:w-32 text-right px-3 py-2">Б/У</span>
+              </>
+            ) : (
+              <span className="w-28 sm:w-36 text-right px-3 py-2">
+                {isSingleType ? "Цена" : isNewAvailable ? "Новое" : "Б/У"}
+              </span>
+            )}
+          </div>
+          {/* Строки модификаций */}
+          {modifications.map((mod, idx) => {
+            const price = isSingleType || isNewAvailable ? mod.priceNew : mod.priceUsed;
+            const isLast = idx === modifications.length - 1;
+            return (
+              <div
+                key={mod.id}
+                className={`flex items-center ${!isLast ? 'border-b border-[var(--gray-200)]' : ''} hover:bg-[var(--accent-50)] transition-colors`}
+              >
+                <span className="flex-1 px-3 py-2 sm:py-2.5 text-sm sm:text-base text-[var(--gray-800)]">
+                  {mod.name}
+                </span>
+                {showBothPrices ? (
+                  <>
+                    <span className="w-24 sm:w-32 text-right px-3 py-2 sm:py-2.5 text-sm sm:text-lg font-bold text-green-700 whitespace-nowrap">
+                      {formatDetailPrice(mod.priceNew)}{suffix}
+                    </span>
+                    <span className="w-24 sm:w-32 text-right px-3 py-2 sm:py-2.5 text-sm sm:text-lg font-bold text-amber-700 whitespace-nowrap">
+                      {formatDetailPrice(mod.priceUsed)}{suffix}
+                    </span>
+                  </>
+                ) : (
+                  <span className="w-28 sm:w-36 text-right px-3 py-2 sm:py-2.5 text-sm sm:text-lg font-bold text-[var(--gray-900)] whitespace-nowrap">
+                    {formatDetailPrice(price)}{suffix}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <p className="text-xs text-[var(--gray-500)] mt-3 flex items-center gap-1">
+        <Info className="w-3 h-3" />
+        {isPriceOnRequest
+          ? "Свяжитесь с нами для уточнения стоимости"
+          : "Цены рассчитаны по актуальному курсу драгметаллов"
+        }
+      </p>
+    </div>
+  );
+}
+
 // Related products
 async function RelatedProducts({
   categoryId,
@@ -346,69 +447,72 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </h1>
 
             {/* Price block */}
-            <div className="bg-gradient-to-r from-[var(--accent-50)] to-[var(--accent-100)] rounded-xl p-6 mb-6 border border-[var(--accent-200)]">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <p className="text-sm text-[var(--gray-600)] mb-3">
-                    Цена скупки за {getUnitShort(product.unitType)}
-                  </p>
-                  {product.isPriceOnRequest ? (
-                    <p className="text-xl md:text-2xl font-medium text-slate-500 italic">
-                      Цена по запросу
+            {product.hasModifications && product.modifications.length > 0 ? (
+              /* === Товар с модификациями === */
+              <ModificationsDetailTable
+                modifications={product.modifications}
+                isSingleType={product.isSingleType}
+                isNewAvailable={product.isNewAvailable}
+                isUsedAvailable={product.isUsedAvailable}
+                isPriceOnRequest={product.isPriceOnRequest}
+                unitType={product.unitType}
+              />
+            ) : (
+              /* === Обычный товар === */
+              <div className="bg-gradient-to-r from-[var(--accent-50)] to-[var(--accent-100)] rounded-xl p-6 mb-6 border border-[var(--accent-200)]">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="text-sm text-[var(--gray-600)] mb-3">
+                      Цена скупки за {getUnitShort(product.unitType)}
                     </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {/* Цена за Новое */}
-                      {product.priceNew !== null && (
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 bg-green-100 px-3 py-2 sm:px-4 sm:py-3 rounded-lg">
-                          <span className="text-xs sm:text-sm font-medium text-green-700">
-                            {product.isSingleType ? "Цена" : "Новое"}
-                          </span>
-                          <span className="text-xl sm:text-2xl md:text-3xl font-bold text-green-700">
-                            {new Intl.NumberFormat("ru-RU", {
-                              style: "currency",
-                              currency: "RUB",
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: 0,
-                            }).format(product.priceNew)}{getPriceUnitSuffix(product.unitType)}
-                          </span>
-                        </div>
-                      )}
-                      
-                      {/* Цена за Б/У */}
-                      {product.priceUsed !== null && !product.isSingleType && (
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 bg-amber-100 px-3 py-2 sm:px-4 sm:py-3 rounded-lg">
-                          <span className="text-xs sm:text-sm font-medium text-amber-700">Б/У</span>
-                          <span className="text-xl sm:text-2xl md:text-3xl font-bold text-amber-700">
-                            {new Intl.NumberFormat("ru-RU", {
-                              style: "currency",
-                              currency: "RUB",
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: 0,
-                            }).format(product.priceUsed)}{getPriceUnitSuffix(product.unitType)}
-                          </span>
-                        </div>
-                      )}
-                      
-                      {/* Если нет цен */}
-                      {product.priceNew === null && product.priceUsed === null && (
-                        <p className="text-lg text-[var(--gray-500)] italic">
-                          Не принимается
-                        </p>
-                      )}
-                    </div>
-                  )}
-                  <p className="text-xs text-[var(--gray-500)] mt-3 flex items-center gap-1">
-                    <Info className="w-3 h-3" />
-                    {product.isPriceOnRequest 
-                      ? "Свяжитесь с нами для уточнения стоимости"
-                      : "Цена рассчитана по актуальному курсу драгметаллов"
-                    }
-                  </p>
+                    {product.isPriceOnRequest ? (
+                      <p className="text-xl md:text-2xl font-medium text-slate-500 italic">
+                        Цена по запросу
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {/* Цена за Новое */}
+                        {product.priceNew !== null && (
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 bg-green-100 px-3 py-2 sm:px-4 sm:py-3 rounded-lg">
+                            <span className="text-xs sm:text-sm font-medium text-green-700">
+                              {product.isSingleType ? "Цена" : "Новое"}
+                            </span>
+                            <span className="text-xl sm:text-2xl md:text-3xl font-bold text-green-700">
+                              {formatDetailPrice(product.priceNew)}{getPriceUnitSuffix(product.unitType)}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {/* Цена за Б/У */}
+                        {product.priceUsed !== null && !product.isSingleType && (
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 bg-amber-100 px-3 py-2 sm:px-4 sm:py-3 rounded-lg">
+                            <span className="text-xs sm:text-sm font-medium text-amber-700">Б/У</span>
+                            <span className="text-xl sm:text-2xl md:text-3xl font-bold text-amber-700">
+                              {formatDetailPrice(product.priceUsed)}{getPriceUnitSuffix(product.unitType)}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {/* Если нет цен */}
+                        {product.priceNew === null && product.priceUsed === null && (
+                          <p className="text-lg text-[var(--gray-500)] italic">
+                            Не принимается
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <p className="text-xs text-[var(--gray-500)] mt-3 flex items-center gap-1">
+                      <Info className="w-3 h-3" />
+                      {product.isPriceOnRequest 
+                        ? "Свяжитесь с нами для уточнения стоимости"
+                        : "Цена рассчитана по актуальному курсу драгметаллов"
+                      }
+                    </p>
+                  </div>
+                  <Scale className="w-12 h-12 text-[var(--accent-400)] shrink-0" />
                 </div>
-                <Scale className="w-12 h-12 text-[var(--accent-400)] shrink-0" />
               </div>
-            </div>
+            )}
 
             {/* CTA buttons */}
             <div className="flex flex-col gap-3 mb-8">

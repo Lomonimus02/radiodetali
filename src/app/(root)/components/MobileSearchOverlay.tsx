@@ -209,7 +209,10 @@ export function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProp
                     {product.name}
                   </h4>
                   <p className="text-sm text-[var(--gray-500)] truncate">
-                    {product.categoryName}
+                    {product.matchedModificationName 
+                      ? <span>→ <span className="text-[var(--primary-600)] font-medium">{product.matchedModificationName}</span></span>
+                      : product.categoryName
+                    }
                   </p>
                   <div className="flex items-center gap-2 mt-1">
                     {product.priceNew && (

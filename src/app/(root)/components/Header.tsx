@@ -249,7 +249,12 @@ export function Header({ contactInfo }: HeaderProps) {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-[var(--gray-900)] truncate">{product.name}</p>
-                              <p className="text-xs text-[var(--gray-500)]">{product.categoryName}</p>
+                              <p className="text-xs text-[var(--gray-500)]">
+                                {product.matchedModificationName 
+                                  ? <span>→ <span className="text-[var(--primary-600)] font-medium">{product.matchedModificationName}</span></span>
+                                  : product.categoryName
+                                }
+                              </p>
                             </div>
                             {product.priceNew && (
                               <span className="text-sm font-semibold text-[var(--primary-600)] whitespace-nowrap">

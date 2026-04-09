@@ -106,6 +106,8 @@ export interface ProductWithPrice {
   // Рассчитанные актуальные цены
   priceNew: number | null; // null если isNewAvailable = false
   priceUsed: number | null; // null если isUsedAvailable = false или isSingleType = true
+  // Название совпавшей модификации (заполняется только при поиске)
+  matchedModificationName: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -304,7 +306,8 @@ function toNumberOrNull(value: unknown): number | null {
 function serializeProduct(
   product: DbProductWithCategory,
   rates: RatesForCalculation,
-  globalPriceMarkup: number
+  globalPriceMarkup: number,
+  matchedModificationName?: string | null,
 ): ProductWithPrice {
   // Наценка товара умножается на глобальную наценку (внутри priceMarkup товара)
   const effectiveMarkup = product.priceMarkup * globalPriceMarkup;
@@ -407,6 +410,7 @@ function serializeProduct(
     manualPriceUsed: toNumberOrNull(product.manualPriceUsed),
     priceNew,
     priceUsed: product.isSingleType ? null : priceUsed, // Для единого типа Б/У цена не нужна
+    matchedModificationName: matchedModificationName ?? null,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
   };
@@ -693,6 +697,7 @@ export async function getProducts(
         ignoreLocation: true,    // Искать совпадение в любом месте строки
         minMatchCharLength: 2,   // Минимум 2 символа для совпадения
         includeScore: true,      // Включить оценку релевантности
+        includeMatches: true,    // Включить информацию о совпадениях
         findAllMatches: true,    // Найти все совпадения в строке
         useExtendedSearch: true, // Расширенный поиск
       });
@@ -723,10 +728,13 @@ export async function getProducts(
       const paginatedResults = combinedResults.slice(offset, offset + limit);
       
       // Преобразуем товары с рассчитанными ценами
-      const productsWithPrices = paginatedResults.map(({ item }) => {
+      const productsWithPrices = paginatedResults.map(({ item, matches }) => {
         // Убираем временные нормализованные поля
         const { nameNormalized, slugNormalized, descriptionNormalized, normalizedSearchString, ...product } = item;
-        return serializeProduct(product as DbProductWithCategory, rates, priceMarkup);
+        // Извлекаем название совпавшей модификации (если совпадение по modifications.name)
+        const modMatch = matches?.find((m) => m.key === 'modifications.name');
+        const matchedModName = modMatch ? String(modMatch.value ?? '') : null;
+        return serializeProduct(product as DbProductWithCategory, rates, priceMarkup, matchedModName);
       });
 
       return {

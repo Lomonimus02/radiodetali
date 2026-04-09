@@ -82,11 +82,11 @@ function ModificationsTable({
             </span>
             {showBothPrices ? (
               <>
-                <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-100)] font-extrabold text-[var(--gray-900)] whitespace-nowrap text-[11px] w-[30%] shrink-0">
-                  {formatPrice(mod.priceNew)}
+                <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-100)] font-extrabold text-[var(--gray-900)] whitespace-nowrap overflow-hidden text-[11px] w-[30%] shrink-0">
+                  {formatPrice(mod.priceNew)}{suffix}
                 </span>
-                <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-100)] font-extrabold text-[var(--gray-900)] whitespace-nowrap text-[11px] w-[30%] shrink-0">
-                  {formatPrice(mod.priceUsed)}
+                <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-100)] font-extrabold text-[var(--gray-900)] whitespace-nowrap overflow-hidden text-[11px] w-[30%] shrink-0">
+                  {formatPrice(mod.priceUsed)}{suffix}
                 </span>
               </>
             ) : (

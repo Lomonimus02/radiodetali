@@ -320,7 +320,7 @@ async function CatalogSection() {
               {/* Content */}
               <div className="p-2 md:p-4">
                 {/* Product name */}
-                <h3 className="text-sm font-medium text-[var(--gray-900)] group-hover:text-[var(--primary-600)] transition-colors line-clamp-2 min-h-[2.5rem]">
+                <h3 className="font-semibold text-[var(--gray-800)] group-hover:text-[var(--primary-600)] transition-colors line-clamp-2 min-h-[2.5rem]">
                   {item.name}
                 </h3>
 
@@ -342,40 +342,39 @@ async function CatalogSection() {
                     </div>
                   ) : item.hasModifications && item.modifications.length > 0 ? (
                     /* Таблица модификаций */
-                    <div className="rounded-lg border border-[var(--gray-200)] overflow-hidden">
-                      {/* Заголовок */}
-                      <div className={`flex items-center bg-[var(--gray-100)] text-[11px] font-bold uppercase tracking-wide text-[var(--gray-500)] border-b border-[var(--gray-200)]`}>
-                        <span className="flex-1 px-2 py-1.5 min-w-0 whitespace-nowrap overflow-hidden">{item.modLabel || 'Модификация'}</span>
-                        {!item.isSingleType && item.isNewAvailable && item.isUsedAvailable ? (
-                          <>
-                            <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-200)] w-[30%] shrink-0">Нов.</span>
-                            <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-200)] w-[30%] shrink-0">Б/У</span>
-                          </>
-                        ) : (
-                          <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-200)] w-[55%] shrink-0">Цена</span>
+                    <div className="overflow-hidden">
+                      <div className="flex items-baseline text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-400)] border-b border-[var(--gray-200)] pb-0.5 mb-0.5">
+                        <span className="flex-1 min-w-0"></span>
+                        <span className="shrink-0 text-right w-16">
+                          {!item.isSingleType && item.isNewAvailable && item.isUsedAvailable ? 'Нов.' : 'Цена'}
+                        </span>
+                        {!item.isSingleType && item.isNewAvailable && item.isUsedAvailable && (
+                          <span className="shrink-0 text-right w-16">Б/У</span>
                         )}
                       </div>
-                      {/* Строки */}
                       {item.modifications.map((mod, idx) => {
                         const showUsed = !item.isSingleType && item.isNewAvailable && item.isUsedAvailable;
                         const singlePrice = item.isSingleType || item.isNewAvailable ? mod.priceNew : mod.priceUsed;
                         const isLast = idx === item.modifications.length - 1;
                         return (
-                          <div key={mod.id} className={`flex items-center ${!isLast ? 'border-b border-[var(--gray-200)]' : ''}`}>
-                            <span className="flex-1 px-2 py-1.5 text-xs font-bold text-[var(--gray-900)] min-w-0 break-words">
+                          <div
+                            key={mod.id}
+                            className={`flex items-baseline py-1 text-xs ${!isLast ? 'border-b border-[var(--gray-200)]' : ''}`}
+                          >
+                            <span className="flex-1 min-w-0 text-[var(--gray-700)] truncate pr-1">
                               {mod.name}
                             </span>
                             {showUsed ? (
                               <>
-                                <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-100)] font-extrabold text-[var(--gray-900)] whitespace-nowrap text-[11px] w-[30%] shrink-0">
-                                  {formatPrice(mod.priceNew)}
+                                <span className="shrink-0 w-16 text-right font-semibold text-[var(--gray-900)] whitespace-nowrap">
+                                  {formatPrice(mod.priceNew)}{getPriceUnitSuffix(item.unitType)}
                                 </span>
-                                <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-100)] font-extrabold text-[var(--gray-900)] whitespace-nowrap text-[11px] w-[30%] shrink-0">
-                                  {formatPrice(mod.priceUsed)}
+                                <span className="shrink-0 w-16 text-right font-semibold text-[var(--gray-900)] whitespace-nowrap">
+                                  {formatPrice(mod.priceUsed)}{getPriceUnitSuffix(item.unitType)}
                                 </span>
                               </>
                             ) : (
-                              <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-100)] font-extrabold text-[var(--gray-900)] whitespace-nowrap text-xs w-[55%] shrink-0">
+                              <span className="shrink-0 w-16 text-right font-semibold text-[var(--gray-900)] whitespace-nowrap">
                                 {formatPrice(singlePrice)}{getPriceUnitSuffix(item.unitType)}
                               </span>
                             )}

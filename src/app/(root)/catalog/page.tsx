@@ -67,7 +67,7 @@ async function CategoriesList() {
             className="group flex items-center bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-lg hover:translate-x-1 transition-all duration-300 overflow-hidden"
           >
             {/* Квадратное фото слева */}
-            <div className="w-24 h-24 md:w-28 md:h-28 shrink-0 bg-[var(--gray-100)] overflow-hidden">
+            <div className="w-24 h-24 md:w-28 md:h-28 shrink-0 bg-[var(--gray-100)] overflow-hidden shadow-sm">
               {displayImage ? (
                 <Image
                   src={displayImage}

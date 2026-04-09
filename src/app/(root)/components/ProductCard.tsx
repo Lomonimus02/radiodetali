@@ -59,35 +59,40 @@ function ModificationsTable({
 
   return (
     <div className="rounded-lg border border-[var(--gray-200)] overflow-hidden">
+      {/* Заголовок */}
+      <div className={`flex items-center bg-[var(--gray-100)] text-[11px] font-bold uppercase tracking-wide text-[var(--gray-500)] border-b border-[var(--gray-200)]`}>
+        <span className="flex-1 px-2 py-1.5 min-w-0 whitespace-nowrap overflow-hidden">{modLabel}</span>
+        {showBothPrices ? (
+          <>
+            <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-200)] w-[30%] shrink-0">Нов.</span>
+            <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-200)] w-[30%] shrink-0">Б/У</span>
+          </>
+        ) : (
+          <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-200)] w-[55%] shrink-0">Цена</span>
+        )}
+      </div>
+      {/* Строки */}
       {modifications.map((mod, idx) => {
         const singlePrice = isSingleType || isNewAvailable ? mod.priceNew : mod.priceUsed;
         const isLast = idx === modifications.length - 1;
         return (
-          <div key={mod.id} className={!isLast ? 'border-b-2 border-[var(--gray-300)]' : ''}>
-            {/* Заголовок модификации: modLabel + название */}
-            <div className="px-2.5 py-2 bg-[var(--gray-100)]">
-              <div className="text-[10px] uppercase tracking-wide text-[var(--gray-400)] mb-0.5">{modLabel}</div>
-              <div className="text-sm font-bold text-[var(--gray-900)]">{mod.name}</div>
-            </div>
-            {/* Строки цен */}
+          <div key={mod.id} className={`flex items-center ${!isLast ? 'border-b border-[var(--gray-200)]' : ''}`}>
+            <span className="flex-1 px-2 py-1.5 text-xs font-bold text-[var(--gray-900)] min-w-0 break-words">
+              {mod.name}
+            </span>
             {showBothPrices ? (
-              <div>
-                <div className="px-2.5 py-1.5 flex items-center justify-between bg-white border-t border-[var(--gray-200)]">
-                  <span className="text-sm font-medium text-[var(--gray-900)]">Новые</span>
-                  <span className="text-sm font-bold text-[var(--gray-900)]">{formatPrice(mod.priceNew)}{suffix}</span>
-                </div>
-                <div className="px-2.5 py-1.5 flex items-center justify-between bg-white border-t border-[var(--gray-200)]">
-                  <span className="text-sm font-medium text-[var(--gray-900)]">Б/У</span>
-                  <span className="text-sm font-bold text-[var(--gray-900)]">{formatPrice(mod.priceUsed)}{suffix}</span>
-                </div>
-              </div>
-            ) : (
-              <div className="px-2.5 py-1.5 flex items-center justify-between bg-white border-t border-[var(--gray-200)]">
-                <span className="text-sm font-medium text-[var(--gray-900)]">
-                  {isSingleType ? 'Цена' : isNewAvailable ? 'Новые' : 'Б/У'}
+              <>
+                <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-100)] font-extrabold text-[var(--gray-900)] whitespace-nowrap text-[11px] w-[30%] shrink-0">
+                  {formatPrice(mod.priceNew)}
                 </span>
-                <span className="text-sm font-bold text-[var(--gray-900)]">{formatPrice(singlePrice)}{suffix}</span>
-              </div>
+                <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-100)] font-extrabold text-[var(--gray-900)] whitespace-nowrap text-[11px] w-[30%] shrink-0">
+                  {formatPrice(mod.priceUsed)}
+                </span>
+              </>
+            ) : (
+              <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-100)] font-extrabold text-[var(--gray-900)] whitespace-nowrap text-xs w-[55%] shrink-0">
+                {formatPrice(singlePrice)}{suffix}
+              </span>
             )}
           </div>
         );
@@ -118,7 +123,7 @@ export function ProductCard({ product, categorySlug, categoryName, variant = "de
         className="group block bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-xl transition-all duration-300 overflow-hidden"
       >
         {/* Image - larger aspect ratio for showcase */}
-        <div className="relative aspect-[3/2] md:aspect-[4/3] bg-[var(--gray-100)] overflow-hidden">
+        <div className="relative aspect-[3/2] md:aspect-[4/3] bg-[var(--gray-100)] overflow-hidden shadow-sm">
           {product.image ? (
             <Image
               src={product.image}
@@ -179,7 +184,7 @@ export function ProductCard({ product, categorySlug, categoryName, variant = "de
           className="w-full cursor-zoom-in"
           aria-label={`Увеличить изображение ${product.name}`}
         >
-          <div className="relative aspect-[3/2] md:aspect-square bg-[var(--gray-100)] overflow-hidden">
+          <div className="relative aspect-[3/2] md:aspect-square bg-[var(--gray-100)] overflow-hidden shadow-sm">
             {product.image ? (
               <Image
                 src={product.image}

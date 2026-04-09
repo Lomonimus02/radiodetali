@@ -24,6 +24,7 @@ import {
   type ProductWithPrice,
 } from "@/app/actions";
 import ProductsTable from "../components/ProductsTable";
+import { DeleteCategoryButton } from "../components/DeleteCategoryButton";
 
 interface CatalogPageProps {
   params: Promise<{ slug?: string[] }>;
@@ -144,9 +145,9 @@ function AddButton({
 }
 
 // Кнопки управления текущей категорией
-function CategoryActions({ categoryId }: { categoryId: string }) {
+function CategoryActions({ categoryId, categoryName, parentId, productCount, childrenCount }: { categoryId: string; categoryName: string; parentId?: string | null; productCount: number; childrenCount: number }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 relative">
       <Link
         href={`/admin/categories/${categoryId}/edit`}
         className="inline-flex items-center gap-2 px-3 py-2 text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-colors text-sm font-medium"
@@ -155,6 +156,7 @@ function CategoryActions({ categoryId }: { categoryId: string }) {
         <Pencil className="w-4 h-4" />
         <span className="hidden sm:inline">Редактировать</span>
       </Link>
+      <DeleteCategoryButton categoryId={categoryId} categoryName={categoryName} parentId={parentId} productCount={productCount} childrenCount={childrenCount} />
     </div>
   );
 }
@@ -319,7 +321,7 @@ export default async function CatalogPage({ params }: CatalogPageProps) {
         <div className="flex items-center gap-2">
           {/* Редактировать текущую категорию */}
           {categoryId && currentCategory && (
-            <CategoryActions categoryId={categoryId} />
+            <CategoryActions categoryId={categoryId} categoryName={currentCategory.name} parentId={currentCategory.parentId} productCount={currentCategory.productCount} childrenCount={currentCategory.childrenCount ?? 0} />
           )}
           {/* Кнопка добавления товара (когда в категории) */}
           {categoryId && (

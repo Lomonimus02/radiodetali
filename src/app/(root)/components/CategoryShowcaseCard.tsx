@@ -35,7 +35,7 @@ export function CategoryShowcaseCard({
       className="group block bg-white rounded-xl border border-[var(--gray-200)] hover:border-[var(--accent-400)] hover:shadow-xl transition-all duration-300 overflow-hidden"
     >
       {/* Фото товара */}
-      <div className="relative h-28 md:h-40 bg-[var(--gray-100)] overflow-hidden">
+      <div className="relative h-28 md:h-40 bg-[var(--gray-100)] overflow-hidden shadow-sm">
         {product.image ? (
           <Image
             src={product.image}

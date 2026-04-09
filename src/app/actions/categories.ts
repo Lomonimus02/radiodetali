@@ -595,6 +595,7 @@ export interface CategoryShowcaseItem {
   unitType: "PIECE" | "GRAM" | "KG"; // Ð•Ð´Ð¸Ð½Ð¸Ñ†Ð° Ð¸Ð·Ð¼ÐµÑ€ÐµÐ½Ð¸Ñ
   // Модификации
   hasModifications: boolean;
+  modLabel: string;
   modifications: { id: string; name: string; priceNew: number; priceUsed: number }[];
   // Ð”Ð°Ð½Ð½Ñ‹Ðµ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ð´Ð»Ñ ÑÑÑ‹Ð»ÐºÐ¸
   categorySlug: string;    // slug ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸
@@ -671,10 +672,11 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
             manualPriceUsed: true,
             // Модификации
             hasModifications: true,
+            modLabel: true,
             modifications: true,
           },
         },
-        // ÐŸÐ¾Ð´ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ñ Ð¸Ñ… Ñ‚Ð¾Ð²Ð°Ñ€Ð°Ð¼Ð¸ Ð¸ ÐºÐ°ÑÑ‚Ð¾Ð¼Ð½Ñ‹Ð¼Ð¸ ÐºÑƒÑ€ÑÐ°Ð¼Ð¸
+        // Подкатегории с их товарами и кастомными курсами
         children: {
           select: {
             // ÐšÐ°ÑÑ‚Ð¾Ð¼Ð½Ñ‹Ðµ ÐºÑƒÑ€ÑÑ‹ Ð¿Ð¾Ð´ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸
@@ -709,6 +711,7 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
                 manualPriceUsed: true,
             // Модификации
             hasModifications: true,
+            modLabel: true,
             modifications: true,
               },
             },
@@ -841,6 +844,7 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
           unitType: chosenProduct.unitType,
           // Модификации с ценами
           hasModifications: chosenProduct.hasModifications ?? false,
+          modLabel: chosenProduct.modLabel ?? 'Модификация',
           modifications: (chosenProduct.modifications ?? []).map((mod) => {
             const effectiveMarkup = (chosenProduct.priceMarkup ?? 1) * markup;
             const effectiveMarkupUsed = (chosenProduct.priceMarkupUsed ?? 1) * markup;

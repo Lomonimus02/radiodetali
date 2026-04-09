@@ -59,6 +59,8 @@ export interface GlobalSettingsData {
   // Текст и фото для страницы "О нас"
   aboutText: string;
   aboutPhotoUrl: string;
+  // Показывать ли плашку "Время прибытия"
+  showArrivalNotice: boolean;
 }
 
 /**
@@ -77,6 +79,7 @@ export interface UpdateGlobalSettingsInput {
   storePhotoUrls?: string[];
   aboutText?: string;
   aboutPhotoUrl?: string;
+  showArrivalNotice?: boolean;
 }
 
 /**
@@ -274,6 +277,7 @@ export async function getGlobalSettings(): Promise<GlobalSettingsResult> {
         storePhotoUrls: settings.storePhotoUrls ?? [],
         aboutText: settings.aboutText ?? "",
         aboutPhotoUrl: settings.aboutPhotoUrl ?? "",
+        showArrivalNotice: settings.showArrivalNotice ?? true,
       },
     };
   } catch (error) {
@@ -325,6 +329,7 @@ export async function updateGlobalSettings(
     if (input.storePhotoUrls !== undefined) updateData.storePhotoUrls = input.storePhotoUrls;
     if (input.aboutText !== undefined) updateData.aboutText = input.aboutText;
     if (input.aboutPhotoUrl !== undefined) updateData.aboutPhotoUrl = input.aboutPhotoUrl;
+    if (input.showArrivalNotice !== undefined) updateData.showArrivalNotice = input.showArrivalNotice;
 
     // Обновляем или создаём запись (upsert)
     const settings = await prisma.globalSettings.upsert({
@@ -367,6 +372,7 @@ export async function updateGlobalSettings(
         storePhotoUrls: settings.storePhotoUrls ?? [],
         aboutText: settings.aboutText ?? "",
         aboutPhotoUrl: settings.aboutPhotoUrl ?? "",
+        showArrivalNotice: settings.showArrivalNotice ?? true,
       },
     };
   } catch (error) {

@@ -85,6 +85,7 @@ export interface ProductWithPrice {
   isShowcaseFace: boolean;
   // Модификации
   hasModifications: boolean;
+  modLabel: string;
   modifications: ModificationWithPrice[];
   // Содержание металлов для НОВЫХ
   contentGold: number;
@@ -129,6 +130,7 @@ export interface CreateProductInput {
   isShowcaseFace?: boolean;
   // Модификации
   hasModifications?: boolean;
+  modLabel?: string;
   modifications?: ModificationInput[];
   // Содержание металлов для НОВЫХ
   contentGold?: number;
@@ -167,6 +169,7 @@ export interface UpdateProductInput {
   isShowcaseFace?: boolean;
   // Модификации
   hasModifications?: boolean;
+  modLabel?: string;
   modifications?: ModificationInput[];
   // Содержание металлов для НОВЫХ
   contentGold?: number;
@@ -238,6 +241,7 @@ interface DbProductWithCategory {
   isShowcaseFace: boolean;
   // Модификации
   hasModifications: boolean;
+  modLabel?: string;
   modifications: {
     id: string;
     name: string;
@@ -387,6 +391,7 @@ function serializeProduct(
     isPriceOnRequest: product.isPriceOnRequest,
     isShowcaseFace: product.isShowcaseFace,
     hasModifications: product.hasModifications,
+    modLabel: product.modLabel ?? "Модификация",
     modifications: modificationsWithPrices,
     contentGold: toNumber(product.contentGold),
     contentSilver: toNumber(product.contentSilver),
@@ -681,6 +686,7 @@ export async function getProducts(
           { name: 'slugNormalized', weight: 1.5 },        // Склеенный слаг
           { name: 'description', weight: 1 },             // Описание
           { name: 'descriptionNormalized', weight: 1 },   // Склеенное описание
+          { name: 'modifications.name', weight: 1.5 },    // Названия модификаций (Deep Search)
         ],
         threshold: 0.3,          // Допуск для опечаток (0 = точное, 1 = любое)
         distance: 100,           // Максимальная дистанция для нечёткого совпадения
@@ -974,6 +980,7 @@ export async function createProduct(
         isPriceOnRequest: input.isPriceOnRequest ?? false,
         isShowcaseFace: input.isShowcaseFace ?? false,
         hasModifications: input.hasModifications ?? false,
+        modLabel: input.modLabel ?? "Модификация",
         // Модификации — создаём вложенно если переданы
         ...(input.modifications?.length ? {
           modifications: {
@@ -1093,43 +1100,14 @@ export async function updateProduct(
     }
 
     // Формируем данные для обновления
-    const updateData: {
-      name?: string;
-      slug?: string;
-      image?: string | null;
-      categoryId?: string;
-      sortOrder?: number;
-      // Единица измерения
-      unitType?: UnitType;
-      // Наценка и тип товара
-      priceMarkup?: number;
-      priceMarkupUsed?: number;
-      isSingleType?: boolean;
-      isPriceOnRequest?: boolean;
-      isShowcaseFace?: boolean;
-      hasModifications?: boolean;
-      // Содержание металлов для НОВЫХ
-      contentGold?: number;
-      contentSilver?: number;
-      contentPlatinum?: number;
-      contentPalladium?: number;
-      // Содержание металлов для Б/У
-      contentGoldUsed?: number;
-      contentSilverUsed?: number;
-      contentPlatinumUsed?: number;
-      contentPalladiumUsed?: number;
-      isNewAvailable?: boolean;
-      isUsedAvailable?: boolean;
-      manualPriceNew?: number | null;
-      manualPriceUsed?: number | null;
-      description?: string | null;
-    } = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateData: Record<string, any> = {};
 
     if (input.name !== undefined) updateData.name = input.name.trim();
     if (input.slug !== undefined) updateData.slug = input.slug.trim();
     if (input.description !== undefined) updateData.description = input.description;
     if (input.image !== undefined) updateData.image = input.image;
-    if (input.categoryId !== undefined) updateData.categoryId = input.categoryId;
+    if (input.categoryId !== undefined) updateData.category = { connect: { id: input.categoryId } };
     // Единица измерения
     if (input.unitType !== undefined) updateData.unitType = input.unitType;
     // Наценка и тип товара
@@ -1139,6 +1117,7 @@ export async function updateProduct(
     if (input.isPriceOnRequest !== undefined) updateData.isPriceOnRequest = input.isPriceOnRequest;
     if (input.isShowcaseFace !== undefined) updateData.isShowcaseFace = input.isShowcaseFace;
     if (input.hasModifications !== undefined) updateData.hasModifications = input.hasModifications;
+    if (input.modLabel !== undefined) updateData.modLabel = input.modLabel;
     // sortOrder обрабатывается отдельно через reorder
     // НОВЫЕ - обрабатываем null и NaN как 0
     if (input.contentGold !== undefined) updateData.contentGold = (input.contentGold == null || Number.isNaN(input.contentGold)) ? 0 : input.contentGold;

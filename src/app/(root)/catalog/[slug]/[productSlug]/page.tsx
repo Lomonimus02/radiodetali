@@ -206,6 +206,7 @@ function ModificationsDetailTable({
   isUsedAvailable,
   isPriceOnRequest,
   unitType,
+  modLabel,
 }: {
   modifications: ModificationWithPrice[];
   isSingleType: boolean;
@@ -213,6 +214,7 @@ function ModificationsDetailTable({
   isUsedAvailable: boolean;
   isPriceOnRequest: boolean;
   unitType: UnitType;
+  modLabel?: string;
 }) {
   const suffix = getPriceUnitSuffix(unitType);
   const showBothPrices = !isSingleType && isNewAvailable && isUsedAvailable;
@@ -234,7 +236,7 @@ function ModificationsDetailTable({
         <div className="bg-white rounded-lg border border-[var(--accent-200)] overflow-hidden">
           {/* Заголовок таблицы */}
           <div className={`flex items-center bg-[var(--gray-100)] text-xs sm:text-sm font-semibold text-[var(--gray-600)] border-b border-[var(--gray-200)]`}>
-            <span className="flex-1 px-3 py-2">Модификация</span>
+            <span className="flex-1 px-3 py-2">{modLabel || "Модификация"}</span>
             {showBothPrices ? (
               <>
                 <span className="w-24 sm:w-32 text-right px-3 py-2">Новое</span>
@@ -456,6 +458,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 isUsedAvailable={product.isUsedAvailable}
                 isPriceOnRequest={product.isPriceOnRequest}
                 unitType={product.unitType}
+                modLabel={product.modLabel}
               />
             ) : (
               /* === Обычный товар === */

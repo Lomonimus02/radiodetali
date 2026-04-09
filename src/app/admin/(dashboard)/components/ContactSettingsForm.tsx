@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { updateGlobalSettings, GlobalSettingsData } from "@/app/actions";
-import { Phone, Mail, MapPin, Clock, Send, Loader2, Check, Upload, X, ImageIcon, MessageCircle } from "lucide-react";
+import { Phone, Mail, MapPin, Clock, Send, Loader2, Check, Upload, X, ImageIcon, MessageCircle, Eye } from "lucide-react";
 import Image from "next/image";
 
 interface ContactSettingsFormProps {
@@ -18,6 +18,7 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
     address: initialData.address || "",
     workSchedule: initialData.workSchedule || "",
   });
+  const [showArrivalNotice, setShowArrivalNotice] = useState(initialData.showArrivalNotice ?? true);
   const [storePhotoUrls, setStorePhotoUrls] = useState<string[]>(initialData.storePhotoUrls ?? []);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -76,6 +77,7 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
         address: form.address,
         workSchedule: form.workSchedule,
         storePhotoUrls: storePhotoUrls,
+        showArrivalNotice: showArrivalNotice,
       });
 
       if (result.success) {
@@ -250,6 +252,30 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Arrival Notice Toggle */}
+      <div>
+        <label className="flex items-center gap-3 cursor-pointer">
+          <div className="relative">
+            <input
+              type="checkbox"
+              checked={showArrivalNotice}
+              onChange={(e) => {
+                setShowArrivalNotice(e.target.checked);
+                setMessage(null);
+              }}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-indigo-500/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Eye className="w-4 h-4 text-slate-400" />
+            <span className="text-sm font-medium text-slate-700">
+              Показывать плашку &laquo;Время прибытия необходимо согласовать заранее&raquo;
+            </span>
+          </div>
+        </label>
       </div>
 
       {/* Message */}

@@ -119,7 +119,7 @@ export default async function AboutPage() {
       {/* ===== 2. СЕКЦИЯ КОНТЕНТА (Split Layout) ===== */}
       <section className="bg-slate-950">
         <div className="container mx-auto px-4 py-16 md:py-24">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+          <div className={`grid grid-cols-1 ${aboutPhotoUrl ? 'lg:grid-cols-2' : ''} gap-12 items-start`}>
             {/* Левая колонка — Текст */}
             <div>
               <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">

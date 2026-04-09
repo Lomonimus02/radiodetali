@@ -42,6 +42,9 @@ model GlobalSettings {
   aboutText     String? @db.Text
   aboutPhotoUrl String? // URL фото для страницы "О компании"
 
+  // Показывать ли плашку "Время прибытия необходимо согласовать заранее"
+  showArrivalNotice Boolean @default(true)
+
   @@map("global_settings")
 }
 
@@ -142,6 +145,8 @@ model Product {
 
   // Флаг наличия модификаций (вариаций товара)
   hasModifications Boolean @default(false)
+  // Название колонки для модификаций (по умолчанию "Модификация")
+  modLabel String @default("Модификация")
 
   // Связь с категорией
   category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)

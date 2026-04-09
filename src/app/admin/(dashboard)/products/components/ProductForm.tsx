@@ -68,6 +68,7 @@ interface FormData {
   manualPriceUsed: number | null;
   // Модификации
   hasModifications: boolean;
+  modLabel: string;
   modifications: {
     name: string;
     contentAu: number;
@@ -155,6 +156,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
       manualPriceUsed: product?.manualPriceUsed || null,
       // Модификации
       hasModifications: product?.hasModifications ?? false,
+      modLabel: product?.modLabel ?? "Модификация",
       modifications: product?.modifications?.map((m) => ({
         name: m.name,
         contentAu: m.contentAu,
@@ -360,6 +362,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
           isPriceOnRequest: data.isPriceOnRequest,
           isShowcaseFace: data.isShowcaseFace,
           hasModifications: data.hasModifications,
+          modLabel: data.modLabel,
           modifications: data.hasModifications ? data.modifications : [],
           contentGold: data.contentGold,
           contentSilver: data.contentSilver,
@@ -389,6 +392,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
           isPriceOnRequest: data.isPriceOnRequest,
           isShowcaseFace: data.isShowcaseFace,
           hasModifications: data.hasModifications,
+          modLabel: data.modLabel,
           modifications: data.hasModifications ? data.modifications : [],
           contentGold: data.contentGold,
           contentSilver: data.contentSilver,
@@ -822,6 +826,28 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
                 </div>
               </label>
             </div>
+
+            {/* Название колонки модификаций */}
+            {watchHasModifications && (
+              <div className="mt-4">
+                <label
+                  htmlFor="modLabel"
+                  className="block text-sm font-medium text-slate-700 mb-1"
+                >
+                  Название колонки для модификаций
+                </label>
+                <input
+                  type="text"
+                  id="modLabel"
+                  {...register("modLabel")}
+                  className="w-full max-w-md px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                  placeholder="Модификация"
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  Например: Сопротивление, Тип, Объём, Номинал
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Modifications Table (when hasModifications = true) */}

@@ -209,7 +209,7 @@ export function ProductCard({ product, categorySlug, categoryName, variant = "de
       <div className="p-2 md:p-4">
         {/* Name */}
         <Link href={productUrl}>
-          <h3 className="font-semibold text-[var(--gray-800)] group-hover:text-[var(--primary-600)] transition-colors line-clamp-2 min-h-[2.5rem]">
+          <h3 className="text-lg font-semibold text-[var(--gray-800)] group-hover:text-[var(--primary-600)] transition-colors line-clamp-2 min-h-[2.5rem]">
             {product.name}
           </h3>
         </Link>

@@ -151,7 +151,7 @@ export function ProductCardCompact({ product, categorySlug, contactInfo }: Produ
         <div className="p-2 md:p-4">
           {/* Name - клик ведет на страницу товара */}
           <Link href={productUrl}>
-            <h3 className="text-sm font-medium text-[var(--gray-900)] hover:text-[var(--primary-600)] transition-colors line-clamp-2 min-h-[2.5rem] cursor-pointer">
+            <h3 className="text-base font-medium text-[var(--gray-900)] hover:text-[var(--primary-600)] transition-colors line-clamp-2 min-h-[2.5rem] cursor-pointer">
               {product.name}
             </h3>
           </Link>

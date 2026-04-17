@@ -27,11 +27,6 @@ const DEFAULT_CONTACTS = {
   telegram: "@dragsoyuz",
   address: "г. Санкт-Петербург",
   workSchedule: ["Пн-Пт: 10:00 - 18:00", "Сб: по записи", "Вс: выходной"],
-  // Координаты для Яндекс Карт
-  coordinates: {
-    lat: 59.9343,
-    lon: 30.3351,
-  },
 };
 
 export default async function ContactsPage() {
@@ -52,7 +47,6 @@ export default async function ContactsPage() {
     workSchedule: settings?.workSchedule
       ? settings.workSchedule.split("\n").filter(line => line.trim())
       : DEFAULT_CONTACTS.workSchedule,
-    coordinates: DEFAULT_CONTACTS.coordinates,
     storePhotoUrls: settings?.storePhotoUrls ?? [],
     vkLink: settings?.vkLink || "https://vk.com/dragsoyuz",
   };
@@ -224,7 +218,7 @@ export default async function ContactsPage() {
             {/* Yandex Map */}
             <div className="relative bg-[var(--gray-200)] rounded-xl overflow-hidden h-64 md:h-80">
               <iframe
-                src={`https://yandex.ru/map-widget/v1/?ll=${CONTACTS.coordinates.lon}%2C${CONTACTS.coordinates.lat}&z=14&pt=${CONTACTS.coordinates.lon}%2C${CONTACTS.coordinates.lat}%2Cpm2rdm`}
+                src={`https://yandex.ru/map-widget/v1/?text=${encodeURIComponent(CONTACTS.address)}&z=15`}
                 width="100%"
                 height="100%"
                 frameBorder="0"

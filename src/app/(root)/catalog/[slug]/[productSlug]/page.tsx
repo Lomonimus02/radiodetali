@@ -239,12 +239,12 @@ function ModificationsDetailTable({
             <span className="flex-1 px-3 py-2">{modLabel || "Модификация"}</span>
             {showBothPrices ? (
               <>
-                <span className="w-24 sm:w-32 text-right px-3 py-2">Новое</span>
+                <span className="w-24 sm:w-32 text-right px-3 py-2">Новые</span>
                 <span className="w-24 sm:w-32 text-right px-3 py-2">Б/У</span>
               </>
             ) : (
               <span className="w-28 sm:w-36 text-right px-3 py-2">
-                {isSingleType ? "Цена" : isNewAvailable ? "Новое" : "Б/У"}
+                {isSingleType ? "Цена" : isNewAvailable ? "Новые" : "Б/У"}
               </span>
             )}
           </div>
@@ -478,7 +478,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                         {product.priceNew !== null && (
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 bg-green-100 px-3 py-2 sm:px-4 sm:py-3 rounded-lg">
                             <span className="text-xs sm:text-sm font-medium text-green-700">
-                              {product.isSingleType ? "Цена" : "Новое"}
+                              {product.isSingleType ? "Цена" : "Новые"}
                             </span>
                             <span className="text-xl sm:text-2xl md:text-3xl font-bold text-green-700">
                               {formatDetailPrice(product.priceNew)}{getPriceUnitSuffix(product.unitType)}

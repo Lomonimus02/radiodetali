@@ -64,7 +64,7 @@ function ModificationsTable({
         <span className="flex-1 px-2 py-1.5 min-w-0 whitespace-nowrap overflow-hidden">{modLabel}</span>
         {showBothPrices ? (
           <>
-            <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-200)] w-[30%] shrink-0">Новый</span>
+            <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-200)] w-[30%] shrink-0">Новые</span>
             <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-200)] w-[30%] shrink-0">Б/У</span>
           </>
         ) : (

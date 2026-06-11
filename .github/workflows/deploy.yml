@@ -48,6 +48,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            NEXT_PUBLIC_BASE_URL=https://xn--e1afmkfd65d.xn--p1ai
+            NEXT_PUBLIC_BASE_URL=https://драгсоюз.рф
           cache-from: type=gha
           cache-to: type=gha,mode=max

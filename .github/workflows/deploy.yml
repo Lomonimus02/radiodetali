@@ -71,6 +71,9 @@ jobs:
           script: |
             cd ~/app
 
+            # Обновляем ссылку на образ (миграция с lomonimus02 → vjf2g46p6j-cloud, идемпотентно)
+            sed -i 's|ghcr.io/lomonimus02/radiodetali:latest|ghcr.io/vjf2g46p6j-cloud/radiodetali:latest|g' docker-compose.yml
+
             # Авторизуемся в ghcr.io
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 

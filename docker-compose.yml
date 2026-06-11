@@ -22,7 +22,7 @@ services:
       - radiodetali_network
 
   app:
-    image: ghcr.io/lomonimus02/radiodetali:latest
+    image: ghcr.io/vjf2g46p6j-cloud/radiodetali:latest
     container_name: radiodetali_app
     restart: unless-stopped
     ports:
@@ -41,7 +41,7 @@ services:
 
   # Сервис для запуска миграций (используем тот же образ)
   migrate:
-    image: ghcr.io/lomonimus02/radiodetali:latest
+    image: ghcr.io/vjf2g46p6j-cloud/radiodetali:latest
     container_name: radiodetali_migrate
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-radiodetali}:${POSTGRES_PASSWORD:-radiodetali_secret}@db:5432/${POSTGRES_DB:-radiodetali}

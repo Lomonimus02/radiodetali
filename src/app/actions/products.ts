@@ -273,6 +273,7 @@ interface DbProductWithCategory {
   isUsedAvailable: boolean;
   manualPriceNew: unknown | null;
   manualPriceUsed: unknown | null;
+  seoH1: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,4 +1,4 @@
-name: Build & Deploy
+name: Build & Push
 
 on:
   push:
@@ -16,9 +16,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-
-    outputs:
-      image_tag: ${{ steps.meta.outputs.tags }}
 
     steps:
       - name: Checkout code
@@ -51,37 +48,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL }}
+            NEXT_PUBLIC_BASE_URL=https://xn--e1afmkfd65d.xn--p1ai
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  deploy:
-    name: Deploy to server
-    runs-on: ubuntu-latest
-    needs: build-and-push
-
-    steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
-          script: |
-            cd ~/app
-
-            # Обновляем ссылку на образ (миграция с lomonimus02 → vjf2g46p6j-cloud, идемпотентно)
-            sed -i 's|ghcr.io/lomonimus02/radiodetali:latest|ghcr.io/vjf2g46p6j-cloud/radiodetali:latest|g' docker-compose.yml
-
-            # Авторизуемся в ghcr.io
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-            # Скачиваем новый образ
-            docker pull ghcr.io/${{ github.repository }}:latest
-
-            # Перезапускаем только app-контейнер (БД не трогаем)
-            docker compose up -d --no-deps app
-
-            # Чистим старые образы
-            docker image prune -f

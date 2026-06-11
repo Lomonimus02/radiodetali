@@ -39,6 +39,19 @@ services:
     networks:
       - radiodetali_network
 
+  watchtower:
+    image: containrrr/watchtower
+    container_name: radiodetali_watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=60
+      - WATCHTOWER_CLEANUP=true
+    command: radiodetali_app
+    networks:
+      - radiodetali_network
+
   # Сервис для запуска миграций (используем тот же образ)
   migrate:
     image: ghcr.io/vjf2g46p6j-cloud/radiodetali:latest

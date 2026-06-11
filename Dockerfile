@@ -70,6 +70,9 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
+# Копируем скрипты (seed и др.)
+COPY --from=builder /app/scripts ./scripts
+
 # Копируем entrypoint скрипт
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x ./docker-entrypoint.sh

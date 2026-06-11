@@ -67,6 +67,7 @@ export interface ProductWithPrice {
   slug: string;
   description: string | null;
   image: string | null;
+  seoH1: string | null;
   categoryId: string;
   categoryName: string;
   categorySlug: string;
@@ -120,6 +121,7 @@ export interface CreateProductInput {
   slug: string;
   description?: string | null;
   image?: string | null;
+  seoH1?: string | null;
   categoryId: string;
   sortOrder?: number;
   // Единица измерения
@@ -159,6 +161,7 @@ export interface UpdateProductInput {
   slug?: string;
   description?: string | null;
   image?: string | null;
+  seoH1?: string | null;
   categoryId?: string;
   sortOrder?: number;
   // Единица измерения
@@ -383,6 +386,7 @@ function serializeProduct(
     slug: product.slug,
     description: product.description,
     image: product.image,
+    seoH1: product.seoH1 ?? null,
     categoryId: product.categoryId,
     categoryName: product.category.name,
     categorySlug: product.category.slug,
@@ -977,6 +981,7 @@ export async function createProduct(
         slug: input.slug.trim(),
         description: input.description ?? null,
         image: input.image ?? null,
+        seoH1: input.seoH1 ?? null,
         categoryId: input.categoryId,
         sortOrder,
         // Единица измерения
@@ -1115,6 +1120,7 @@ export async function updateProduct(
     if (input.slug !== undefined) updateData.slug = input.slug.trim();
     if (input.description !== undefined) updateData.description = input.description;
     if (input.image !== undefined) updateData.image = input.image;
+    if (input.seoH1 !== undefined) updateData.seoH1 = input.seoH1 ?? null;
     if (input.categoryId !== undefined) updateData.category = { connect: { id: input.categoryId } };
     // Единица измерения
     if (input.unitType !== undefined) updateData.unitType = input.unitType;

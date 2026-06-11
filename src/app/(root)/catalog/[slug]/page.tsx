@@ -26,22 +26,19 @@ export async function generateMetadata({
   }
 
   const category = result.data;
+  const canonicalUrl = `${BASE_URL}/catalog/${slug}`;
 
   return {
-    title: `Скупка ${category.name} — цены за грамм/штуку | Драг Союз`,
-    description: `Актуальные цены на ${category.name}. Принимаем лом драгметаллов дорого. Оценка по фото.`,
-    keywords: [
-      category.name,
-      "скупка радиодеталей",
-      "продать " + category.name.toLowerCase(),
-      "драгоценные металлы",
-      "цены на " + category.name.toLowerCase(),
-    ],
+    title: { absolute: `Скупка ${category.name} в Санкт-Петербурге по высоким ценам | Покупаем в любом объеме, оплата сразу | ДрагСоюз СПб` },
+    description: `Скупаем ${category.name} по высоким ценам в Санкт-Петербурге. Оценка по фото, скупаем в любом объеме, оплата сразу, честное взвешивание. Компания ДрагСоюз в СПб. Звоните +7 (921)-632-01-05`,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
-      title: `Скупка ${category.name} — цены | Драг Союз`,
-      description: `Актуальные цены на ${category.name}. Принимаем лом драгметаллов дорого.`,
+      title: `Скупка ${category.name} в Санкт-Петербурге | ДрагСоюз СПб`,
+      description: `Скупаем ${category.name} по высоким ценам. Оплата сразу, оценка по фото.`,
       type: "website",
-      url: `${BASE_URL}/catalog/${slug}`,
+      url: canonicalUrl,
     },
   };
 }

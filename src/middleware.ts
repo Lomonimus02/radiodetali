@@ -3,14 +3,8 @@ import type { NextRequest } from "next/server";
 
 const ADMIN_COOKIE_NAME = "admin_session";
 
-/**
- * Проверяет валидность сессии
- */
 function isValidSession(sessionCookie: string | undefined): boolean {
-  if (!sessionCookie) {
-    return false;
-  }
-
+  if (!sessionCookie) return false;
   try {
     const session = JSON.parse(
       Buffer.from(sessionCookie, "base64").toString("utf-8")
@@ -22,9 +16,29 @@ function isValidSession(sessionCookie: string | undefined): boolean {
 }
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const url = request.nextUrl.clone();
+  const { pathname, hostname } = url;
 
-  // Проверяем только маршруты /admin
+  // 1. www → non-www (301)
+  if (hostname.startsWith("www.")) {
+    url.hostname = hostname.slice(4);
+    return NextResponse.redirect(url, { status: 301 });
+  }
+
+  // 2. Убираем множественные слеши и trailing slash (301)
+  // Заменяем повторные // на один /
+  const cleanedPath = pathname.replace(/\/{2,}/g, "/");
+  // Убираем trailing slash (кроме корня)
+  const finalPath = cleanedPath.length > 1 && cleanedPath.endsWith("/")
+    ? cleanedPath.slice(0, -1)
+    : cleanedPath;
+
+  if (finalPath !== pathname) {
+    url.pathname = finalPath;
+    return NextResponse.redirect(url, { status: 301 });
+  }
+
+  // 3. Авторизация в /admin
   if (!pathname.startsWith("/admin")) {
     return NextResponse.next();
   }
@@ -32,26 +46,22 @@ export function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
   const isAuthenticated = isValidSession(sessionCookie);
 
-  // Если пользователь идёт на страницу логина
   if (pathname === "/admin/login") {
-    // Если уже авторизован — редирект в админку
     if (isAuthenticated) {
       return NextResponse.redirect(new URL("/admin", request.url));
     }
-    // Иначе — пускаем на страницу логина
     return NextResponse.next();
   }
 
-  // Для всех остальных страниц /admin/*
-  // Если не авторизован — редирект на страницу логина
   if (!isAuthenticated) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
-  // Авторизован — пускаем дальше
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|otf|css|js)).*)",
+  ],
 };

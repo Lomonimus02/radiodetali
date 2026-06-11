@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://драгсоюз.рф";
+
 export const metadata: Metadata = {
-  title: "Почтовые отправления | Сдать радиодетали по почте",
+  title: { absolute: "Отправить радиодетали почтой | Скупка по всей России | ДрагСоюз СПб" },
   description:
-    "Отправьте радиодетали почтой или транспортной компанией. Прозрачная оценка, быстрый расчёт в день приёмки. Простой процесс в 3 шага.",
+    "Сдайте радиодетали почтой или транспортной компанией по всей России. Прозрачная оценка по фото, быстрый расчёт в день приёмки. Компания ДрагСоюз СПб.",
+  alternates: {
+    canonical: `${BASE_URL}/postal`,
+  },
 };
 
 export default function PostalLayout({

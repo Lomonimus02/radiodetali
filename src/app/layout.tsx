@@ -72,9 +72,6 @@ export const metadata: Metadata = {
     description:
       "Профессиональная скупка радиодеталей. Честные цены, быстрая оценка, оплата на месте.",
   },
-  alternates: {
-    canonical: "https://драгсоюз.рф",
-  },
   twitter: {
     card: "summary_large_image",
     title: "ДРАГСОЮЗ — Скупка радиодеталей",

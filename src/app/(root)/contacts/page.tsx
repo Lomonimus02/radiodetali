@@ -13,10 +13,15 @@ import { getGlobalSettings } from "@/app/actions";
 
 export const dynamic = "force-dynamic";
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://драгсоюз.рф";
+
 export const metadata: Metadata = {
-  title: "Контакты",
+  title: { absolute: "Контакты пункта скупки радиодеталей в СПб | ДрагСоюз" },
   description:
-    "Свяжитесь с нами для оценки радиодеталей. Телефон, ВКонтакте, Telegram, адрес пункта приёма.",
+    "Свяжитесь с нами для оценки и скупки радиодеталей в Санкт-Петербурге. Телефон, Telegram, ВКонтакте, адрес пункта приёма. Компания ДрагСоюз СПб.",
+  alternates: {
+    canonical: `${BASE_URL}/contacts`,
+  },
 };
 
 // Дефолтные контактные данные

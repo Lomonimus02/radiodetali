@@ -68,35 +68,25 @@ export async function generateMetadata({
   }
 
   const product = result.data;
-  const price = getDisplayPrice(product);
-  const formattedPrice = new Intl.NumberFormat("ru-RU", {
-    style: "currency",
-    currency: "RUB",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(price);
+  const canonicalUrl = `${BASE_URL}/catalog/${categorySlug}/${productSlug}`;
 
-  // Формируем полный URL до изображения
-  const imageUrl = product.image 
-    ? (product.image.startsWith("http") ? product.image : `${BASE_URL}${product.image}`)
+  const imageUrl = product.image
+    ? product.image.startsWith("http")
+      ? product.image
+      : `${BASE_URL}${product.image}`
     : undefined;
 
   return {
-    title: `${product.name} — цена скупки, продать дорого`,
-    description: `Продать ${product.name} по выгодной цене. Текущий курс скупки: ${formattedPrice}. Оценка и выкуп радиодеталей.`,
-    keywords: [
-      product.name,
-      product.slug,
-      "скупка радиодеталей",
-      "продать " + product.name,
-      product.categoryName,
-      "драгоценные металлы",
-    ],
+    title: { absolute: `Скупаем ${product.name} по высоким ценам в Санкт-Петербурге | Любые объемы, честное взвешивание, оплата сразу | ДрагСоюз СПб` },
+    description: `Сдать ${product.name} по высоким ценам в Санкт-Петербурге. Скупаем в любых объемах. Оценка по фото в мессенджере, оплата сразу, честное взвешивание. Компания ДрагСоюз в СПб. Звоните +7 (921)-632-01-05`,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
-      title: `${product.name} — цена скупки ${formattedPrice}`,
-      description: `Продать ${product.name} по выгодной цене. Текущий курс скупки: ${formattedPrice}. Оценка и выкуп радиодеталей.`,
+      title: `Скупаем ${product.name} в Санкт-Петербурге | ДрагСоюз СПб`,
+      description: `Сдать ${product.name} дорого в СПб. Оценка по фото, оплата сразу.`,
       type: "website",
-      url: `${BASE_URL}/catalog/${categorySlug}/${productSlug}`,
+      url: canonicalUrl,
       images: imageUrl ? [{ url: imageUrl, alt: product.name }] : undefined,
     },
   };
@@ -445,7 +435,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <div>
             {/* Title */}
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[var(--gray-900)] mb-6">
-              {product.name}
+              {product.seoH1 || product.name}
             </h1>
 
             {/* Price block */}

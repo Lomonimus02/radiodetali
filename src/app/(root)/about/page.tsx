@@ -14,10 +14,15 @@ import { getGlobalSettings } from "@/app/actions";
 
 export const dynamic = "force-dynamic";
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://драгсоюз.рф";
+
 export const metadata: Metadata = {
-  title: "О компании | Драг Союз",
+  title: { absolute: "О компании по скупке радиодеталей ДрагСоюз | Санкт-Петербург" },
   description:
-    "Информация о компании ДРАГСОЮЗ — профессиональная скупка радиодеталей, содержащих драгоценные металлы.",
+    "ДРАГСОЮЗ — профессиональная скупка радиодеталей с драгоценными металлами в Санкт-Петербурге. Честное взвешивание, оплата сразу, работаем с физическими и юридическими лицами.",
+  alternates: {
+    canonical: `${BASE_URL}/about`,
+  },
 };
 
 const advantages = [

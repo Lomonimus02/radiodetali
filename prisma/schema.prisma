@@ -143,6 +143,9 @@ model Product {
   manualPriceNew  Decimal? @db.Decimal(12, 2) // Фиксированная цена для "Нового"
   manualPriceUsed Decimal? @db.Decimal(12, 2) // Фиксированная цена для "Б/У"
 
+  // SEO: кастомный H1 (если задан — используется вместо name на странице товара)
+  seoH1 String? @db.Text
+
   // Флаг наличия модификаций (вариаций товара)
   hasModifications Boolean @default(false)
   // Название колонки для модификаций (по умолчанию "Модификация")

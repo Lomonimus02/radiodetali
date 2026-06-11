@@ -6,13 +6,17 @@ import { Package, ChevronRight } from "lucide-react";
 import { ProductGridSkeleton } from "../components";
 import { prisma } from "@/lib/prisma";
 
-// Отключаем статический пререндеринг (требуется БД)
 export const dynamic = "force-dynamic";
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://драгсоюз.рф";
+
 export const metadata: Metadata = {
-  title: "Каталог радиодеталей",
+  title: { absolute: "Каталог скупаемых в Санкт-Петербурге радиодеталей с ценами и фото | ДрагСоюз СПб" },
   description:
-    "Полный каталог радиодеталей с актуальными ценами скупки. Транзисторы, конденсаторы, микросхемы, реле и другие детали.",
+    "Полный каталог радиодеталей с актуальными ценами скупки. Транзисторы, конденсаторы, микросхемы, реле и другие детали. Покупаем дорого, в любых объемах. Оплата сразу.",
+  alternates: {
+    canonical: `${BASE_URL}/catalog`,
+  },
 };
 
 // Categories List

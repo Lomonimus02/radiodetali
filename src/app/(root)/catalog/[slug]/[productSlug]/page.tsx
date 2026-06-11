@@ -69,6 +69,8 @@ export async function generateMetadata({
 
   const product = result.data;
   const canonicalUrl = `${BASE_URL}/catalog/${categorySlug}/${productSlug}`;
+  const seoName = product.seoH1 || product.name;
+  const autoDescription = `Сдать ${seoName} по высоким ценам в Санкт-Петербурге. Скупаем в любых объемах. Оценка по фото в мессенджере, оплата сразу, честное взвешивание. Компания ДрагСоюз в СПб. Звоните +7 (921)-632-01-05`;
 
   const imageUrl = product.image
     ? product.image.startsWith("http")
@@ -77,14 +79,14 @@ export async function generateMetadata({
     : undefined;
 
   return {
-    title: { absolute: `Скупаем ${product.name} по высоким ценам в Санкт-Петербурге | Любые объемы, честное взвешивание, оплата сразу | ДрагСоюз СПб` },
-    description: `Сдать ${product.name} по высоким ценам в Санкт-Петербурге. Скупаем в любых объемах. Оценка по фото в мессенджере, оплата сразу, честное взвешивание. Компания ДрагСоюз в СПб. Звоните +7 (921)-632-01-05`,
+    title: { absolute: `Скупаем ${seoName} по высоким ценам в Санкт-Петербурге | Любые объемы, честное взвешивание, оплата сразу | ДрагСоюз СПб` },
+    description: product.seoDescription || autoDescription,
     alternates: {
       canonical: canonicalUrl,
     },
     openGraph: {
-      title: `Скупаем ${product.name} в Санкт-Петербурге | ДрагСоюз СПб`,
-      description: `Сдать ${product.name} дорого в СПб. Оценка по фото, оплата сразу.`,
+      title: `Скупаем ${seoName} в Санкт-Петербурге | ДрагСоюз СПб`,
+      description: product.seoDescription || `Сдать ${seoName} дорого в СПб. Оценка по фото, оплата сразу.`,
       type: "website",
       url: canonicalUrl,
       images: imageUrl ? [{ url: imageUrl, alt: product.name }] : undefined,

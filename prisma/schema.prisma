@@ -145,6 +145,8 @@ model Product {
 
   // SEO: кастомный H1 (если задан — используется вместо name на странице товара)
   seoH1 String? @db.Text
+  // SEO: кастомный meta description (если задан — используется вместо авто-шаблона)
+  seoDescription String? @db.Text
 
   // Флаг наличия модификаций (вариаций товара)
   hasModifications Boolean @default(false)

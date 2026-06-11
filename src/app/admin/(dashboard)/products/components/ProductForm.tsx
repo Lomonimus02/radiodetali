@@ -43,6 +43,7 @@ interface FormData {
   description: string;
   image: string;
   seoH1: string;
+  seoDescription: string;
   categoryId: string;
   sortOrder: number;
   // Единица измерения
@@ -132,6 +133,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
       description: product?.description || "",
       image: product?.image || "",
       seoH1: product?.seoH1 || "",
+      seoDescription: product?.seoDescription || "",
       categoryId: product?.categoryId || defaultCategoryId || "",
       sortOrder: product?.sortOrder ?? 0,
       // Единица измерения
@@ -356,6 +358,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
           description: hasDescription ? data.description || null : null,
           image: data.image || null,
           seoH1: data.seoH1 || null,
+          seoDescription: data.seoDescription || null,
           categoryId: data.categoryId,
           sortOrder: data.sortOrder,
           unitType: data.unitType,
@@ -387,6 +390,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
           description: hasDescription ? data.description || null : null,
           image: data.image || null,
           seoH1: data.seoH1 || null,
+          seoDescription: data.seoDescription || null,
           categoryId: data.categoryId,
           sortOrder: data.sortOrder,
           unitType: data.unitType,
@@ -576,6 +580,26 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
                 />
                 <p className="mt-1 text-xs text-slate-500">
                   Если заполнено — отображается как H1 вместо названия товара
+                </p>
+              </div>
+
+              {/* SEO Description */}
+              <div>
+                <label
+                  htmlFor="seoDescription"
+                  className="block text-sm font-medium text-slate-700 mb-1"
+                >
+                  SEO Description <span className="text-slate-400 font-normal">(meta description страницы)</span>
+                </label>
+                <textarea
+                  id="seoDescription"
+                  rows={3}
+                  {...register("seoDescription")}
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+                  placeholder="Если пусто — генерируется автоматически: «Сдать {H1 или название} по высоким ценам в Санкт-Петербурге...»"
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  Если заполнено — используется как meta description вместо авто-шаблона
                 </p>
               </div>
 

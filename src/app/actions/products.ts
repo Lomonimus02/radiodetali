@@ -68,6 +68,7 @@ export interface ProductWithPrice {
   description: string | null;
   image: string | null;
   seoH1: string | null;
+  seoDescription: string | null;
   categoryId: string;
   categoryName: string;
   categorySlug: string;
@@ -122,6 +123,7 @@ export interface CreateProductInput {
   description?: string | null;
   image?: string | null;
   seoH1?: string | null;
+  seoDescription?: string | null;
   categoryId: string;
   sortOrder?: number;
   // Единица измерения
@@ -162,6 +164,7 @@ export interface UpdateProductInput {
   description?: string | null;
   image?: string | null;
   seoH1?: string | null;
+  seoDescription?: string | null;
   categoryId?: string;
   sortOrder?: number;
   // Единица измерения
@@ -274,6 +277,7 @@ interface DbProductWithCategory {
   manualPriceNew: unknown | null;
   manualPriceUsed: unknown | null;
   seoH1: string | null;
+  seoDescription: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -388,6 +392,7 @@ function serializeProduct(
     description: product.description,
     image: product.image,
     seoH1: product.seoH1 ?? null,
+    seoDescription: product.seoDescription ?? null,
     categoryId: product.categoryId,
     categoryName: product.category.name,
     categorySlug: product.category.slug,
@@ -983,6 +988,7 @@ export async function createProduct(
         description: input.description ?? null,
         image: input.image ?? null,
         seoH1: input.seoH1 ?? null,
+        seoDescription: input.seoDescription ?? null,
         categoryId: input.categoryId,
         sortOrder,
         // Единица измерения
@@ -1122,6 +1128,7 @@ export async function updateProduct(
     if (input.description !== undefined) updateData.description = input.description;
     if (input.image !== undefined) updateData.image = input.image;
     if (input.seoH1 !== undefined) updateData.seoH1 = input.seoH1 ?? null;
+    if (input.seoDescription !== undefined) updateData.seoDescription = input.seoDescription ?? null;
     if (input.categoryId !== undefined) updateData.category = { connect: { id: input.categoryId } };
     // Единица измерения
     if (input.unitType !== undefined) updateData.unitType = input.unitType;

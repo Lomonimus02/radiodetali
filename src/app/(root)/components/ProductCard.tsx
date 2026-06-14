@@ -60,7 +60,7 @@ function ModificationsTable({
   return (
     <div className="rounded-lg border border-[var(--gray-200)] overflow-hidden">
       {/* Заголовок */}
-      <div className={`flex items-center bg-[var(--gray-100)] text-[11px] font-bold uppercase tracking-wide text-[var(--gray-500)] border-b border-[var(--gray-200)]`}>
+      <div className={`flex items-center bg-[var(--gray-100)] text-[11px] font-bold uppercase tracking-wide text-[var(--gray-900)] border-b border-[var(--gray-200)]`}>
         <span className="flex-1 px-2 py-1.5 min-w-0 whitespace-nowrap overflow-hidden">{modLabel}</span>
         {showBothPrices ? (
           <>
@@ -77,20 +77,20 @@ function ModificationsTable({
         const isLast = idx === modifications.length - 1;
         return (
           <div key={mod.id} className={`flex items-center ${!isLast ? 'border-b border-[var(--gray-200)]' : ''}`}>
-            <span className="flex-1 px-2 py-1.5 text-xs font-bold text-[var(--gray-900)] min-w-0 break-words">
+            <span className="flex-1 px-2 py-1.5 text-xs font-bold text-[var(--gray-900)] min-w-0 break-words tabular-nums">
               {mod.name}
             </span>
             {showBothPrices ? (
               <>
-                <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-100)] font-extrabold text-[var(--gray-900)] whitespace-nowrap overflow-hidden text-[11px] w-[30%] shrink-0">
+                <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-100)] font-extrabold text-[var(--gray-900)] whitespace-nowrap overflow-hidden text-[11px] w-[30%] shrink-0 tabular-nums">
                   {formatPrice(mod.priceNew)}{suffix}
                 </span>
-                <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-100)] font-extrabold text-[var(--gray-900)] whitespace-nowrap overflow-hidden text-[11px] w-[30%] shrink-0">
+                <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-100)] font-extrabold text-[var(--gray-900)] whitespace-nowrap overflow-hidden text-[11px] w-[30%] shrink-0 tabular-nums">
                   {formatPrice(mod.priceUsed)}{suffix}
                 </span>
               </>
             ) : (
-              <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-100)] font-extrabold text-[var(--gray-900)] whitespace-nowrap text-xs w-[55%] shrink-0">
+              <span className="px-1.5 py-1.5 text-left border-l border-[var(--gray-100)] font-extrabold text-[var(--gray-900)] whitespace-nowrap text-xs w-[55%] shrink-0 tabular-nums">
                 {formatPrice(singlePrice)}{suffix}
               </span>
             )}

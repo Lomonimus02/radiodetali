@@ -6,7 +6,6 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  Package,
   ArrowLeft,
   ChevronRight,
   Scale,
@@ -227,7 +226,7 @@ function ModificationsDetailTable({
       ) : (
         <div className="bg-white rounded-lg border border-[var(--accent-200)] overflow-hidden">
           {/* Заголовок таблицы */}
-          <div className={`flex items-center bg-[var(--gray-100)] text-xs sm:text-sm font-semibold text-[var(--gray-600)] border-b border-[var(--gray-200)]`}>
+          <div className={`flex items-center bg-[var(--gray-100)] text-xs sm:text-sm font-bold text-[var(--gray-900)] border-b border-[var(--gray-200)]`}>
             <span className="flex-1 px-3 py-2">{modLabel || "Модификация"}</span>
             {showBothPrices ? (
               <>
@@ -249,20 +248,20 @@ function ModificationsDetailTable({
                 key={mod.id}
                 className={`flex items-center ${!isLast ? 'border-b border-[var(--gray-200)]' : ''} hover:bg-[var(--accent-50)] transition-colors`}
               >
-                <span className="flex-1 px-3 py-2 sm:py-2.5 text-sm sm:text-base text-[var(--gray-800)]">
+                <span className="flex-1 px-3 py-2 sm:py-2.5 text-sm sm:text-base text-[var(--gray-800)] tabular-nums">
                   {mod.name}
                 </span>
                 {showBothPrices ? (
                   <>
-                    <span className="w-24 sm:w-32 text-right px-3 py-2 sm:py-2.5 text-sm sm:text-lg font-bold text-green-700 whitespace-nowrap">
+                    <span className="w-24 sm:w-32 text-right px-3 py-2 sm:py-2.5 text-sm sm:text-lg font-bold text-green-700 whitespace-nowrap tabular-nums">
                       {formatDetailPrice(mod.priceNew)}{suffix}
                     </span>
-                    <span className="w-24 sm:w-32 text-right px-3 py-2 sm:py-2.5 text-sm sm:text-lg font-bold text-amber-700 whitespace-nowrap">
+                    <span className="w-24 sm:w-32 text-right px-3 py-2 sm:py-2.5 text-sm sm:text-lg font-bold text-amber-700 whitespace-nowrap tabular-nums">
                       {formatDetailPrice(mod.priceUsed)}{suffix}
                     </span>
                   </>
                 ) : (
-                  <span className="w-28 sm:w-36 text-right px-3 py-2 sm:py-2.5 text-sm sm:text-lg font-bold text-[var(--gray-900)] whitespace-nowrap">
+                  <span className="w-28 sm:w-36 text-right px-3 py-2 sm:py-2.5 text-sm sm:text-lg font-bold text-[var(--gray-900)] whitespace-nowrap tabular-nums">
                     {formatDetailPrice(price)}{suffix}
                   </span>
                 )}
@@ -423,8 +422,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 priority
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Package className="w-32 h-32 text-[var(--gray-300)]" />
+              <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+                <span className="text-gray-400 text-sm font-medium">Загрузка фото</span>
               </div>
             )}
             {/* Category badge */}

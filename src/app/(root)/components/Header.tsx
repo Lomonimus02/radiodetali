@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Search, Menu, X, Zap, Package, Phone, MapPin, Loader2, ChevronRight, Home, Mail } from "lucide-react";
+import { Search, Menu, X, Zap, Package, Phone, MapPin, Loader2, ChevronRight, Home, Mail, ClipboardList } from "lucide-react";
 import { findBestMatchProduct, getProducts, ProductWithPrice } from "@/app/actions";
 import { MobileSearchOverlay } from "./MobileSearchOverlay";
 
@@ -130,6 +130,7 @@ export function Header({ contactInfo }: HeaderProps) {
   const menuItems = [
     { href: "/", label: "Главная", icon: Home },
     { href: "/catalog", label: "Каталог", icon: Package },
+    { href: "/how-to-sell", label: "Как сдать", icon: ClipboardList },
     { href: "/postal", label: "Почтовые отправления", icon: Mail },
     { href: "/contacts", label: "Контакты", icon: MapPin },
     { href: "/about", label: "О нас", icon: Zap },
@@ -290,6 +291,13 @@ export function Header({ contactInfo }: HeaderProps) {
               >
                 <Mail className="w-5 h-5" />
                 Почтовые отправления
+              </Link>
+              <Link
+                href="/how-to-sell"
+                className="flex items-center gap-2 hover:text-[var(--accent-400)] transition-colors"
+              >
+                <ClipboardList className="w-5 h-5" />
+                Как сдать
               </Link>
               <Link
                 href="/about"

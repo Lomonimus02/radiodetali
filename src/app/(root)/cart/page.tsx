@@ -204,8 +204,8 @@ export default function CartPage() {
                         sizes="96px"
                       />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Package className="w-8 h-8 text-[var(--gray-300)]" />
+                      <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+                        <span className="text-gray-400 text-[10px] font-medium text-center leading-tight px-1">Загрузка фото</span>
                       </div>
                     )}
                   </Link>

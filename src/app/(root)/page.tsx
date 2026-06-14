@@ -8,7 +8,6 @@ import {
   Truck,
   Clock,
   Sparkles,
-  Package,
 } from "lucide-react";
 import { getCategoryShowcase, getGlobalSettings } from "@/app/actions";
 import { BenefitsSection } from "./components/BenefitCard";
@@ -310,8 +309,8 @@ async function CatalogSection() {
                     sizes="(max-width: 768px) 100vw, (max-width: 1280px) 33vw, 20vw"
                   />
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Package className="w-16 h-16 text-[var(--gray-300)]" />
+                  <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+                    <span className="text-gray-400 text-sm font-medium">Загрузка фото</span>
                   </div>
                 )}
                 {/* Category label with gradient fade at top */}

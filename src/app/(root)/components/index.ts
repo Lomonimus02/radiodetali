@@ -11,3 +11,4 @@ export { AddToCartButton } from "./AddToCartButton";
 export { MobileSearchOverlay } from "./MobileSearchOverlay";
 export { SellModal } from "./SellModal";
 export type { SellModalContactInfo } from "./SellModal";
+export { HowItWorks } from "./HowItWorks";

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { getCategoryShowcase, getGlobalSettings } from "@/app/actions";
 import { BenefitsSection } from "./components/BenefitCard";
+import { ReviewsSection } from "./components/ReviewsSection";
 
 // Отключаем статический пререндеринг (требуется БД)
 export const dynamic = "force-dynamic";
@@ -520,6 +521,7 @@ export default async function HomePage() {
       <StatsSection />
       <BenefitsSection />
       <CTASection phone={phone} phoneHref={phoneHref} />
+      <ReviewsSection />
     </>
   );
 }

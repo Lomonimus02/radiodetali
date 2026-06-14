@@ -12,3 +12,7 @@ export { MobileSearchOverlay } from "./MobileSearchOverlay";
 export { SellModal } from "./SellModal";
 export type { SellModalContactInfo } from "./SellModal";
 export { HowItWorks } from "./HowItWorks";
+export { ReviewSubmitModal } from "./ReviewSubmitModal";
+export { ReviewsSection } from "./ReviewsSection";
+export { ReviewsCarousel } from "./ReviewsCarousel";
+export type { ReviewDisplay } from "./ReviewsCarousel";

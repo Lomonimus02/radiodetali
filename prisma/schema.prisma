@@ -193,3 +193,14 @@ model ProductModification {
   @@map("product_modifications")
 }
 
+// Отзывы клиентов (модерация перед публикацией на главной)
+model Review {
+  id        String   @id @default(cuid())
+  name      String
+  text      String   @db.Text
+  approved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("reviews")
+}
+

@@ -15,8 +15,20 @@ function createPrismaClient() {
   return new PrismaClient({ adapter });
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+function getPrismaClient(): PrismaClient {
+  const cached = globalForPrisma.prisma;
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+  // В dev Next.js кэширует Prisma Client в globalThis — после изменения schema
+  // старый клиент не знает новые модели (prisma.review === undefined).
+  if (cached && typeof cached.review?.findMany === "function") {
+    return cached;
+  }
+
+  const client = createPrismaClient();
+  globalForPrisma.prisma = client;
+  return client;
+}
+
+export const prisma = getPrismaClient();
 
 export default prisma;

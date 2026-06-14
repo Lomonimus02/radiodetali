@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
+import { ReviewSubmitModal } from "./ReviewSubmitModal";
 
 // Тип контактных данных для Footer
 export interface FooterContactInfo {
@@ -191,6 +192,7 @@ export function Footer({ contactInfo }: FooterProps) {
         <div className="mt-8 pt-6 border-t border-white/10">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-white/40">
             <p>© 2026 ДРАГСОЮЗ. Все права защищены.</p>
+            <ReviewSubmitModal />
             <p>Санкт-Петербург</p>
           </div>
         </div>

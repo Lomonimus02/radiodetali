@@ -86,3 +86,16 @@ export {
   type PostalRequestInput,
   type PostalRequestResult,
 } from "./postal";
+
+// Отзывы
+export {
+  submitReview,
+  getApprovedReviews,
+  adminGetReviews,
+  adminApproveReview,
+  adminDeleteReview,
+  type ReviewData,
+  type SubmitReviewResult,
+  type ReviewsResult,
+  type ReviewActionResult,
+} from "./reviews";

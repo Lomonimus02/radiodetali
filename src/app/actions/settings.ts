@@ -59,8 +59,10 @@ export interface GlobalSettingsData {
   // Текст и фото для страницы "О нас"
   aboutText: string;
   aboutPhotoUrl: string;
-  // Показывать ли плашку "Время прибытия"
+  // Показывать ли плашку над шапкой
   showArrivalNotice: boolean;
+  // Текст плашки над шапкой
+  arrivalNoticeText: string;
 }
 
 /**
@@ -80,6 +82,7 @@ export interface UpdateGlobalSettingsInput {
   aboutText?: string;
   aboutPhotoUrl?: string;
   showArrivalNotice?: boolean;
+  arrivalNoticeText?: string;
 }
 
 /**
@@ -278,6 +281,9 @@ export async function getGlobalSettings(): Promise<GlobalSettingsResult> {
         aboutText: settings.aboutText ?? "",
         aboutPhotoUrl: settings.aboutPhotoUrl ?? "",
         showArrivalNotice: settings.showArrivalNotice ?? true,
+        arrivalNoticeText:
+          settings.arrivalNoticeText?.trim() ||
+          "❗️Время прибытия необходимо согласовать заранее❗️",
       },
     };
   } catch (error) {
@@ -330,6 +336,10 @@ export async function updateGlobalSettings(
     if (input.aboutText !== undefined) updateData.aboutText = input.aboutText;
     if (input.aboutPhotoUrl !== undefined) updateData.aboutPhotoUrl = input.aboutPhotoUrl;
     if (input.showArrivalNotice !== undefined) updateData.showArrivalNotice = input.showArrivalNotice;
+    if (input.arrivalNoticeText !== undefined) {
+      updateData.arrivalNoticeText = input.arrivalNoticeText.trim() ||
+        "❗️Время прибытия необходимо согласовать заранее❗️";
+    }
 
     // Обновляем или создаём запись (upsert)
     const settings = await prisma.globalSettings.upsert({
@@ -349,6 +359,10 @@ export async function updateGlobalSettings(
         storePhotoUrls: input.storePhotoUrls ?? [],
         aboutText: input.aboutText ?? "",
         aboutPhotoUrl: input.aboutPhotoUrl ?? "",
+        showArrivalNotice: input.showArrivalNotice ?? true,
+        arrivalNoticeText:
+          input.arrivalNoticeText?.trim() ||
+          "❗️Время прибытия необходимо согласовать заранее❗️",
       },
     });
 
@@ -373,6 +387,9 @@ export async function updateGlobalSettings(
         aboutText: settings.aboutText ?? "",
         aboutPhotoUrl: settings.aboutPhotoUrl ?? "",
         showArrivalNotice: settings.showArrivalNotice ?? true,
+        arrivalNoticeText:
+          settings.arrivalNoticeText?.trim() ||
+          "❗️Время прибытия необходимо согласовать заранее❗️",
       },
     };
   } catch (error) {

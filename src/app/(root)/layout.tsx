@@ -64,7 +64,10 @@ export default async function RootLayout({
     <SiteContactsProvider contacts={sellContactInfo}>
       <div className="h-full flex flex-col bg-[var(--background)] overflow-y-auto overflow-x-hidden overscroll-none" style={{ WebkitOverflowScrolling: 'touch' }}>
       <div className="sticky top-0 z-50 bg-[var(--gray-700)] shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-        <TopAlert show={settings?.showArrivalNotice ?? true} />
+        <TopAlert
+          show={settings?.showArrivalNotice ?? true}
+          text={settings?.arrivalNoticeText}
+        />
         <Header contactInfo={headerContactInfo} />
       </div>
       <main className="flex-1">{children}</main>

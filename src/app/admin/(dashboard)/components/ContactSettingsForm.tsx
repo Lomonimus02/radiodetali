@@ -19,6 +19,10 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
     workSchedule: initialData.workSchedule || "",
   });
   const [showArrivalNotice, setShowArrivalNotice] = useState(initialData.showArrivalNotice ?? true);
+  const [arrivalNoticeText, setArrivalNoticeText] = useState(
+    initialData.arrivalNoticeText ||
+      "❗️Время прибытия необходимо согласовать заранее❗️",
+  );
   const [storePhotoUrls, setStorePhotoUrls] = useState<string[]>(initialData.storePhotoUrls ?? []);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -78,6 +82,7 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
         workSchedule: form.workSchedule,
         storePhotoUrls: storePhotoUrls,
         showArrivalNotice: showArrivalNotice,
+        arrivalNoticeText: arrivalNoticeText,
       });
 
       if (result.success) {
@@ -254,8 +259,8 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
         </div>
       </div>
 
-      {/* Arrival Notice Toggle */}
-      <div>
+      {/* Arrival Notice */}
+      <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/70 p-4">
         <label className="flex items-center gap-3 cursor-pointer">
           <div className="relative">
             <input
@@ -272,10 +277,29 @@ export function ContactSettingsForm({ initialData }: ContactSettingsFormProps) {
           <div className="flex items-center gap-2">
             <Eye className="w-4 h-4 text-slate-400" />
             <span className="text-sm font-medium text-slate-700">
-              Показывать плашку &laquo;Время прибытия необходимо согласовать заранее&raquo;
+              Показывать плашку над шапкой сайта
             </span>
           </div>
         </label>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">
+            Текст плашки
+          </label>
+          <textarea
+            value={arrivalNoticeText}
+            onChange={(e) => {
+              setArrivalNoticeText(e.target.value);
+              setMessage(null);
+            }}
+            rows={2}
+            placeholder="❗️Время прибытия необходимо согласовать заранее❗️"
+            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors resize-none"
+          />
+          <p className="text-xs text-slate-500 mt-1">
+            Этот текст виден сверху сайта, над меню. Можно скрыть плашку переключателем выше.
+          </p>
+        </div>
       </div>
 
       {/* Message */}

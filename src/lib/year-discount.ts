@@ -79,18 +79,18 @@ const DECADE_ROUND_PERIODS: ReadonlySet<YearPeriodId> = new Set([
 ]);
 
 /**
- * Round to 10 ₽: remainder 0–7.99 → down, 8–9.99 → up.
- * 40.7→40, 45→40, 47.9→40, 48→50.
- * Cutoff 0.8 was wrong: 50×0.9=45 rounded back to 50, hiding «с 1990».
+ * Round kopecks to a whole ruble with cutoff 80 kop (not to 10 ₽).
+ * 45.6 / 45.7 → 45, 45.8 / 45.9 → 46.
  */
-export function roundToTenRublesCutoff08(price: number): number {
+export function roundRublesByKopecksCutoff08(price: number): number {
   if (!Number.isFinite(price) || price < 0) return 0;
-  const base = Math.floor(price / 10) * 10;
-  const rem = price - base;
-  return rem < 8 ? base : base + 10;
+  const kopecks = Math.round(price * 100);
+  const rubles = Math.floor(kopecks / 100);
+  const remainder = kopecks % 100;
+  return remainder < 80 ? rubles : rubles + 1;
 }
 
-function usesDecadePriceRound(
+function usesKopeckCutoffRound(
   yearPeriodId: YearPeriodId,
   applyYearOverlay: boolean,
   useCustomMarkdown: boolean,
@@ -103,7 +103,7 @@ function usesDecadePriceRound(
  * Overlay фактора золота поверх уже посчитанной витринной цены:
  * процент N = меньше золота → цена × (1−N/100).
  * Не использует формулы из price-calculator.ts.
- * Decade-round for from1990|from2000|from2010 (year overlay) and for manual «Уценка».
+ * Kopeck cutoff 0.8 for from1990|from2000|from2010 (year overlay) and for «Уценка».
  */
 export function applyYearDiscount(
   basePrice: number,
@@ -113,8 +113,8 @@ export function applyYearDiscount(
   useCustomMarkdown: boolean,
 ): number {
   const raw = applyYearPercentToAmount(basePrice, discountPercent);
-  if (usesDecadePriceRound(yearPeriodId, applyYearOverlay, useCustomMarkdown)) {
-    return roundToTenRublesCutoff08(raw);
+  if (usesKopeckCutoffRound(yearPeriodId, applyYearOverlay, useCustomMarkdown)) {
+    return roundRublesByKopecksCutoff08(raw);
   }
   return Math.round(raw);
 }

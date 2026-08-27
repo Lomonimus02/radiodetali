@@ -20,6 +20,7 @@ interface CalculatorModalProps {
 }
 
 interface AddedSummary {
+  id: number;
   quantity: number;
   condition: ItemCondition;
   yearPeriodId: YearPeriodId;
@@ -73,6 +74,7 @@ function defaultModificationId(product: ProductWithPrice): string | null {
 function formatAddedSummary(
   summary: AddedSummary,
   product: ProductWithPrice,
+  index: number,
 ): string {
   const parts = [formatQuantityLabel(summary.quantity, product.unitType)];
   if (summary.modificationName) {
@@ -82,7 +84,7 @@ function formatAddedSummary(
     parts.push(summary.condition === "new" ? "новые" : "б/у");
   }
   parts.push(getYearPeriodLabel(summary.yearPeriodId));
-  return `Добавлено: ${parts.join(", ")}`;
+  return `Добавлено ${index + 1}: ${parts.join(", ")}`;
 }
 
 export function CalculatorModal({ product }: CalculatorModalProps) {
@@ -97,7 +99,9 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
     defaultModificationId(product),
   );
   const discounts = useYearPeriodDiscounts();
-  const [lastAdded, setLastAdded] = useState<AddedSummary | null>(null);
+  const [addedLines, setAddedLines] = useState<AddedSummary[]>([]);
+  const addedIdRef = useRef(0);
+  const addedListEndRef = useRef<HTMLDivElement | null>(null);
   const pushedRef = useRef(false);
   const closingFromPopRef = useRef(false);
 
@@ -115,7 +119,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
 
   const close = useCallback((fromPopState = false) => {
     setIsOpen(false);
-    setLastAdded(null);
+    setAddedLines([]);
     if (fromPopState) {
       pushedRef.current = false;
       closingFromPopRef.current = false;
@@ -134,7 +138,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
     setYearPeriodId("from1990");
     setQuantity(1);
     setModificationId(defaultModificationId(product));
-    setLastAdded(null);
+    setAddedLines([]);
     setIsOpen(true);
     window.history.pushState({ calcModal: true }, "");
     pushedRef.current = true;
@@ -163,6 +167,14 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
     };
   }, [isOpen, close]);
 
+  useEffect(() => {
+    if (addedLines.length === 0) return;
+    addedListEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
+  }, [addedLines.length]);
+
   if (!shouldShowCalculator(product)) {
     return null;
   }
@@ -182,12 +194,17 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
       quantity,
     });
 
-    setLastAdded({
-      quantity,
-      condition,
-      yearPeriodId,
-      modificationName,
-    });
+    addedIdRef.current += 1;
+    setAddedLines((prev) => [
+      ...prev,
+      {
+        id: addedIdRef.current,
+        quantity,
+        condition,
+        yearPeriodId,
+        modificationName,
+      },
+    ]);
     setQuantity(1);
   };
 
@@ -391,10 +408,18 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                 )}
               </div>
 
-              {lastAdded && (
-                <p className="mb-3 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                  {formatAddedSummary(lastAdded, product)}
-                </p>
+              {addedLines.length > 0 && (
+                <div className="mb-3 space-y-2" aria-live="polite">
+                  {addedLines.map((item, index) => (
+                    <p
+                      key={item.id}
+                      className="text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2"
+                    >
+                      {formatAddedSummary(item, product, index)}
+                    </p>
+                  ))}
+                  <div ref={addedListEndRef} />
+                </div>
               )}
 
               <div className="flex flex-col gap-2">
@@ -404,11 +429,11 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                   disabled={!canSubmit}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--accent-500)] hover:bg-[var(--accent-600)] disabled:bg-[var(--gray-300)] disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-colors"
                 >
-                  {lastAdded
+                  {addedLines.length > 0
                     ? "Добавить ещё вариант этой детали"
                     : "Добавить в опись"}
                 </button>
-                {lastAdded ? (
+                {addedLines.length > 0 ? (
                   <>
                     <button
                       type="button"
@@ -422,7 +447,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                       onClick={() => {
                         pushedRef.current = false;
                         setIsOpen(false);
-                        setLastAdded(null);
+                        setAddedLines([]);
                       }}
                       className="w-full text-center text-sm font-medium text-[var(--primary-700)] hover:text-[var(--primary-800)] py-1"
                     >

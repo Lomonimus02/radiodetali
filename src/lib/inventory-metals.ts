@@ -4,6 +4,11 @@ import {
   usesGramQuantity,
 } from "@/lib/gram-quantity";
 import { classifyPrintGroup } from "@/lib/inventory-print-groups";
+import {
+  applyYearPercentToAmount,
+  getDiscountPercent,
+  type YearPeriodDiscounts,
+} from "@/lib/year-discount";
 
 export type MetalTotals = {
   au: number;
@@ -175,10 +180,11 @@ function addAuToBucket(
   bucket.all += au;
 }
 
-/** Au (мг) only for transistors, ICs, diodes. Connectors are excluded. Year discount is ignored. */
+/** Au (мг) only for transistors, ICs, diodes. Year-period % scales content; manual «Уценка» does not. */
 export function accumulateGoldAuByGroup(
   lines: InventoryLine[],
   productsById: Record<string, InventoryMetalProduct | undefined>,
+  yearDiscounts: YearPeriodDiscounts,
 ): {
   chips: GoldAuBucket;
   connectors: GoldAuBucket;
@@ -209,7 +215,8 @@ export function accumulateGoldAuByGroup(
       product.unitType,
       usesGramQuantity(product),
     );
-    const au = unit.au * scale;
+    const yearPercent = getDiscountPercent(yearDiscounts, line.yearPeriodId);
+    const au = applyYearPercentToAmount(unit.au * scale, yearPercent);
     const bucket = groupId === "chips" ? chips : connectors;
     addAuToBucket(
       bucket,

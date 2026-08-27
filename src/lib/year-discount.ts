@@ -73,15 +73,24 @@ export function parseYearPeriodDiscounts(raw: unknown): YearPeriodDiscounts {
 }
 
 /**
- * Overlay годовой скидки поверх уже посчитанной витринной цены.
+ * Overlay фактора золота поверх уже посчитанной витринной цены:
+ * процент N = меньше золота → цена × (1−N/100).
  * Не использует формулы из price-calculator.ts.
  */
 export function applyYearDiscount(
   basePrice: number,
   discountPercent: number,
 ): number {
-  const base = Number.isFinite(basePrice) ? basePrice : 0;
-  return Math.round(base * (1 - clampDiscountPercent(discountPercent) / 100));
+  return Math.round(applyYearPercentToAmount(basePrice, discountPercent));
+}
+
+/** Same overlay as year markdown, without ruble rounding — for metal content. */
+export function applyYearPercentToAmount(
+  amount: number,
+  discountPercent: number,
+): number {
+  const base = Number.isFinite(amount) ? amount : 0;
+  return base * (1 - clampDiscountPercent(discountPercent) / 100);
 }
 
 export function getDiscountPercent(
@@ -93,6 +102,11 @@ export function getDiscountPercent(
   );
 }
 
+/**
+ * Combined overlay percent for a line price (one `applyYearDiscount` round).
+ * Year factor: reduced gold → price (0 when `applyYearDiscount` is false).
+ * Custom percent: extra price-only overlay; does not affect Au.
+ */
 export function resolveLineDiscountPercent(
   line: {
     yearPeriodId: YearPeriodId;
@@ -101,16 +115,18 @@ export function resolveLineDiscountPercent(
   discounts: YearPeriodDiscounts,
   applyYearDiscount = true,
 ): number {
-  if (
+  const yearPct = applyYearDiscount
+    ? getDiscountPercent(discounts, line.yearPeriodId)
+    : 0;
+  const customPct =
     typeof line.customDiscountPercent === "number" &&
     Number.isFinite(line.customDiscountPercent)
-  ) {
-    return clampDiscountPercent(line.customDiscountPercent);
-  }
+      ? clampDiscountPercent(line.customDiscountPercent)
+      : 0;
 
-  if (!applyYearDiscount) return 0;
-
-  return getDiscountPercent(discounts, line.yearPeriodId);
+  return clampDiscountPercent(
+    100 * (1 - (1 - yearPct / 100) * (1 - customPct / 100)),
+  );
 }
 
 export function resolveLineBasePrice(

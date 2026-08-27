@@ -97,10 +97,11 @@ export default async function AdminDashboard() {
           </div>
           <div>
             <h2 className="text-xl font-semibold text-slate-800">
-              Скидки калькулятора по году выпуска
+              Проценты по году выпуска (золото)
             </h2>
             <p className="text-sm text-slate-500">
-              Только калькулятор и опись. Цены в каталоге без этой скидки.
+              Меньше золота — ниже цена в калькуляторе и описи. Каталог без
+              изменений.
             </p>
           </div>
         </div>

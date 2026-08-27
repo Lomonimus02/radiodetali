@@ -371,15 +371,13 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                   <div className="grid grid-cols-2 gap-2">
                     {YEAR_PERIODS.map((period) => {
                       const percent = getDiscountPercent(discounts, period.id);
-                      const selected =
-                        yearPeriodId === period.id && !customMarkdownEnabled;
+                      const selected = yearPeriodId === period.id;
                       return (
                         <button
                           key={period.id}
                           type="button"
                           onClick={() => {
                             setYearPeriodId(period.id);
-                            setCustomMarkdownEnabled(false);
                           }}
                           className={`px-3 py-2.5 rounded-lg font-bold border text-sm transition-colors ${
                             selected
@@ -411,9 +409,11 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                     <button
                       type="button"
                       onClick={() => {
-                        if (!customMarkdownEnabled) {
-                          setCustomDiscountPercent(0);
+                        if (customMarkdownEnabled) {
+                          setCustomMarkdownEnabled(false);
+                          return;
                         }
+                        setCustomDiscountPercent(0);
                         setCustomMarkdownEnabled(true);
                       }}
                       className={`w-full px-3 py-2.5 rounded-lg font-bold border text-sm transition-colors ${

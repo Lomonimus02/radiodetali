@@ -46,7 +46,7 @@ export function YearPeriodDiscountsForm({
         setValues(result.data.yearPeriodDiscounts);
         setNotification({
           type: "success",
-          message: "Скидки по году обновлены",
+          message: "Проценты по году обновлены",
         });
         setTimeout(() => setNotification(null), 3000);
       } else {
@@ -78,8 +78,10 @@ export function YearPeriodDiscountsForm({
       )}
 
       <p className="text-sm text-slate-500">
-        Скидка применяется поверх цены скупки в калькуляторе и описи. Цены в
-        каталоге не меняются.
+        Процент снижает содержание золота (Au) у микросхем, транзисторов и
+        диодов: −10% = 90% золота. Цена в калькуляторе и описи считается от
+        этого. Ручная «Уценка» меняет только цену, не золото. Цены в каталоге
+        не меняются.
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -120,7 +122,7 @@ export function YearPeriodDiscountsForm({
         ) : (
           <>
             <Save className="w-5 h-5" />
-            Сохранить скидки
+            Сохранить
           </>
         )}
       </button>

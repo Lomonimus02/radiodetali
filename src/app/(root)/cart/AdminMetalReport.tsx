@@ -8,6 +8,7 @@ import {
   type InventoryMetalProduct,
 } from "@/lib/inventory-metals";
 import { formatPreciousMetalContent } from "@/lib/price-calculator";
+import { useYearPeriodDiscounts } from "../components/YearDiscountsProvider";
 
 const PRINT_INTERNAL_CLASS = "print-internal-report";
 const PRINT_CLEANUP_FALLBACK_MS = 2_000;
@@ -38,9 +39,10 @@ export function AdminMetalReport({
   lines,
   productsById,
 }: AdminMetalReportProps) {
+  const yearDiscounts = useYearPeriodDiscounts();
   const totals = useMemo(
-    () => accumulateGoldAuByGroup(lines, productsById),
-    [lines, productsById],
+    () => accumulateGoldAuByGroup(lines, productsById, yearDiscounts),
+    [lines, productsById, yearDiscounts],
   );
 
   useEffect(() => {

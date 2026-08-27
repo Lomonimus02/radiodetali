@@ -24,6 +24,7 @@ import {
 import {
   classifyPrintGroup,
   groupRowsForPrint,
+  isGoldBearingGroup,
 } from "@/lib/inventory-print-groups";
 import {
   computeLineTotal,
@@ -102,6 +103,7 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
   >({});
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showMetalReport, setShowMetalReport] = useState(false);
 
   const productsByIdRef = useRef(productsById);
 
@@ -207,22 +209,28 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
       rowGramMode(row.product) ? sum + row.line.quantity : sum,
     0,
   );
-  const printGroups = useMemo(
+  const displayGroups = useMemo(
     () =>
-      groupRowsForPrint(rows, (row) =>
-        classifyPrintGroup({
-          categorySlug: row.product?.categorySlug,
-          categoryName: row.product?.categoryName,
-          productName: row.product?.name,
-          productSlug: row.product?.slug,
+      groupRowsForPrint(
+        rows,
+        (row) =>
+          classifyPrintGroup({
+            categorySlug: row.product?.categorySlug,
+            categoryName: row.product?.categoryName,
+            productName: row.product?.name,
+            productSlug: row.product?.slug,
+          }),
+        (row) => ({
+          isSingleType: row.product?.isSingleType ?? false,
+          condition: row.line.condition,
         }),
       ),
     [rows],
   );
 
-  const printSections = useMemo(() => {
+  const displaySections = useMemo(() => {
     let index = 0;
-    return printGroups.map((group) => ({
+    return displayGroups.map((group) => ({
       ...group,
       groupTotal: group.rows.reduce((sum, row) => sum + row.lineTotal, 0),
       numberedRows: group.rows.map((row) => {
@@ -230,7 +238,21 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
         return { row, index };
       }),
     }));
-  }, [printGroups]);
+  }, [displayGroups]);
+
+  const goldBearingSum = useMemo(
+    () =>
+      rows.reduce((sum, row) => {
+        const groupId = classifyPrintGroup({
+          categorySlug: row.product?.categorySlug,
+          categoryName: row.product?.categoryName,
+          productName: row.product?.name,
+          productSlug: row.product?.slug,
+        });
+        return isGoldBearingGroup(groupId) ? sum + row.lineTotal : sum;
+      }, 0),
+    [rows],
+  );
 
   const printDateLabel = formatPrintDate(new Date());
 
@@ -348,13 +370,20 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {rows.map((row, index) => (
+                    {displaySections.map((group) => (
+                      <Fragment key={group.id}>
+                        <tr>
+                          <td colSpan={8} className="group-title px-3 py-2">
+                            {group.label}
+                          </td>
+                        </tr>
+                        {group.numberedRows.map(({ row, index }) => (
                       <tr
                         key={row.line.lineId}
                         className="text-[var(--gray-800)]"
                       >
                         <td className="col-num px-2 py-2 tabular-nums text-[var(--gray-500)]">
-                          {index + 1}
+                          {index}
                         </td>
                         <td className="col-name px-3 py-2 font-medium text-[var(--gray-900)]">
                           {row.product ? (
@@ -464,9 +493,23 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
                           </button>
                         </td>
                       </tr>
+                        ))}
+                      </Fragment>
                     ))}
                   </tbody>
                   <tfoot>
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="px-3 py-3 text-right font-medium"
+                      >
+                        Итого золотосодержащие
+                      </td>
+                      <td className="px-3 py-3 text-right font-semibold tabular-nums">
+                        {formatPrice(goldBearingSum)}
+                      </td>
+                      <td className="print:hidden" />
+                    </tr>
                     <tr>
                       <td
                         colSpan={6}
@@ -497,7 +540,7 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {printSections.map((group) => (
+                    {displaySections.map((group) => (
                       <Fragment key={group.id}>
                         <tr>
                           <td colSpan={7} className="group-title">
@@ -544,6 +587,14 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
                     ))}
                   </tbody>
                   <tfoot>
+                    <tr className="gold-bearing-total">
+                      <td colSpan={6} className="text-right">
+                        Итого золотосодержащие
+                      </td>
+                      <td className="col-sum tabular-nums">
+                        {formatPrice(goldBearingSum)}
+                      </td>
+                    </tr>
                     <tr className="grand-total">
                       <td colSpan={6} className="text-right">
                         Итого
@@ -557,6 +608,18 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
               </div>
 
               {isAdmin ? (
+                <label className="print:hidden mt-4 flex items-center gap-2 text-sm text-[var(--gray-700)] cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={showMetalReport}
+                    onChange={(e) => setShowMetalReport(e.target.checked)}
+                    className="rounded border-[var(--gray-300)]"
+                  />
+                  Показать содержание металлов
+                </label>
+              ) : null}
+
+              {isAdmin && showMetalReport ? (
                 <AdminMetalReport lines={items} productsById={productsById} />
               ) : null}
             </div>
@@ -584,7 +647,15 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
                       <span>{totalGrams}</span>
                     </div>
                   ) : null}
-                  <div className="pt-3 border-t border-[var(--gray-200)]">
+                  <div className="pt-3 border-t border-[var(--gray-200)] space-y-2">
+                    <div className="flex justify-between items-end">
+                      <span className="text-[var(--gray-700)] font-medium">
+                        Итого золотосодержащие:
+                      </span>
+                      <span className="text-lg font-semibold text-[var(--gray-900)] tabular-nums">
+                        {formatPrice(goldBearingSum)}
+                      </span>
+                    </div>
                     <div className="flex justify-between items-end">
                       <span className="text-[var(--gray-900)] font-medium">
                         Сумма описи:

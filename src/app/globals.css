@@ -158,6 +158,12 @@ a, button, input, select, textarea {
   text-align: left;
 }
 
+.inventory-screen .group-title {
+  text-align: left;
+  font-weight: 700;
+  background: var(--gray-100);
+}
+
 @media print {
   html,
   body {
@@ -177,6 +183,11 @@ a, button, input, select, textarea {
 
   html.print-internal-report .internal-report-title {
     display: block !important;
+  }
+
+  html.print-internal-report .inventory-print-header,
+  html.print-internal-report .inventory-ledger {
+    display: none !important;
   }
 
   .inventory-print-header {
@@ -238,6 +249,7 @@ a, button, input, select, textarea {
   }
 
   .inventory-ledger .group-total td,
+  .inventory-ledger .gold-bearing-total td,
   .inventory-ledger .grand-total td {
     font-weight: 700;
   }

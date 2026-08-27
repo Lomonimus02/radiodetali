@@ -3,6 +3,7 @@ import {
   quantityToPriceMultiplier,
   usesGramQuantity,
 } from "@/lib/gram-quantity";
+import { classifyPrintGroup } from "@/lib/inventory-print-groups";
 
 export type MetalTotals = {
   au: number;
@@ -147,6 +148,83 @@ export function accumulateInventoryMetals(
       ag: newTotals.ag + usedTotals.ag,
       pt: newTotals.pt + usedTotals.pt,
       pd: newTotals.pd + usedTotals.pd,
+    },
+  };
+}
+
+export type GoldAuBucket = {
+  new: number;
+  used: number;
+  all: number;
+};
+
+function emptyGoldAuBucket(): GoldAuBucket {
+  return { new: 0, used: 0, all: 0 };
+}
+
+function addAuToBucket(
+  bucket: GoldAuBucket,
+  au: number,
+  isNew: boolean,
+): void {
+  if (isNew) {
+    bucket.new += au;
+  } else {
+    bucket.used += au;
+  }
+  bucket.all += au;
+}
+
+/** Au (мг) only for chips + connectors; year discount is ignored. */
+export function accumulateGoldAuByGroup(
+  lines: InventoryLine[],
+  productsById: Record<string, InventoryMetalProduct | undefined>,
+): {
+  chips: GoldAuBucket;
+  connectors: GoldAuBucket;
+  grand: GoldAuBucket;
+} {
+  const chips = emptyGoldAuBucket();
+  const connectors = emptyGoldAuBucket();
+
+  for (const line of lines) {
+    const product = productsById[line.productId];
+    if (!product) continue;
+
+    const groupId = classifyPrintGroup({
+      categorySlug: product.categorySlug,
+      categoryName: product.categoryName,
+      productName: product.name,
+      productSlug: product.slug,
+    });
+    if (groupId !== "chips" && groupId !== "connectors") continue;
+
+    const unit = resolveLineMetalContent(
+      product,
+      line.modificationId,
+      line.condition,
+    );
+    const scale = quantityToPriceMultiplier(
+      line.quantity,
+      product.unitType,
+      usesGramQuantity(product),
+    );
+    const au = unit.au * scale;
+    const bucket = groupId === "chips" ? chips : connectors;
+    addAuToBucket(
+      bucket,
+      au,
+      usesNewContent(product.isSingleType, line.condition),
+    );
+  }
+
+  return {
+    chips,
+    connectors,
+    grand: {
+      new: chips.new + connectors.new,
+      used: chips.used + connectors.used,
+      all: chips.all + connectors.all,
     },
   };
 }

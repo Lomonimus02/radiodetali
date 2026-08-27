@@ -4,45 +4,33 @@ import { useEffect, useMemo } from "react";
 import { Printer } from "lucide-react";
 import type { InventoryLine } from "@/store";
 import {
-  accumulateInventoryMetals,
+  accumulateGoldAuByGroup,
   type InventoryMetalProduct,
-  type MetalTotals,
 } from "@/lib/inventory-metals";
-import {
-  formatPreciousMetalContent,
-  type MetalSymbol,
-} from "@/lib/price-calculator";
-import { PRECIOUS_METAL_LIST } from "@/lib/precious-metals";
+import { formatPreciousMetalContent } from "@/lib/price-calculator";
 
 const PRINT_INTERNAL_CLASS = "print-internal-report";
 const PRINT_CLEANUP_FALLBACK_MS = 2_000;
-
-const TOTAL_KEYS: Record<MetalSymbol, keyof MetalTotals> = {
-  Au: "au",
-  Ag: "ag",
-  Pt: "pt",
-  Pd: "pd",
-};
 
 interface AdminMetalReportProps {
   lines: InventoryLine[];
   productsById: Record<string, InventoryMetalProduct | undefined>;
 }
 
-function MetalValues({ totals }: { totals: MetalTotals }) {
+function formatAu(value: number): string {
+  return formatPreciousMetalContent("Au", value);
+}
+
+function AuRow({ label, value }: { label: string; value: number }) {
   return (
-    <ul className="grid grid-cols-2 gap-2">
-      {PRECIOUS_METAL_LIST.map((metal) => (
-        <li key={metal.id} className="min-w-0">
-          <span className="block text-xs text-[var(--gray-600)]">
-            {metal.displaySymbol} ({metal.name})
-          </span>
-          <span className="block text-sm font-semibold tabular-nums text-[var(--gray-900)]">
-            {formatPreciousMetalContent(metal.id, totals[TOTAL_KEYS[metal.id]])}
-          </span>
-        </li>
-      ))}
-    </ul>
+    <div className="p-4 rounded-lg border border-[var(--gray-200)] bg-[var(--gray-50)]">
+      <span className="block text-sm font-medium text-[var(--gray-700)] mb-1">
+        {label}
+      </span>
+      <span className="block text-lg font-bold tabular-nums text-[var(--gray-900)]">
+        {formatAu(value)}
+      </span>
+    </div>
   );
 }
 
@@ -51,7 +39,7 @@ export function AdminMetalReport({
   productsById,
 }: AdminMetalReportProps) {
   const totals = useMemo(
-    () => accumulateInventoryMetals(lines, productsById),
+    () => accumulateGoldAuByGroup(lines, productsById),
     [lines, productsById],
   );
 
@@ -83,9 +71,14 @@ export function AdminMetalReport({
   return (
     <section className="admin-metal-report mt-6 rounded-xl border border-[var(--gray-200)] bg-white p-5 print:hidden print:mt-8 print:rounded-none print:border print:border-gray-300 print:p-0 print:bg-white">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 print:mb-3">
-        <h2 className="text-lg font-bold text-[var(--gray-900)]">
-          Содержание металлов
-        </h2>
+        <div>
+          <p className="internal-report-title text-sm font-semibold text-gray-500 mb-1">
+            Внутренний отчёт
+          </p>
+          <h2 className="text-lg font-bold text-[var(--gray-900)]">
+            Содержание золота (Au)
+          </h2>
+        </div>
         <button
           type="button"
           onClick={handleInternalPrint}
@@ -96,24 +89,23 @@ export function AdminMetalReport({
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-          <h3 className="text-sm font-semibold text-green-800 mb-3">
-            Новые / единый тип
-          </h3>
-          <MetalValues totals={totals.new} />
-        </div>
-        <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-          <h3 className="text-sm font-semibold text-amber-800 mb-3">Б/У</h3>
-          <MetalValues totals={totals.used} />
-        </div>
+      <div className="space-y-3">
+        <AuRow label="Разъёмы" value={totals.connectors.all} />
+        <AuRow
+          label="Новые микросхемы, транзисторы и диоды"
+          value={totals.chips.new}
+        />
+        <AuRow
+          label="Микросхемы, транзисторы и диоды б/у"
+          value={totals.chips.used}
+        />
       </div>
 
       <div className="mt-4 pt-4 border-t border-[var(--gray-200)]">
-        <h3 className="text-sm font-semibold text-[var(--gray-900)] mb-3">
-          Всего
-        </h3>
-        <MetalValues totals={totals.all} />
+        <AuRow
+          label="Итого Au по золотосодержащим"
+          value={totals.grand.all}
+        />
       </div>
     </section>
   );

@@ -110,7 +110,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
   );
   const [yearPeriodId, setYearPeriodId] = useState<YearPeriodId>("until1990");
   const [customMarkdownEnabled, setCustomMarkdownEnabled] = useState(false);
-  const [customDiscountPercent, setCustomDiscountPercent] = useState(5);
+  const [customDiscountPercent, setCustomDiscountPercent] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [modificationId, setModificationId] = useState<string | null>(() =>
     defaultModificationId(product),
@@ -165,7 +165,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
     setCondition(defaultCondition(product));
     setYearPeriodId("until1990");
     setCustomMarkdownEnabled(false);
-    setCustomDiscountPercent(5);
+    setCustomDiscountPercent(0);
     setQuantity(1);
     setModificationId(defaultModificationId(product));
     setAddedLines([]);
@@ -356,7 +356,8 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                 <div className="grid grid-cols-2 gap-2">
                   {YEAR_PERIODS.map((period) => {
                     const percent = getDiscountPercent(discounts, period.id);
-                    const selected = yearPeriodId === period.id;
+                    const selected =
+                      yearPeriodId === period.id && !customMarkdownEnabled;
                     return (
                       <button
                         key={period.id}
@@ -389,13 +390,13 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                       type="button"
                       onClick={() => {
                         if (!customMarkdownEnabled) {
-                          setCustomDiscountPercent(5);
+                          setCustomDiscountPercent(0);
                         }
                         setCustomMarkdownEnabled(true);
                       }}
                       className={`mt-2 w-full px-3 py-2.5 rounded-lg font-semibold border text-sm transition-colors ${
                         customMarkdownEnabled
-                          ? "bg-[var(--accent-500)] border-[var(--accent-500)] text-white"
+                          ? "bg-[var(--primary-600)] border-[var(--primary-600)] text-white"
                           : "bg-white border-[var(--gray-300)] text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
                       }`}
                     >
@@ -432,7 +433,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                                 clampDiscountPercent(value),
                               );
                             }}
-                            className="w-full px-3 py-2.5 pr-10 rounded-lg border border-[var(--gray-300)] bg-white text-[var(--gray-900)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)]"
+                            className="w-full px-3 py-2.5 pr-10 rounded-lg border border-[var(--gray-300)] bg-white text-[var(--gray-900)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-600)]"
                           />
                           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[var(--gray-500)]">
                             %

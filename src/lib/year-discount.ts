@@ -36,8 +36,8 @@ export const YEAR_PERIODS: { id: YearPeriodId; label: string }[] = [
 export const DEFAULT_YEAR_PERIOD_DISCOUNTS: YearPeriodDiscounts = {
   until1990: 0,
   from1990: 10,
-  from2000: 10,
-  from2010: 10,
+  from2000: 20,
+  from2010: 30,
 };
 
 export function getYearPeriodLabel(id: YearPeriodId): string {

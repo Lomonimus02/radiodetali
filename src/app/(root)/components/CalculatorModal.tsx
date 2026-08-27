@@ -53,9 +53,13 @@ function formatPrice(price: number): string {
 }
 
 function parseMarkdownPercent(raw: string): number {
-  if (raw.trim() === "") return 0;
+  if (raw.trim() === "" || raw === "." || raw === ",") return 0;
   const value = Number(raw.replace(",", "."));
   return Number.isFinite(value) ? clampDiscountPercent(value) : 0;
+}
+
+function isMarkdownPercentDraft(raw: string): boolean {
+  return raw === "" || /^\d{0,3}([.,]\d{0,2})?$/.test(raw);
 }
 
 function formatQuantityLabel(
@@ -456,24 +460,29 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                         <div className="relative">
                           <input
                             type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
+                            inputMode="decimal"
                             enterKeyHint="done"
                             autoComplete="off"
                             value={customDiscountInput}
                             onFocus={(e) => e.target.select()}
                             onChange={(e) => {
-                              const raw = e.target.value.replace(",", ".");
+                              const raw = e.target.value;
                               if (raw === "") {
                                 setCustomDiscountInput("");
                                 return;
                               }
-                              if (!/^\d{1,3}$/.test(raw)) return;
-                              const value = Number(raw);
-                              if (!Number.isFinite(value)) return;
-                              setCustomDiscountInput(
-                                value > 100 ? "100" : raw,
-                              );
+                              if (!isMarkdownPercentDraft(raw)) return;
+                              const value = Number(raw.replace(",", "."));
+                              if (
+                                raw !== "." &&
+                                raw !== "," &&
+                                Number.isFinite(value) &&
+                                value > 100
+                              ) {
+                                setCustomDiscountInput("100");
+                                return;
+                              }
+                              setCustomDiscountInput(raw);
                             }}
                             className="w-full px-3 py-2.5 pr-10 rounded-lg border border-[var(--gray-300)] bg-white text-[var(--gray-900)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-600)]"
                           />

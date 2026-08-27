@@ -140,7 +140,8 @@ export function getDiscountPercent(
 /**
  * Combined overlay percent for a line price (one `applyYearDiscount` round).
  * Year factor: reduced gold → price (0 when `applyYearDiscount` is false).
- * Custom percent: extra price-only overlay; does not affect Au.
+ * Custom percent: extra overlay stacked with year on price; chip Au uses the
+ * same year×custom factors via sequential `applyYearPercentToAmount` (no ruble round).
  */
 export function resolveLineDiscountPercent(
   line: {

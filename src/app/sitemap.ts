@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
-import { listCategoryGuideSlugs } from "@/lib/category-banners";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://драгсоюз.рф";
 
@@ -54,6 +53,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       select: {
         slug: true,
         updatedAt: true,
+        infoPageEnabled: true,
       },
     });
 
@@ -84,16 +84,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
 
-    const guideSlugs = listCategoryGuideSlugs();
-    const guidePages: MetadataRoute.Sitemap = guideSlugs.map((slug) => {
-      const category = categories.find((c) => c.slug === slug);
-      return {
-        url: `${BASE_URL}/catalog/${slug}/guide`,
-        lastModified: category?.updatedAt ?? new Date(),
+    const guidePages: MetadataRoute.Sitemap = categories
+      .filter((category) => category.infoPageEnabled)
+      .map((category) => ({
+        url: `${BASE_URL}/catalog/${category.slug}/guide`,
+        lastModified: category.updatedAt,
         changeFrequency: "monthly" as const,
         priority: 0.6,
-      };
-    });
+      }));
 
     return [...staticPages, ...categoryPages, ...productPages, ...guidePages];
   } catch (error) {

@@ -10,8 +10,14 @@ import {
   type CategoryData,
 } from "@/app/actions";
 import { CategoryBannerEditor } from "./CategoryBannerEditor";
+import { CategoryInfoPageEditor } from "./CategoryInfoPageEditor";
 import { getMetalLabel } from "@/lib/precious-metals";
 import type { CategoryBannerAlign, CategoryBannerTheme } from "@prisma/client";
+import {
+  defaultInfoButtonLabel,
+  parseInfoPageBlocks,
+  type CategoryInfoBlock,
+} from "@/lib/category-info";
 import {
   Save,
   Loader2,
@@ -26,7 +32,6 @@ interface CategoryFormProps {
   editCategory?: CategoryData;
   defaultParentId?: string;
   redirectPath?: string;
-  hasGuide?: boolean;
 }
 
 interface FormData {
@@ -44,7 +49,6 @@ interface FormData {
   bannerLinkLabel: string;
   bannerTextColor: string;
   bannerTitleLines: boolean;
-  bannerShowGuide: boolean;
   // Закрепить управление курсом на Дашборде
   isPinnedToDashboard: boolean;
   // Кастомные курсы металлов (цена за 1 мг в рублях)
@@ -77,7 +81,6 @@ export function CategoryForm({
   editCategory,
   defaultParentId,
   redirectPath,
-  hasGuide = false,
 }: CategoryFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -89,6 +92,15 @@ export function CategoryForm({
   const [imageUrl, setImageUrl] = useState<string>(editCategory?.imageUrl || "");
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [infoPageEnabled, setInfoPageEnabled] = useState(
+    editCategory?.infoPageEnabled ?? false,
+  );
+  const [infoPageButtonLabel, setInfoPageButtonLabel] = useState(
+    editCategory?.infoPageButtonLabel || "",
+  );
+  const [infoPageBlocks, setInfoPageBlocks] = useState<CategoryInfoBlock[]>(
+    () => parseInfoPageBlocks(editCategory?.infoPageBlocks),
+  );
 
   const isEditing = !!editCategory;
 
@@ -117,7 +129,6 @@ export function CategoryForm({
       bannerLinkLabel: editCategory?.bannerLinkLabel || "",
       bannerTextColor: editCategory?.bannerTextColor || "",
       bannerTitleLines: editCategory?.bannerTitleLines ?? false,
-      bannerShowGuide: editCategory?.bannerShowGuide ?? true,
       isPinnedToDashboard: editCategory?.isPinnedToDashboard ?? false,
       customRateAu: editCategory?.customRateAu?.toString() || "",
       customRateAg: editCategory?.customRateAg?.toString() || "",
@@ -236,7 +247,9 @@ export function CategoryForm({
           bannerLinkLabel: data.bannerLinkLabel || null,
           bannerTextColor: data.bannerTextColor || null,
           bannerTitleLines: data.bannerTitleLines,
-          bannerShowGuide: data.bannerShowGuide,
+          infoPageEnabled,
+          infoPageButtonLabel: infoPageButtonLabel.trim() || null,
+          infoPageBlocks,
           isPinnedToDashboard: data.isPinnedToDashboard,
           customRateAu: parseRate(data.customRateAu),
           customRateAg: parseRate(data.customRateAg),
@@ -262,7 +275,9 @@ export function CategoryForm({
           bannerLinkLabel: data.bannerLinkLabel || null,
           bannerTextColor: data.bannerTextColor || null,
           bannerTitleLines: data.bannerTitleLines,
-          bannerShowGuide: data.bannerShowGuide,
+          infoPageEnabled,
+          infoPageButtonLabel: infoPageButtonLabel.trim() || null,
+          infoPageBlocks,
           isPinnedToDashboard: data.isPinnedToDashboard,
           customRateAu: parseRate(data.customRateAu),
           customRateAg: parseRate(data.customRateAg),
@@ -456,7 +471,10 @@ export function CategoryForm({
             categorySlug={watchSlug}
             warningMessage={watchWarningMessage}
             bannerTextLegacy={editCategory?.bannerText || ""}
-            hasGuide={hasGuide}
+            infoPageEnabled={infoPageEnabled}
+            infoPageButtonLabel={
+              infoPageButtonLabel.trim() || defaultInfoButtonLabel(watchName)
+            }
             values={{
               bannerTitle: watch("bannerTitle"),
               bannerAlign: watch("bannerAlign"),
@@ -466,7 +484,6 @@ export function CategoryForm({
               bannerLinkLabel: watch("bannerLinkLabel"),
               bannerTextColor: watch("bannerTextColor"),
               bannerTitleLines: watch("bannerTitleLines"),
-              bannerShowGuide: watch("bannerShowGuide"),
             }}
             onWarningMessageChange={(value) =>
               setValue("warningMessage", value, { shouldDirty: true })
@@ -475,6 +492,16 @@ export function CategoryForm({
             onChange={(key, value) => {
               setValue(key as keyof FormData, value as never, { shouldDirty: true });
             }}
+          />
+
+          <CategoryInfoPageEditor
+            categoryName={watchName}
+            enabled={infoPageEnabled}
+            buttonLabel={infoPageButtonLabel}
+            blocks={infoPageBlocks}
+            onEnabledChange={setInfoPageEnabled}
+            onButtonLabelChange={setInfoPageButtonLabel}
+            onBlocksChange={setInfoPageBlocks}
           />
 
           {/* Image Upload */}

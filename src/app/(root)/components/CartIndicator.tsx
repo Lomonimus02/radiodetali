@@ -1,40 +1,50 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingBag } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Calculator } from "lucide-react";
 import { useCartStore } from "@/store";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
-interface CartIndicatorProps {
-  className?: string;
-}
+export function CartIndicator() {
+  const lineCount = useCartStore((state) => state.items.length);
+  const hasHydrated = useCartStore((state) => state.hasHydrated);
+  const pathname = usePathname();
 
-export function CartIndicator({ className = "" }: CartIndicatorProps) {
-  const { getTotalItems, items } = useCartStore();
-  const [mounted, setMounted] = useState(false);
-
-  // Prevent hydration mismatch
   useEffect(() => {
-    setMounted(true);
+    if (useCartStore.persist.hasHydrated()) {
+      useCartStore.setState({ hasHydrated: true });
+      return;
+    }
+
+    void useCartStore.persist.rehydrate();
   }, []);
 
-  const totalItems = mounted ? getTotalItems() : 0;
-  const hasItems = totalItems > 0;
+  if (!hasHydrated) {
+    return null;
+  }
+
+  const visible = lineCount > 0 && pathname !== "/cart";
+  const badgeText = lineCount > 99 ? "99+" : String(lineCount);
 
   return (
     <Link
       href="/cart"
-      className={`relative flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors ${className}`}
+      className={`fixed z-[60] left-4 bottom-6 md:left-6 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent-500)] text-white shadow-lg shadow-black/25 hover:bg-[var(--accent-600)] transition-[opacity,transform] duration-200 print:hidden ${
+        visible
+          ? "opacity-100 scale-100"
+          : "pointer-events-none opacity-0 scale-90"
+      }`}
+      style={{ marginBottom: "env(safe-area-inset-bottom, 0px)" }}
+      aria-hidden={!visible}
+      tabIndex={visible ? 0 : -1}
+      aria-label={`Опись, ${lineCount} позиций`}
+      title="Опись"
     >
-      <div className="relative">
-        <ShoppingBag className="w-6 h-6" />
-        {mounted && hasItems && (
-          <span className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center bg-[var(--accent-500)] text-white text-xs font-bold rounded-full">
-            {totalItems > 99 ? "99+" : totalItems}
-          </span>
-        )}
-      </div>
-      <span className="hidden sm:inline font-medium">Лист оценки</span>
+      <Calculator className="h-6 w-6" />
+      <span className="absolute -top-1 -right-1 min-w-6 h-6 px-1 flex items-center justify-center bg-[var(--primary-800)] text-white text-xs font-bold rounded-full border-2 border-white tabular-nums">
+        {badgeText}
+      </span>
     </Link>
   );
 }

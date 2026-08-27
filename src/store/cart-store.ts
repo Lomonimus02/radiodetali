@@ -2,111 +2,79 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { YearPeriodId } from "@/lib/year-discount";
 
-/**
- * Состояние товара: новый или б/у
- */
 export type ItemCondition = "new" | "used";
+export type { YearPeriodId };
 
-/**
- * Элемент корзины сдачи
- */
-export interface CartItem {
-  id: string;
-  condition: ItemCondition; // Состояние: новый или б/у
+export interface InventoryLine {
+  lineId: string;
+  productId: string;
+  modificationId: string | null;
+  condition: ItemCondition;
+  yearPeriodId: YearPeriodId;
   quantity: number;
 }
 
-/**
- * Уникальный ключ для элемента корзины (id + condition)
- */
-function getCartKey(id: string, condition: ItemCondition): string {
-  return `${id}:${condition}`;
-}
+export type AddLineInput = Omit<InventoryLine, "lineId">;
 
-/**
- * Состояние корзины
- */
 interface CartState {
-  items: CartItem[];
-  
-  // Actions
-  addItem: (id: string, condition: ItemCondition) => void;
-  removeItem: (id: string, condition: ItemCondition) => void;
-  updateQuantity: (id: string, condition: ItemCondition, quantity: number) => void;
+  items: InventoryLine[];
+  hasHydrated: boolean;
+
+  addLine: (payload: AddLineInput) => void;
+  removeLine: (lineId: string) => void;
+  updateLineQuantity: (lineId: string, quantity: number) => void;
   clearCart: () => void;
-  getQuantity: (id: string, condition?: ItemCondition) => number;
-  getTotalItems: () => number;
+  getLineCount: () => number;
+  getTotalPieces: () => number;
 }
 
-/**
- * Zustand store для корзины сдачи
- * Использует persist middleware для сохранения в localStorage
- */
+function normalizeQuantity(quantity: number): number {
+  if (!Number.isFinite(quantity)) return 1;
+  return Math.max(1, Math.floor(quantity));
+}
+
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
+      hasHydrated: false,
 
-      addItem: (id: string, condition: ItemCondition) => {
-        set((state) => {
-          const existingItem = state.items.find(
-            (item) => item.id === id && item.condition === condition
-          );
-          if (existingItem) {
-            return {
-              items: state.items.map((item) =>
-                item.id === id && item.condition === condition
-                  ? { ...item, quantity: item.quantity + 1 }
-                  : item
-              ),
-            };
-          }
-          return {
-            items: [...state.items, { id, condition, quantity: 1 }],
-          };
-        });
+      addLine: (payload) => {
+        const line: InventoryLine = {
+          lineId: crypto.randomUUID(),
+          productId: payload.productId,
+          modificationId: payload.modificationId,
+          condition: payload.condition,
+          yearPeriodId: payload.yearPeriodId,
+          quantity: normalizeQuantity(payload.quantity),
+        };
+
+        set((state) => ({
+          items: [...state.items, line],
+        }));
       },
 
-      removeItem: (id: string, condition: ItemCondition) => {
-        set((state) => {
-          const existingItem = state.items.find(
-            (item) => item.id === id && item.condition === condition
-          );
-          if (!existingItem) return state;
+      removeLine: (lineId) => {
+        set((state) => ({
+          items: state.items.filter((item) => item.lineId !== lineId),
+        }));
+      },
 
-          if (existingItem.quantity <= 1) {
+      updateLineQuantity: (lineId, quantity) => {
+        set((state) => {
+          if (!Number.isFinite(quantity) || quantity < 1) {
             return {
-              items: state.items.filter(
-                (item) => !(item.id === id && item.condition === condition)
-              ),
+              items: state.items.filter((item) => item.lineId !== lineId),
             };
           }
 
           return {
             items: state.items.map((item) =>
-              item.id === id && item.condition === condition
-                ? { ...item, quantity: item.quantity - 1 }
-                : item
-            ),
-          };
-        });
-      },
-
-      updateQuantity: (id: string, condition: ItemCondition, quantity: number) => {
-        set((state) => {
-          if (quantity <= 0) {
-            return {
-              items: state.items.filter(
-                (item) => !(item.id === id && item.condition === condition)
-              ),
-            };
-          }
-          return {
-            items: state.items.map((item) =>
-              item.id === id && item.condition === condition
-                ? { ...item, quantity }
-                : item
+              item.lineId === lineId
+                ? { ...item, quantity: Math.floor(quantity) }
+                : item,
             ),
           };
         });
@@ -116,25 +84,18 @@ export const useCartStore = create<CartState>()(
         set({ items: [] });
       },
 
-      getQuantity: (id: string, condition?: ItemCondition) => {
-        if (condition) {
-          const item = get().items.find(
-            (item) => item.id === id && item.condition === condition
-          );
-          return item?.quantity ?? 0;
-        }
-        // Если condition не указан, возвращаем сумму обоих
-        return get().items
-          .filter((item) => item.id === id)
-          .reduce((sum, item) => sum + item.quantity, 0);
-      },
+      getLineCount: () => get().items.length,
 
-      getTotalItems: () => {
-        return get().items.reduce((sum, item) => sum + item.quantity, 0);
-      },
+      getTotalPieces: () =>
+        get().items.reduce((sum, item) => sum + item.quantity, 0),
     }),
     {
-      name: "scrap-cart-storage",
-    }
-  )
+      name: "scrap-inventory-v2",
+      skipHydration: true,
+      partialize: (state) => ({ items: state.items }),
+      onRehydrateStorage: () => () => {
+        useCartStore.setState({ hasHydrated: true });
+      },
+    },
+  ),
 );

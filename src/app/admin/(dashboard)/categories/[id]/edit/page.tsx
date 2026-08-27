@@ -1,6 +1,5 @@
 import { getCategories, getCategoryById } from "@/app/actions";
 import { CategoryForm } from "../../components/CategoryForm";
-import { showGuideBanner } from "@/lib/category-banners";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -73,7 +72,6 @@ export default async function EditCategoryPage({ params }: PageProps) {
         categories={categoriesResult.data}
         editCategory={category}
         redirectPath={redirectPath}
-        hasGuide={showGuideBanner(category.slug)}
       />
     </div>
   );

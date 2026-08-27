@@ -4,6 +4,7 @@ import { ArrowLeft, Info } from "lucide-react";
 import type { ProductWithPrice, ModificationWithPrice, UnitType } from "@/app/actions";
 import { SellModal } from "./SellModal";
 import type { SellModalContactInfo } from "./SellModal";
+import { CalculatorModal } from "./CalculatorModal";
 import { ProductMetalContent } from "./ProductMetalContent";
 
 function getPriceUnitSuffix(unitType: UnitType): string {
@@ -273,7 +274,10 @@ export function ProductDetailView({
             )}
           </section>
 
-          <SellModal contactInfo={sellContactInfo} />
+          <div className="space-y-2">
+            <CalculatorModal product={product} />
+            <SellModal contactInfo={sellContactInfo} />
+          </div>
         </div>
       </div>
 

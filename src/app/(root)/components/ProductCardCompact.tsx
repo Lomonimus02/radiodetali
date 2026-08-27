@@ -7,6 +7,7 @@ import { ZoomIn } from "lucide-react";
 import type { ProductWithPrice, ModificationWithPrice, UnitType } from "@/app/actions";
 import { ImageModal } from "./ImageModal";
 import { SellModal } from "./SellModal";
+import { CalculatorModal } from "./CalculatorModal";
 import type { SellModalContactInfo } from "./SellModal";
 
 interface ProductCardCompactProps {
@@ -212,7 +213,8 @@ export function ProductCardCompact({ product, categorySlug, contactInfo }: Produ
           )}
         </div>
 
-        <div className="mt-3">
+        <div className="mt-3 space-y-2">
+          <CalculatorModal product={product} />
           <SellModal contactInfo={contactInfo} />
         </div>
       </div>

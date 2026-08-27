@@ -1,1 +1,7 @@
-export { useCartStore, type CartItem, type ItemCondition } from "./cart-store";
+export {
+  useCartStore,
+  type InventoryLine,
+  type AddLineInput,
+  type ItemCondition,
+  type YearPeriodId,
+} from "./cart-store";

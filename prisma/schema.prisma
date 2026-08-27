@@ -46,6 +46,9 @@ model GlobalSettings {
   showArrivalNotice Boolean @default(true)
   arrivalNoticeText String  @default("❗️Время прибытия необходимо согласовать заранее❗️")
 
+  // Скидки калькулятора по периоду года выпуска (проценты: until1990, from1990, from2000, from2010)
+  yearPeriodDiscounts Json @default("{\"until1990\":10,\"from1990\":0,\"from2000\":20,\"from2010\":40}")
+
   @@map("global_settings")
 }
 
@@ -99,6 +102,11 @@ model Category {
   bannerTextColor    String? // CSS-цвет текста (hex), null = из стиля темы
   bannerTitleLines   Boolean @default(false) // Декоративные линии по бокам заголовка
   bannerShowGuide    Boolean             @default(true)
+
+  // CMS-страница категории (/catalog/[slug]/guide)
+  infoPageEnabled     Boolean @default(false)
+  infoPageButtonLabel String?
+  infoPageBlocks      Json    @default("[]")
 
   // Закрепить управление курсом на Дашборде
   isPinnedToDashboard Boolean @default(false)

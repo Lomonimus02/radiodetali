@@ -17,17 +17,17 @@ interface CategoryPageClientProps {
     warningMessage?: string | null;
     bannerText?: string | null;
     banner: CategoryBannerConfig;
+    infoPageEnabled: boolean;
+    infoPageButtonLabel: string | null;
   };
   products: ProductWithPrice[];
   total: number;
-  showGuideBanner: boolean;
 }
 
 export function CategoryPageClient({
   category,
   products,
   total,
-  showGuideBanner,
 }: CategoryPageClientProps) {
   const searchParams = useSearchParams();
   const highlightSlug = searchParams.get("highlight");
@@ -89,7 +89,8 @@ export function CategoryPageClient({
           warningMessage={category.warningMessage}
           bannerTextLegacy={category.bannerText}
           banner={category.banner}
-          showGuideBanner={showGuideBanner}
+          infoPageEnabled={category.infoPageEnabled}
+          infoPageButtonLabel={category.infoPageButtonLabel}
         />
 
         {products.length === 0 ? (

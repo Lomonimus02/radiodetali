@@ -3,10 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight, ArrowLeft, BookOpen } from "lucide-react";
 import { getCategoryBySlug } from "@/app/actions";
-import {
-  getCategoryGuideContent,
-  showGuideBanner,
-} from "@/lib/category-banners";
+import { CategoryInfoBlocks } from "@/app/(root)/components/CategoryInfoBlocks";
+import { parseInfoPageBlocks, resolveInfoButtonLabel } from "@/lib/category-info";
 
 export const dynamic = "force-dynamic";
 
@@ -22,21 +20,25 @@ export async function generateMetadata({
   const { slug } = await params;
   const result = await getCategoryBySlug(slug);
 
-  if (!result.success) {
-    return { title: "Справочник не найден" };
+  if (!result.success || !result.data.infoPageEnabled) {
+    notFound();
   }
 
+  const title = resolveInfoButtonLabel(
+    result.data.infoPageButtonLabel,
+    result.data.name,
+  );
   const canonicalUrl = `${BASE_URL}/catalog/${slug}/guide`;
 
   return {
-    title: `Справочник: ${result.data.name}`,
-    description: `Информация о категории «${result.data.name}» — скупка радиодеталей в Санкт-Петербурге.`,
+    title,
+    description: `${title} — скупка радиодеталей в Санкт-Петербурге.`,
     alternates: {
       canonical: canonicalUrl,
     },
     openGraph: {
-      title: `Справочник: ${result.data.name}`,
-      description: `Информация о категории «${result.data.name}» — скупка радиодеталей в Санкт-Петербурге.`,
+      title,
+      description: `${title} — скупка радиодеталей в Санкт-Петербурге.`,
       type: "website",
       url: canonicalUrl,
     },
@@ -53,11 +55,15 @@ export default async function CategoryGuidePage({ params }: GuidePageProps) {
 
   const category = categoryResult.data;
 
-  if (!showGuideBanner(slug)) {
+  if (!category.infoPageEnabled) {
     notFound();
   }
 
-  const guideContent = getCategoryGuideContent(slug);
+  const pageTitle = resolveInfoButtonLabel(
+    category.infoPageButtonLabel,
+    category.name,
+  );
+  const blocks = parseInfoPageBlocks(category.infoPageBlocks);
 
   return (
     <div className="min-h-screen bg-[var(--gray-50)]">
@@ -80,7 +86,7 @@ export default async function CategoryGuidePage({ params }: GuidePageProps) {
             </Link>
             <ChevronRight className="w-4 h-4 shrink-0" />
             <span className="text-[var(--gray-900)] font-medium whitespace-nowrap">
-              Справочник
+              {pageTitle}
             </span>
           </nav>
         </div>
@@ -101,19 +107,11 @@ export default async function CategoryGuidePage({ params }: GuidePageProps) {
               <BookOpen className="w-6 h-6 text-[var(--accent-600)]" />
             </div>
             <h1 className="text-2xl md:text-3xl font-bold text-[var(--gray-900)]">
-              Справочник: {category.name}
+              {pageTitle}
             </h1>
           </div>
 
-          {guideContent ? (
-            <div className="prose prose-slate max-w-none text-[var(--gray-700)] leading-relaxed whitespace-pre-wrap">
-              {guideContent}
-            </div>
-          ) : (
-            <p className="text-[var(--gray-500)]">
-              Материалы справочника для этой категории скоро появятся.
-            </p>
-          )}
+          <CategoryInfoBlocks blocks={blocks} />
         </div>
       </div>
     </div>

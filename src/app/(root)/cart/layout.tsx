@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Лист оценки",
+  title: "Опись",
   description:
-    "Ваш список радиодеталей для сдачи. Актуальные цены, расчёт общей суммы, отправка заявки в VK.",
+    "Опись радиодеталей для оценки на приёмке. Печать и сохранение списка с учётом года выпуска.",
+  robots: { index: false, follow: false },
 };
 
 export default function CartLayout({

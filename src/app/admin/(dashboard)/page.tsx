@@ -5,7 +5,8 @@ import { PinnedCategoryRatesForm } from "./components/PinnedCategoryRatesForm";
 import { ContactSettingsForm } from "./components/ContactSettingsForm";
 import { TelegramSettingsForm } from "./components/TelegramSettingsForm";
 import { AboutTextForm } from "./components/AboutTextForm";
-import { Package, TrendingUp, Phone, Bot, FileText } from "lucide-react";
+import { YearPeriodDiscountsForm } from "./components/YearPeriodDiscountsForm";
+import { Package, TrendingUp, Phone, Bot, FileText, Percent } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +87,31 @@ export default async function AdminDashboard() {
           Курсы металлов для категорий, закреплённых на дашборде
         </p>
         <PinnedCategoryRatesForm categories={pinnedCategories} />
+      </div>
+
+      {/* Year period discounts for calculator */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-amber-50 rounded-lg">
+            <Percent className="w-5 h-5 text-amber-600" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-slate-800">
+              Скидки калькулятора по году выпуска
+            </h2>
+            <p className="text-sm text-slate-500">
+              Только калькулятор и опись. Цены в каталоге без этой скидки.
+            </p>
+          </div>
+        </div>
+        {globalSettings ? (
+          <YearPeriodDiscountsForm initialData={globalSettings} />
+        ) : (
+          <div className="text-red-500">
+            Ошибка загрузки настроек:{" "}
+            {!globalSettingsResult.success && globalSettingsResult.error}
+          </div>
+        )}
       </div>
 
       {/* Contact Settings */}

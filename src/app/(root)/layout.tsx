@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { Header, Footer, TopAlert } from "./components";
+import { Header, Footer, TopAlert, CartIndicator } from "./components";
 import { getGlobalSettings } from "@/app/actions";
 import type { HeaderContactInfo } from "./components/Header";
 import type { FooterContactInfo } from "./components/Footer";
 import { JivoWidget } from "./components/JivoWidget";
 import { SiteContactsProvider } from "./components/SiteContactsProvider";
+import { YearDiscountsProvider } from "./components/YearDiscountsProvider";
 import { buildSellContactInfo, formatPhoneHref, formatTelegramHref } from "@/lib/site";
+import { DEFAULT_YEAR_PERIOD_DISCOUNTS } from "@/lib/year-discount";
 
 export const dynamic = "force-dynamic";
 
@@ -61,9 +63,12 @@ export default async function RootLayout({
   } : undefined;
 
   return (
+    <YearDiscountsProvider
+      value={settings?.yearPeriodDiscounts ?? DEFAULT_YEAR_PERIOD_DISCOUNTS}
+    >
     <SiteContactsProvider contacts={sellContactInfo}>
-      <div className="h-full flex flex-col bg-[var(--background)] overflow-y-auto overflow-x-hidden overscroll-none" style={{ WebkitOverflowScrolling: 'touch' }}>
-      <div className="sticky top-0 z-50 bg-[var(--gray-700)] shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <div className="h-full flex flex-col bg-[var(--background)] overflow-y-auto overflow-x-hidden overscroll-none print:h-auto print:overflow-visible print:bg-white" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="sticky top-0 z-50 bg-[var(--gray-700)] shrink-0 print:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <TopAlert
           show={settings?.showArrivalNotice ?? true}
           text={settings?.arrivalNoticeText}
@@ -71,9 +76,15 @@ export default async function RootLayout({
         <Header contactInfo={headerContactInfo} />
       </div>
       <main className="flex-1">{children}</main>
-      <Footer contactInfo={footerContactInfo} />
-      <JivoWidget />
+      <div className="print:hidden">
+        <Footer contactInfo={footerContactInfo} />
+      </div>
+      <div className="print:hidden">
+        <CartIndicator />
+        <JivoWidget />
+      </div>
     </div>
     </SiteContactsProvider>
+    </YearDiscountsProvider>
   );
 }

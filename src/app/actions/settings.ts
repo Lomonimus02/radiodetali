@@ -2,6 +2,10 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import {
+  parseYearPeriodDiscounts,
+  type YearPeriodDiscounts,
+} from "@/lib/year-discount";
 
 // ============================================================================
 // ТИПЫ
@@ -63,6 +67,8 @@ export interface GlobalSettingsData {
   showArrivalNotice: boolean;
   // Текст плашки над шапкой
   arrivalNoticeText: string;
+  // Скидки калькулятора по периоду года выпуска (%)
+  yearPeriodDiscounts: YearPeriodDiscounts;
 }
 
 /**
@@ -83,6 +89,7 @@ export interface UpdateGlobalSettingsInput {
   aboutPhotoUrl?: string;
   showArrivalNotice?: boolean;
   arrivalNoticeText?: string;
+  yearPeriodDiscounts?: YearPeriodDiscounts;
 }
 
 /**
@@ -234,6 +241,48 @@ export async function updateMetalRates(
 /** Дефолтное значение наценки */
 const DEFAULT_MARKUP = 1.0;
 
+function serializeGlobalSettings(settings: {
+  id: string;
+  priceMarkup: number;
+  updatedAt: Date;
+  phoneNumber: string;
+  email: string;
+  telegramUsername: string;
+  address: string;
+  workSchedule: string;
+  vkLink: string | null;
+  telegramBotToken: string;
+  telegramChatId: string;
+  storePhotoUrls: string[];
+  aboutText: string | null;
+  aboutPhotoUrl: string | null;
+  showArrivalNotice: boolean;
+  arrivalNoticeText: string | null;
+  yearPeriodDiscounts: unknown;
+}): GlobalSettingsData {
+  return {
+    id: settings.id,
+    priceMarkup: settings.priceMarkup,
+    updatedAt: settings.updatedAt,
+    phoneNumber: settings.phoneNumber,
+    email: settings.email,
+    telegramUsername: settings.telegramUsername,
+    address: settings.address,
+    workSchedule: settings.workSchedule,
+    vkLink: settings.vkLink ?? "",
+    telegramBotToken: settings.telegramBotToken,
+    telegramChatId: settings.telegramChatId,
+    storePhotoUrls: settings.storePhotoUrls ?? [],
+    aboutText: settings.aboutText ?? "",
+    aboutPhotoUrl: settings.aboutPhotoUrl ?? "",
+    showArrivalNotice: settings.showArrivalNotice ?? true,
+    arrivalNoticeText:
+      settings.arrivalNoticeText?.trim() ||
+      "❗️Время прибытия необходимо согласовать заранее❗️",
+    yearPeriodDiscounts: parseYearPeriodDiscounts(settings.yearPeriodDiscounts),
+  };
+}
+
 /**
  * Получить глобальные настройки.
  * Если записи нет — создаёт дефолтную с priceMarkup = 1.0
@@ -265,26 +314,7 @@ export async function getGlobalSettings(): Promise<GlobalSettingsResult> {
 
     return {
       success: true,
-      data: {
-        id: settings.id,
-        priceMarkup: settings.priceMarkup,
-        updatedAt: settings.updatedAt,
-        phoneNumber: settings.phoneNumber,
-        email: settings.email,
-        telegramUsername: settings.telegramUsername,
-        address: settings.address,
-        workSchedule: settings.workSchedule,
-        vkLink: settings.vkLink ?? "",
-        telegramBotToken: settings.telegramBotToken,
-        telegramChatId: settings.telegramChatId,
-        storePhotoUrls: settings.storePhotoUrls ?? [],
-        aboutText: settings.aboutText ?? "",
-        aboutPhotoUrl: settings.aboutPhotoUrl ?? "",
-        showArrivalNotice: settings.showArrivalNotice ?? true,
-        arrivalNoticeText:
-          settings.arrivalNoticeText?.trim() ||
-          "❗️Время прибытия необходимо согласовать заранее❗️",
-      },
+      data: serializeGlobalSettings(settings),
     };
   } catch (error) {
     console.error("Ошибка при получении глобальных настроек:", error);
@@ -321,6 +351,22 @@ export async function updateGlobalSettings(
       }
     }
 
+    const yearPeriodDiscounts = input.yearPeriodDiscounts
+      ? parseYearPeriodDiscounts(input.yearPeriodDiscounts)
+      : undefined;
+
+    if (yearPeriodDiscounts) {
+      const outOfRange = Object.values(yearPeriodDiscounts).some(
+        (value) => value < 0 || value > 100,
+      );
+      if (outOfRange) {
+        return {
+          success: false,
+          error: "Скидка по году должна быть от 0 до 100%",
+        };
+      }
+    }
+
     // Собираем данные для обновления
     const updateData: Partial<UpdateGlobalSettingsInput> = {};
     if (input.priceMarkup !== undefined) updateData.priceMarkup = input.priceMarkup;
@@ -339,6 +385,9 @@ export async function updateGlobalSettings(
     if (input.arrivalNoticeText !== undefined) {
       updateData.arrivalNoticeText = input.arrivalNoticeText.trim() ||
         "❗️Время прибытия необходимо согласовать заранее❗️";
+    }
+    if (yearPeriodDiscounts !== undefined) {
+      updateData.yearPeriodDiscounts = yearPeriodDiscounts;
     }
 
     // Обновляем или создаём запись (upsert)
@@ -363,6 +412,7 @@ export async function updateGlobalSettings(
         arrivalNoticeText:
           input.arrivalNoticeText?.trim() ||
           "❗️Время прибытия необходимо согласовать заранее❗️",
+        yearPeriodDiscounts: yearPeriodDiscounts ?? parseYearPeriodDiscounts(null),
       },
     });
 
@@ -371,26 +421,7 @@ export async function updateGlobalSettings(
 
     return {
       success: true,
-      data: {
-        id: settings.id,
-        priceMarkup: settings.priceMarkup,
-        updatedAt: settings.updatedAt,
-        phoneNumber: settings.phoneNumber,
-        email: settings.email,
-        telegramUsername: settings.telegramUsername,
-        address: settings.address,
-        workSchedule: settings.workSchedule,
-        vkLink: settings.vkLink ?? "",
-        telegramBotToken: settings.telegramBotToken,
-        telegramChatId: settings.telegramChatId,
-        storePhotoUrls: settings.storePhotoUrls ?? [],
-        aboutText: settings.aboutText ?? "",
-        aboutPhotoUrl: settings.aboutPhotoUrl ?? "",
-        showArrivalNotice: settings.showArrivalNotice ?? true,
-        arrivalNoticeText:
-          settings.arrivalNoticeText?.trim() ||
-          "❗️Время прибытия необходимо согласовать заранее❗️",
-      },
+      data: serializeGlobalSettings(settings),
     };
   } catch (error) {
     console.error("Ошибка при обновлении глобальных настроек:", error);

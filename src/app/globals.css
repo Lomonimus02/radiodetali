@@ -129,3 +129,29 @@ a, button, input, select, textarea {
 .animate-marquee:hover {
   animation-play-state: paused;
 }
+
+.internal-report-title {
+  display: none;
+}
+
+@media print {
+  html,
+  body {
+    background: white !important;
+    color: #111 !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  @page {
+    margin: 12mm;
+  }
+
+  html.print-internal-report .admin-metal-report {
+    display: block !important;
+  }
+
+  html.print-internal-report .internal-report-title {
+    display: block !important;
+  }
+}

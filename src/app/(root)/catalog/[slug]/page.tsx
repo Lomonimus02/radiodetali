@@ -6,7 +6,6 @@ import { notFound } from "next/navigation";
 import { getCategoryBySlug, getProducts } from "@/app/actions";
 import { ProductGridSkeleton } from "../../components";
 import { CategoryPageClient } from "./CategoryPageClient";
-import { showGuideBanner } from "@/lib/category-banners";
 import { bannerConfigFromCategory } from "@/lib/category-banner";
 import { SITE_BRAND } from "@/lib/site";
 
@@ -115,10 +114,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             warningMessage: category.warningMessage,
             bannerText: category.bannerText,
             banner: bannerConfigFromCategory(category),
+            infoPageEnabled: category.infoPageEnabled,
+            infoPageButtonLabel: category.infoPageButtonLabel,
           }}
           products={productsResult.data}
           total={productsResult.total}
-          showGuideBanner={showGuideBanner(category.slug)}
         />
       </Suspense>
     </>

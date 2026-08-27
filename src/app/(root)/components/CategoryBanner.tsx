@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { AlertTriangle, ArrowRight, BookOpen } from "lucide-react";
+import { AlertTriangle, ArrowRight } from "lucide-react";
 import {
   type CategoryBannerConfig,
   type CategoryBannerAlign,
@@ -10,6 +10,7 @@ import {
   resolveBannerDisplay,
   resolveCategoryBannerContent,
 } from "@/lib/category-banner";
+import { resolveInfoButtonLabel } from "@/lib/category-info";
 
 export interface CategoryBannersProps {
   categoryName: string;
@@ -17,7 +18,8 @@ export interface CategoryBannersProps {
   warningMessage?: string | null;
   banner: CategoryBannerConfig;
   bannerTextLegacy?: string | null;
-  showGuideBanner: boolean;
+  infoPageEnabled?: boolean;
+  infoPageButtonLabel?: string | null;
 }
 
 function getDecorLineColor(
@@ -207,7 +209,8 @@ export function CategoryBanners({
   warningMessage,
   banner,
   bannerTextLegacy,
-  showGuideBanner,
+  infoPageEnabled = false,
+  infoPageButtonLabel,
 }: CategoryBannersProps) {
   const rawContent = resolveCategoryBannerContent(
     warningMessage,
@@ -216,12 +219,17 @@ export function CategoryBanners({
   );
   const display = resolveBannerDisplay(rawContent, banner.titleLines);
 
-  const showGuide =
-    showGuideBanner && banner.showGuide && categorySlug !== "preview";
+  const showInfoButton = infoPageEnabled;
 
-  if (!display && !showGuide) {
+  if (!display && !showInfoButton) {
     return null;
   }
+
+  const isPreviewSlug = !categorySlug || categorySlug === "preview";
+  const infoHref = isPreviewSlug ? "#" : `/catalog/${categorySlug}/guide`;
+  const infoLabel = resolveInfoButtonLabel(infoPageButtonLabel, categoryName);
+  const infoButtonClassName =
+    "block w-full rounded-2xl bg-[var(--primary-700)] py-3 text-center font-semibold text-white transition-colors hover:bg-[var(--primary-800)]";
 
   return (
     <div className="mb-6 space-y-2">
@@ -240,15 +248,14 @@ export function CategoryBanners({
         />
       )}
 
-      {showGuide && (
-        <Link
-          href={`/catalog/${categorySlug}/guide`}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--primary-600)] hover:text-[var(--primary-700)] hover:underline"
-        >
-          <BookOpen className="h-4 w-4 shrink-0" />
-          Справочник: {categoryName}
-        </Link>
-      )}
+      {showInfoButton &&
+        (isPreviewSlug ? (
+          <span className={infoButtonClassName}>{infoLabel}</span>
+        ) : (
+          <Link href={infoHref} className={infoButtonClassName}>
+            {infoLabel}
+          </Link>
+        ))}
     </div>
   );
 }

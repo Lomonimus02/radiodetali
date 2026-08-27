@@ -22,6 +22,8 @@ export {
   type GlobalSettingsResult,
 } from "./settings";
 
+export type { YearPeriodDiscounts, YearPeriodId } from "@/lib/year-discount";
+
 // Авторизация
 export {
   loginAdmin,

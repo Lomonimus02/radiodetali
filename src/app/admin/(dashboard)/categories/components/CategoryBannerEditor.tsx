@@ -23,7 +23,6 @@ export interface CategoryBannerFormValues {
   bannerLinkLabel: string;
   bannerTextColor: string;
   bannerTitleLines: boolean;
-  bannerShowGuide: boolean;
 }
 
 interface CategoryBannerEditorProps {
@@ -31,7 +30,8 @@ interface CategoryBannerEditorProps {
   categorySlug: string;
   warningMessage: string;
   bannerTextLegacy: string;
-  hasGuide: boolean;
+  infoPageEnabled?: boolean;
+  infoPageButtonLabel?: string | null;
   values: CategoryBannerFormValues;
   onWarningMessageChange: (value: string) => void;
   onChange: <K extends keyof CategoryBannerFormValues>(
@@ -46,7 +46,8 @@ export function CategoryBannerEditor({
   categorySlug,
   warningMessage,
   bannerTextLegacy,
-  hasGuide,
+  infoPageEnabled = false,
+  infoPageButtonLabel,
   values,
   onWarningMessageChange,
   onChange,
@@ -65,7 +66,7 @@ export function CategoryBannerEditor({
     linkLabel: values.bannerLinkLabel.trim() || null,
     textColor: values.bannerTextColor.trim() || null,
     titleLines: values.bannerTitleLines,
-    showGuide: values.bannerShowGuide,
+    showGuide: true,
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -360,33 +361,20 @@ export function CategoryBannerEditor({
             </div>
           )}
         </div>
-
-        {hasGuide && (
-          <label className="flex items-center gap-3 cursor-pointer pt-1">
-            <input
-              type="checkbox"
-              checked={values.bannerShowGuide}
-              onChange={(e) => onChange("bannerShowGuide", e.target.checked)}
-              className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-            />
-            <span className="text-sm text-slate-700">
-              Показать ссылку на справочник под баннером
-            </span>
-          </label>
-        )}
       </div>
 
       <div className="space-y-2">
         <p className="text-sm font-medium text-slate-700">Превью</p>
         <div className="rounded-xl border border-dashed border-slate-300 bg-white p-4">
-          {hasPreviewContent || (hasGuide && values.bannerShowGuide) ? (
+          {hasPreviewContent || infoPageEnabled ? (
             <CategoryBanners
               categoryName={categoryName || "Категория"}
               categorySlug={categorySlug || "preview"}
               warningMessage={warningMessage.trim() || null}
               bannerTextLegacy={bannerTextLegacy.trim() || null}
               banner={previewBanner}
-              showGuideBanner={hasGuide}
+              infoPageEnabled={infoPageEnabled}
+              infoPageButtonLabel={infoPageButtonLabel}
             />
           ) : (
             <p className="text-sm text-slate-400 text-center py-6">

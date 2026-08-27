@@ -2,8 +2,13 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 import type { CategoryBannerAlign, CategoryBannerTheme } from "@prisma/client";
 import { normalizeBannerTextColor } from "@/lib/category-banner";
+import {
+  parseInfoPageBlocks,
+  type CategoryInfoBlock,
+} from "@/lib/category-info";
 
 // ============================================================================
 // ТИПЫ
@@ -67,6 +72,36 @@ function pickBannerInput(input: {
   return data;
 }
 
+function pickInfoPageFields(category: {
+  infoPageEnabled: boolean;
+  infoPageButtonLabel: string | null;
+  infoPageBlocks: unknown;
+}) {
+  return {
+    infoPageEnabled: category.infoPageEnabled,
+    infoPageButtonLabel: category.infoPageButtonLabel,
+    infoPageBlocks: parseInfoPageBlocks(category.infoPageBlocks),
+  };
+}
+
+function pickInfoPageInput(input: {
+  infoPageEnabled?: boolean;
+  infoPageButtonLabel?: string | null;
+  infoPageBlocks?: CategoryInfoBlock[];
+}) {
+  const data: Record<string, unknown> = {};
+  if (input.infoPageEnabled !== undefined) data.infoPageEnabled = input.infoPageEnabled;
+  if (input.infoPageButtonLabel !== undefined) {
+    data.infoPageButtonLabel = input.infoPageButtonLabel?.trim() || null;
+  }
+  if (input.infoPageBlocks !== undefined) {
+    data.infoPageBlocks = parseInfoPageBlocks(
+      input.infoPageBlocks,
+    ) as Prisma.InputJsonValue;
+  }
+  return data;
+}
+
 /**
  * Ð”Ð°Ð½Ð½Ñ‹Ðµ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ Ð´Ð»Ñ API
  */
@@ -91,6 +126,9 @@ export interface CategoryData {
   bannerTextColor: string | null;
   bannerTitleLines: boolean;
   bannerShowGuide: boolean;
+  infoPageEnabled: boolean;
+  infoPageButtonLabel: string | null;
+  infoPageBlocks: CategoryInfoBlock[];
   isPinnedToDashboard: boolean;
   customRateAu: number | null;
   customRateAg: number | null;
@@ -124,6 +162,9 @@ export interface CreateCategoryInput {
   bannerTextColor?: string | null;
   bannerTitleLines?: boolean;
   bannerShowGuide?: boolean;
+  infoPageEnabled?: boolean;
+  infoPageButtonLabel?: string | null;
+  infoPageBlocks?: CategoryInfoBlock[];
   isPinnedToDashboard?: boolean;
   customRateAu?: number | null;
   customRateAg?: number | null;
@@ -154,6 +195,9 @@ export interface UpdateCategoryInput {
   bannerTextColor?: string | null;
   bannerTitleLines?: boolean;
   bannerShowGuide?: boolean;
+  infoPageEnabled?: boolean;
+  infoPageButtonLabel?: string | null;
+  infoPageBlocks?: CategoryInfoBlock[];
   isPinnedToDashboard?: boolean;
   customRateAu?: number | null;
   customRateAg?: number | null;
@@ -270,6 +314,7 @@ export async function getCategories(rootOnly: boolean = false): Promise<Categori
         childSortOrder: cat.childSortOrder,
         warningMessage: cat.warningMessage,
         ...pickBannerFields(cat),
+        ...pickInfoPageFields(cat),
         isPinnedToDashboard: cat.isPinnedToDashboard,
         customRateAu: cat.customRateAu,
         customRateAg: cat.customRateAg,
@@ -325,6 +370,7 @@ export async function getCategoryBySlug(slug: string): Promise<CategoryResult> {
         childSortOrder: category.childSortOrder,
         warningMessage: category.warningMessage,
         ...pickBannerFields(category),
+        ...pickInfoPageFields(category),
         isPinnedToDashboard: category.isPinnedToDashboard,
         customRateAu: category.customRateAu,
         customRateAg: category.customRateAg,
@@ -374,6 +420,7 @@ export async function getCategoryById(id: string): Promise<CategoryResult> {
         childSortOrder: category.childSortOrder,
         warningMessage: category.warningMessage,
         ...pickBannerFields(category),
+        ...pickInfoPageFields(category),
         isPinnedToDashboard: category.isPinnedToDashboard,
         customRateAu: category.customRateAu,
         customRateAg: category.customRateAg,
@@ -449,6 +496,7 @@ export async function createCategory(
         childSortOrder: input.childSortOrder ?? 0,
         warningMessage: input.warningMessage?.trim() || null,
         ...pickBannerInput(input),
+        ...pickInfoPageInput(input),
         isPinnedToDashboard: input.isPinnedToDashboard ?? false,
         // ÐšÐ°ÑÑ‚Ð¾Ð¼Ð½Ñ‹Ðµ ÐºÑƒÑ€ÑÑ‹: ÐµÑÐ»Ð¸ Ð¿ÑƒÑÑ‚Ð¾Ðµ/undefined â€” Ð¿Ð¸ÑˆÐµÐ¼ null
         customRateAu: input.customRateAu ?? null,
@@ -477,6 +525,7 @@ export async function createCategory(
         childSortOrder: category.childSortOrder,
         warningMessage: category.warningMessage,
         ...pickBannerFields(category),
+        ...pickInfoPageFields(category),
         isPinnedToDashboard: category.isPinnedToDashboard,
         customRateAu: category.customRateAu,
         customRateAg: category.customRateAg,
@@ -564,7 +613,7 @@ export async function updateCategory(
     if (input.customRateAg !== undefined) updateData.customRateAg = input.customRateAg;
     if (input.customRatePt !== undefined) updateData.customRatePt = input.customRatePt;
     if (input.customRatePd !== undefined) updateData.customRatePd = input.customRatePd;
-    Object.assign(updateData, pickBannerInput(input));
+    Object.assign(updateData, pickBannerInput(input), pickInfoPageInput(input));
     if (input.parentId !== undefined) {
       if (input.parentId === null) {
         updateData.parent = { disconnect: true };
@@ -604,6 +653,7 @@ export async function updateCategory(
         childSortOrder: category.childSortOrder,
         warningMessage: category.warningMessage,
         ...pickBannerFields(category),
+        ...pickInfoPageFields(category),
         isPinnedToDashboard: category.isPinnedToDashboard,
         customRateAu: category.customRateAu,
         customRateAg: category.customRateAg,
@@ -1002,6 +1052,7 @@ export async function getSubcategories(parentId: string | null): Promise<Categor
       childSortOrder: cat.childSortOrder,
       warningMessage: cat.warningMessage,
       ...pickBannerFields(cat),
+      ...pickInfoPageFields(cat),
       isPinnedToDashboard: cat.isPinnedToDashboard,
       customRateAu: cat.customRateAu,
       customRateAg: cat.customRateAg,
@@ -1092,6 +1143,7 @@ export async function getPinnedCategories(): Promise<CategoriesResult> {
       childSortOrder: cat.childSortOrder,
       warningMessage: cat.warningMessage,
       ...pickBannerFields(cat),
+      ...pickInfoPageFields(cat),
       isPinnedToDashboard: cat.isPinnedToDashboard,
       customRateAu: cat.customRateAu,
       customRateAg: cat.customRateAg,

@@ -29,14 +29,9 @@ export type YearPeriodDiscounts = Record<YearPeriodId, number>;
 export const YEAR_PERIODS: { id: YearPeriodId; label: string }[] = [
   { id: "until1990", label: "до 1990" },
   { id: "from1990", label: "с 1990" },
-  { id: "from2000", label: "с 1990" },
-  { id: "from2010", label: "с 1990" },
+  { id: "from2000", label: "с 2000" },
+  { id: "from2010", label: "с 2010" },
 ];
-
-/** Периоды в калькуляторе и админке: «до 1990» и «с 1990». Остальные ключи только для старых строк описи. */
-export const VISIBLE_YEAR_PERIODS = YEAR_PERIODS.filter(
-  (period) => period.id === "until1990" || period.id === "from1990",
-);
 
 export const DEFAULT_YEAR_PERIOD_DISCOUNTS: YearPeriodDiscounts = {
   until1990: 0,
@@ -49,7 +44,7 @@ export function getYearPeriodLabel(id: YearPeriodId): string {
   return YEAR_PERIODS.find((period) => period.id === id)?.label ?? id;
 }
 
-function clampDiscountPercent(value: number): number {
+export function clampDiscountPercent(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.min(100, Math.max(0, value));
 }
@@ -74,9 +69,6 @@ export function parseYearPeriodDiscounts(raw: unknown): YearPeriodDiscounts {
     }
   }
 
-  result.from2000 = result.from1990;
-  result.from2010 = result.from1990;
-
   return result;
 }
 
@@ -99,6 +91,23 @@ export function getDiscountPercent(
   return clampDiscountPercent(
     discounts[yearPeriodId] ?? DEFAULT_YEAR_PERIOD_DISCOUNTS[yearPeriodId],
   );
+}
+
+export function resolveLineDiscountPercent(
+  line: {
+    yearPeriodId: YearPeriodId;
+    customDiscountPercent?: number | null;
+  },
+  discounts: YearPeriodDiscounts,
+): number {
+  if (
+    typeof line.customDiscountPercent === "number" &&
+    Number.isFinite(line.customDiscountPercent)
+  ) {
+    return clampDiscountPercent(line.customDiscountPercent);
+  }
+
+  return getDiscountPercent(discounts, line.yearPeriodId);
 }
 
 export function resolveLineBasePrice(

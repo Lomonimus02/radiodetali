@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Header, Footer, TopAlert, CartIndicator } from "./components";
-import { getGlobalSettings } from "@/app/actions";
+import { getGlobalSettings, isAuthenticated } from "@/app/actions";
 import type { HeaderContactInfo } from "./components/Header";
 import type { FooterContactInfo } from "./components/Footer";
 import { JivoWidget } from "./components/JivoWidget";
@@ -39,6 +39,7 @@ export default async function RootLayout({
   const settingsResult = await getGlobalSettings();
   const settings = settingsResult.success ? settingsResult.data : null;
   const sellContactInfo = buildSellContactInfo(settings);
+  const isAdmin = await isAuthenticated();
 
   // Формируем данные для Header
   const headerContactInfo: HeaderContactInfo | undefined = settings ? {
@@ -65,6 +66,7 @@ export default async function RootLayout({
   return (
     <YearDiscountsProvider
       value={settings?.yearPeriodDiscounts ?? DEFAULT_YEAR_PERIOD_DISCOUNTS}
+      isAdmin={isAdmin}
     >
     <SiteContactsProvider contacts={sellContactInfo}>
       <div className="h-full flex flex-col bg-[var(--background)] overflow-y-auto overflow-x-hidden overscroll-none print:h-auto print:overflow-visible print:bg-white" style={{ WebkitOverflowScrolling: 'touch' }}>

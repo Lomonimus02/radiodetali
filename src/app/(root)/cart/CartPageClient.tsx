@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Package,
@@ -17,11 +17,21 @@ import { useCartStore, type InventoryLine, type ItemCondition } from "@/store";
 import { useSiteContacts } from "../components/SiteContactsProvider";
 import { useYearPeriodDiscounts } from "../components/YearDiscountsProvider";
 import {
-  getDiscountPercent,
   getYearPeriodLabel,
+  resolveLineDiscountPercent,
   resolveLineUnitPrice,
 } from "@/lib/year-discount";
-import type { ProductWithPrice, ProductsResult, UnitType } from "@/app/actions";
+import {
+  classifyPrintGroup,
+  groupRowsForPrint,
+} from "@/lib/inventory-print-groups";
+import {
+  computeLineTotal,
+  formatInventoryQuantity,
+  getInventoryPriceUnitSuffix,
+  usesGramQuantity,
+} from "@/lib/gram-quantity";
+import type { ProductWithPrice, ProductsResult } from "@/app/actions";
 import { AdminMetalReport } from "./AdminMetalReport";
 
 const DEFAULT_VK_URL = "https://vk.com/dragsoyuz";
@@ -37,18 +47,36 @@ function formatPrice(price: number): string {
 
 function getConditionLabel(condition: ItemCondition, isSingleType: boolean): string {
   if (isSingleType) return "—";
-  return condition === "new" ? "Новые" : "Б/У";
+  return condition === "new" ? "новое" : "б/у";
 }
 
-function getPriceUnitSuffix(unitType: UnitType): string {
-  switch (unitType) {
-    case "GRAM":
-      return "/г.";
-    case "KG":
-      return "/кг.";
-    default:
-      return "/шт.";
+function formatPrintDate(date: Date): string {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = date.toLocaleDateString("ru-RU", { month: "long" });
+  return `«${day}» ${month} ${date.getFullYear()} г.`;
+}
+
+function formatLinePeriod(line: InventoryLine): string {
+  const yearLabel = getYearPeriodLabel(line.yearPeriodId);
+  if (
+    typeof line.customDiscountPercent === "number" &&
+    Number.isFinite(line.customDiscountPercent)
+  ) {
+    return `${yearLabel}, уценка ${line.customDiscountPercent}%`;
   }
+  return yearLabel;
+}
+
+function rowGramMode(product: ProductWithPrice | null): boolean {
+  return product ? usesGramQuantity(product) : false;
+}
+
+function rowPriceSuffix(product: ProductWithPrice | null): string {
+  if (!product) return "";
+  return getInventoryPriceUnitSuffix(
+    product.unitType,
+    usesGramQuantity(product),
+  );
 }
 
 interface InventoryRow {
@@ -145,7 +173,7 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
               product,
               line.modificationId,
               line.condition,
-              getDiscountPercent(discounts, line.yearPeriodId),
+              resolveLineDiscountPercent(line, discounts),
             )
           : 0;
         const modName = product?.modifications.find(
@@ -161,7 +189,7 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
           line,
           product,
           unitPrice,
-          lineTotal: unitPrice * line.quantity,
+          lineTotal: computeLineTotal(unitPrice, line.quantity, product),
           displayName,
         };
       }),
@@ -169,7 +197,42 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
   );
 
   const totalSum = rows.reduce((sum, row) => sum + row.lineTotal, 0);
-  const totalPieces = rows.reduce((sum, row) => sum + row.line.quantity, 0);
+  const totalPieces = rows.reduce(
+    (sum, row) =>
+      rowGramMode(row.product) ? sum : sum + row.line.quantity,
+    0,
+  );
+  const totalGrams = rows.reduce(
+    (sum, row) =>
+      rowGramMode(row.product) ? sum + row.line.quantity : sum,
+    0,
+  );
+  const printGroups = useMemo(
+    () =>
+      groupRowsForPrint(rows, (row) =>
+        classifyPrintGroup({
+          categorySlug: row.product?.categorySlug,
+          categoryName: row.product?.categoryName,
+          productName: row.product?.name,
+          productSlug: row.product?.slug,
+        }),
+      ),
+    [rows],
+  );
+
+  const printSections = useMemo(() => {
+    let index = 0;
+    return printGroups.map((group) => ({
+      ...group,
+      groupTotal: group.rows.reduce((sum, row) => sum + row.lineTotal, 0),
+      numberedRows: group.rows.map((row) => {
+        index += 1;
+        return { row, index };
+      }),
+    }));
+  }, [printGroups]);
+
+  const printDateLabel = formatPrintDate(new Date());
 
   const handlePrint = () => {
     document.documentElement.classList.remove("print-internal-report");
@@ -224,16 +287,19 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
           )}
         </div>
 
-        <div className="hidden print:block mb-4">
-          {isAdmin ? (
-            <p className="internal-report-title text-sm font-semibold text-gray-500 mb-1">
-              Внутренний отчёт
-            </p>
-          ) : null}
-          <h1 className="text-xl font-bold">Опись — ДРАГСОЮЗ</h1>
-          <p className="text-sm text-gray-600">
-            {new Date().toLocaleString("ru-RU")}
-          </p>
+        <div className="hidden print:block inventory-print-header mb-4">
+          <div>
+            {isAdmin ? (
+              <p className="internal-report-title text-sm font-semibold text-gray-500 mb-1">
+                Внутренний отчёт
+              </p>
+            ) : null}
+            <h1 className="text-xl font-bold">Опись — ДРАГСОЮЗ</h1>
+          </div>
+          <div className="text-right">
+            <p>Лист № 1</p>
+            <p>Дата: {printDateLabel}</p>
+          </div>
         </div>
 
         {error && (
@@ -263,30 +329,34 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 print:block print:gap-0">
             <div className="lg:col-span-2 print:w-full">
-              <div className="bg-white rounded-xl border border-[var(--gray-200)] overflow-x-auto print:border-0 print:rounded-none">
-                <table className="w-full min-w-[640px] text-sm print:min-w-0">
+              <div className="bg-white rounded-xl border border-[var(--gray-200)] overflow-x-auto print:hidden">
+                <table className="inventory-screen w-full min-w-[720px] text-sm">
                   <thead>
-                    <tr className="bg-[var(--gray-100)] text-left text-[var(--gray-700)] print:bg-transparent">
-                      <th className="px-3 py-3 font-semibold w-10">#</th>
-                      <th className="px-3 py-3 font-semibold">Название</th>
-                      <th className="px-3 py-3 font-semibold">Период</th>
-                      <th className="px-3 py-3 font-semibold">Состояние</th>
-                      <th className="px-3 py-3 font-semibold text-right">Кол-во</th>
-                      <th className="px-3 py-3 font-semibold text-right">Цена/ед.</th>
-                      <th className="px-3 py-3 font-semibold text-right">Сумма</th>
-                      <th className="px-2 py-3 print:hidden" />
+                    <tr className="text-[var(--gray-700)]">
+                      <th className="col-num px-2 py-2 font-semibold w-12">№ п/п</th>
+                      <th className="col-name px-3 py-2 font-semibold text-left">
+                        Наименование
+                      </th>
+                      <th className="px-2 py-2 font-semibold whitespace-nowrap">
+                        Год выпуска
+                      </th>
+                      <th className="px-2 py-2 font-semibold">Состояние</th>
+                      <th className="px-2 py-2 font-semibold">Кол-во</th>
+                      <th className="px-2 py-2 font-semibold">Цена</th>
+                      <th className="px-2 py-2 font-semibold">Сумма</th>
+                      <th className="px-2 py-2 w-10 print:hidden" />
                     </tr>
                   </thead>
                   <tbody>
                     {rows.map((row, index) => (
                       <tr
                         key={row.line.lineId}
-                        className="border-t border-[var(--gray-200)]"
+                        className="text-[var(--gray-800)]"
                       >
-                        <td className="px-3 py-3 tabular-nums text-[var(--gray-500)]">
+                        <td className="col-num px-2 py-2 tabular-nums text-[var(--gray-500)]">
                           {index + 1}
                         </td>
-                        <td className="px-3 py-3 font-medium text-[var(--gray-900)]">
+                        <td className="col-name px-3 py-2 font-medium text-[var(--gray-900)]">
                           {row.product ? (
                             <Link
                               href={`/catalog/${row.product.categorySlug}/${row.product.slug}`}
@@ -300,16 +370,16 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
                             </span>
                           )}
                         </td>
-                        <td className="px-3 py-3 whitespace-nowrap">
-                          {getYearPeriodLabel(row.line.yearPeriodId)}
+                        <td className="px-2 py-2 text-center whitespace-nowrap">
+                          {formatLinePeriod(row.line)}
                         </td>
-                        <td className="px-3 py-3 whitespace-nowrap">
+                        <td className="px-2 py-2 text-center whitespace-nowrap">
                           {getConditionLabel(
                             row.line.condition,
                             row.product?.isSingleType ?? false,
                           )}
                         </td>
-                        <td className="px-3 py-3 text-right">
+                        <td className="px-2 py-2 text-center">
                           <div className="inline-flex items-center gap-1 print:hidden">
                             <button
                               type="button"
@@ -320,7 +390,11 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
                                 )
                               }
                               className="w-7 h-7 flex items-center justify-center rounded border border-[var(--gray-200)] hover:bg-[var(--gray-50)]"
-                              aria-label="Уменьшить"
+                              aria-label={
+                                rowGramMode(row.product)
+                                  ? "Уменьшить на 1 г"
+                                  : "Уменьшить"
+                              }
                             >
                               <Minus className="w-3 h-3" />
                             </button>
@@ -336,7 +410,17 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
                                 );
                               }}
                               className="w-12 h-7 text-center font-semibold bg-transparent border-none outline-none tabular-nums"
+                              aria-label={
+                                rowGramMode(row.product)
+                                  ? "Количество, г"
+                                  : "Количество"
+                              }
                             />
+                            {rowGramMode(row.product) ? (
+                              <span className="text-xs text-[var(--gray-500)]">
+                                г.
+                              </span>
+                            ) : null}
                             <button
                               type="button"
                               onClick={() =>
@@ -346,25 +430,30 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
                                 )
                               }
                               className="w-7 h-7 flex items-center justify-center rounded border border-[var(--gray-200)] hover:bg-[var(--gray-50)]"
-                              aria-label="Увеличить"
+                              aria-label={
+                                rowGramMode(row.product)
+                                  ? "Увеличить на 1 г"
+                                  : "Увеличить"
+                              }
                             >
                               <Plus className="w-3 h-3" />
                             </button>
                           </div>
                           <span className="hidden print:inline tabular-nums">
-                            {row.line.quantity}
+                            {formatInventoryQuantity(
+                              row.line.quantity,
+                              rowGramMode(row.product),
+                            )}
                           </span>
                         </td>
-                        <td className="px-3 py-3 text-right whitespace-nowrap tabular-nums">
+                        <td className="px-2 py-2 text-right whitespace-nowrap tabular-nums">
                           {formatPrice(row.unitPrice)}
-                          {row.product
-                            ? getPriceUnitSuffix(row.product.unitType)
-                            : ""}
+                          {rowPriceSuffix(row.product)}
                         </td>
-                        <td className="px-3 py-3 text-right font-semibold whitespace-nowrap tabular-nums">
+                        <td className="px-2 py-2 text-right font-semibold whitespace-nowrap tabular-nums">
                           {formatPrice(row.lineTotal)}
                         </td>
-                        <td className="px-2 py-3 print:hidden">
+                        <td className="px-2 py-2 print:hidden">
                           <button
                             type="button"
                             onClick={() => removeLine(row.line.lineId)}
@@ -378,7 +467,7 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
                     ))}
                   </tbody>
                   <tfoot>
-                    <tr className="border-t-2 border-[var(--gray-900)]">
+                    <tr>
                       <td
                         colSpan={6}
                         className="px-3 py-3 text-right font-medium"
@@ -389,6 +478,79 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
                         {formatPrice(totalSum)}
                       </td>
                       <td className="print:hidden" />
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              <div className="hidden print:block">
+                <table className="inventory-ledger">
+                  <thead>
+                    <tr>
+                      <th className="col-num">№ п/п</th>
+                      <th className="col-name">Наименование</th>
+                      <th className="col-year">Год выпуска</th>
+                      <th className="col-cond">Состояние</th>
+                      <th className="col-qty">Кол-во</th>
+                      <th className="col-price">Цена</th>
+                      <th className="col-sum">Сумма</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {printSections.map((group) => (
+                      <Fragment key={group.id}>
+                        <tr>
+                          <td colSpan={7} className="group-title">
+                            {group.label}
+                          </td>
+                        </tr>
+                        {group.numberedRows.map(({ row, index }) => (
+                          <tr key={row.line.lineId}>
+                            <td className="col-num tabular-nums">{index}</td>
+                            <td className="col-name">{row.displayName}</td>
+                            <td className="col-year">
+                              {formatLinePeriod(row.line)}
+                            </td>
+                            <td className="col-cond">
+                              {getConditionLabel(
+                                row.line.condition,
+                                row.product?.isSingleType ?? false,
+                              )}
+                            </td>
+                            <td className="col-qty tabular-nums">
+                              {formatInventoryQuantity(
+                                row.line.quantity,
+                                rowGramMode(row.product),
+                              )}
+                            </td>
+                            <td className="col-price tabular-nums">
+                              {formatPrice(row.unitPrice)}
+                              {rowPriceSuffix(row.product)}
+                            </td>
+                            <td className="col-sum tabular-nums">
+                              {formatPrice(row.lineTotal)}
+                            </td>
+                          </tr>
+                        ))}
+                        <tr className="group-total">
+                          <td colSpan={6} className="text-right">
+                            Итого по группе
+                          </td>
+                          <td className="col-sum tabular-nums">
+                            {formatPrice(group.groupTotal)}
+                          </td>
+                        </tr>
+                      </Fragment>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="grand-total">
+                      <td colSpan={6} className="text-right">
+                        Итого
+                      </td>
+                      <td className="col-sum tabular-nums">
+                        {formatPrice(totalSum)}
+                      </td>
                     </tr>
                   </tfoot>
                 </table>
@@ -410,10 +572,18 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
                     <span>Строк:</span>
                     <span>{rows.length}</span>
                   </div>
-                  <div className="flex justify-between text-[var(--gray-600)]">
-                    <span>Всего единиц:</span>
-                    <span>{totalPieces}</span>
-                  </div>
+                  {totalPieces > 0 ? (
+                    <div className="flex justify-between text-[var(--gray-600)]">
+                      <span>Всего, шт.:</span>
+                      <span>{totalPieces}</span>
+                    </div>
+                  ) : null}
+                  {totalGrams > 0 ? (
+                    <div className="flex justify-between text-[var(--gray-600)]">
+                      <span>Всего, г.:</span>
+                      <span>{totalGrams}</span>
+                    </div>
+                  ) : null}
                   <div className="pt-3 border-t border-[var(--gray-200)]">
                     <div className="flex justify-between items-end">
                       <span className="text-[var(--gray-900)] font-medium">

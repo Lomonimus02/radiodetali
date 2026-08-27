@@ -2,7 +2,10 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { YearPeriodId } from "@/lib/year-discount";
+import {
+  clampDiscountPercent,
+  type YearPeriodId,
+} from "@/lib/year-discount";
 
 export type ItemCondition = "new" | "used";
 export type { YearPeriodId };
@@ -14,6 +17,7 @@ export interface InventoryLine {
   condition: ItemCondition;
   yearPeriodId: YearPeriodId;
   quantity: number;
+  customDiscountPercent: number | null;
 }
 
 export type AddLineInput = Omit<InventoryLine, "lineId">;
@@ -35,6 +39,20 @@ function normalizeQuantity(quantity: number): number {
   return Math.max(1, Math.floor(quantity));
 }
 
+function normalizeCustomDiscountPercent(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  return clampDiscountPercent(value);
+}
+
+function normalizeLine(line: InventoryLine): InventoryLine {
+  return {
+    ...line,
+    customDiscountPercent: normalizeCustomDiscountPercent(
+      line.customDiscountPercent,
+    ),
+  };
+}
+
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
@@ -49,6 +67,9 @@ export const useCartStore = create<CartState>()(
           condition: payload.condition,
           yearPeriodId: payload.yearPeriodId,
           quantity: normalizeQuantity(payload.quantity),
+          customDiscountPercent: normalizeCustomDiscountPercent(
+            payload.customDiscountPercent,
+          ),
         };
 
         set((state) => ({
@@ -93,6 +114,13 @@ export const useCartStore = create<CartState>()(
       name: "scrap-inventory-v2",
       skipHydration: true,
       partialize: (state) => ({ items: state.items }),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<CartState> | undefined;
+        const items = Array.isArray(persisted?.items)
+          ? persisted.items.map((line) => normalizeLine(line as InventoryLine))
+          : currentState.items;
+        return { ...currentState, ...persisted, items };
+      },
       onRehydrateStorage: () => () => {
         useCartStore.setState({ hasHydrated: true });
       },

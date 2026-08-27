@@ -134,6 +134,30 @@ a, button, input, select, textarea {
   display: none;
 }
 
+.inventory-screen {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.inventory-screen th,
+.inventory-screen td {
+  border: 1px solid var(--gray-300);
+}
+
+.inventory-screen th {
+  text-align: center;
+  background: var(--gray-100);
+}
+
+.inventory-screen td.col-num,
+.inventory-screen th.col-num {
+  text-align: center;
+}
+
+.inventory-screen td.col-name {
+  text-align: left;
+}
+
 @media print {
   html,
   body {
@@ -153,5 +177,72 @@ a, button, input, select, textarea {
 
   html.print-internal-report .internal-report-title {
     display: block !important;
+  }
+
+  .inventory-print-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+
+  .inventory-ledger {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 11px;
+    color: #000;
+  }
+
+  .inventory-ledger th,
+  .inventory-ledger td {
+    border: 1px solid #000;
+    padding: 3px 5px;
+    vertical-align: middle;
+  }
+
+  .inventory-ledger th {
+    text-align: center;
+    font-weight: 600;
+  }
+
+  .inventory-ledger .col-num {
+    width: 8%;
+    text-align: center;
+  }
+
+  .inventory-ledger .col-name {
+    width: 36%;
+    text-align: left;
+  }
+
+  .inventory-ledger .col-year,
+  .inventory-ledger .col-cond {
+    width: 12%;
+    text-align: center;
+  }
+
+  .inventory-ledger .col-qty,
+  .inventory-ledger .col-price,
+  .inventory-ledger .col-sum {
+    width: 10%;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .inventory-ledger .group-title {
+    text-align: left;
+    font-weight: 700;
+    background: #eee;
+  }
+
+  .inventory-ledger .group-total td,
+  .inventory-ledger .grand-total td {
+    font-weight: 700;
+  }
+
+  .inventory-print-section {
+    break-inside: avoid;
   }
 }

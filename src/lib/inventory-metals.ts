@@ -1,4 +1,8 @@
 import type { InventoryLine, ItemCondition } from "@/store";
+import {
+  quantityToPriceMultiplier,
+  usesGramQuantity,
+} from "@/lib/gram-quantity";
 
 export type MetalTotals = {
   au: number;
@@ -9,6 +13,11 @@ export type MetalTotals = {
 
 export type InventoryMetalProduct = {
   isSingleType: boolean;
+  unitType?: "PIECE" | "GRAM" | "KG" | null;
+  categorySlug?: string | null;
+  categoryName?: string | null;
+  slug?: string | null;
+  name?: string | null;
   contentGold: number;
   contentSilver: number;
   contentPlatinum: number;
@@ -118,10 +127,15 @@ export function accumulateInventoryMetals(
       line.modificationId,
       line.condition,
     );
+    const scale = quantityToPriceMultiplier(
+      line.quantity,
+      product.unitType,
+      usesGramQuantity(product),
+    );
     if (usesNewContent(product.isSingleType, line.condition)) {
-      newTotals = addScaled(newTotals, unit, line.quantity);
+      newTotals = addScaled(newTotals, unit, scale);
     } else {
-      usedTotals = addScaled(usedTotals, unit, line.quantity);
+      usedTotals = addScaled(usedTotals, unit, scale);
     }
   }
 

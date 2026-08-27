@@ -5,15 +5,26 @@ import Link from "next/link";
 import { ClipboardList, Minus, Plus, X } from "lucide-react";
 import type { ProductWithPrice, UnitType } from "@/app/actions";
 import { useCartStore, type ItemCondition } from "@/store";
-import { useYearPeriodDiscounts } from "./YearDiscountsProvider";
 import {
-  VISIBLE_YEAR_PERIODS,
+  useIsAdmin,
+  useYearPeriodDiscounts,
+} from "./YearDiscountsProvider";
+import {
+  YEAR_PERIODS,
+  clampDiscountPercent,
   getDiscountPercent,
   getYearPeriodLabel,
+  resolveLineDiscountPercent,
   resolveLineUnitPrice,
   shouldShowCalculator,
   type YearPeriodId,
 } from "@/lib/year-discount";
+import {
+  computeLineTotal,
+  formatInventoryQuantity,
+  getInventoryPriceUnitSuffix,
+  usesGramQuantity,
+} from "@/lib/gram-quantity";
 
 interface CalculatorModalProps {
   product: ProductWithPrice;
@@ -24,6 +35,7 @@ interface AddedSummary {
   quantity: number;
   condition: ItemCondition;
   yearPeriodId: YearPeriodId;
+  customDiscountPercent: number | null;
   modificationName: string | null;
 }
 
@@ -36,18 +48,12 @@ function formatPrice(price: number): string {
   }).format(price);
 }
 
-function getPriceUnitSuffix(unitType: UnitType): string {
-  switch (unitType) {
-    case "GRAM":
-      return "/г.";
-    case "KG":
-      return "/кг.";
-    default:
-      return "/шт.";
-  }
-}
-
-function formatQuantityLabel(quantity: number, unitType: UnitType): string {
+function formatQuantityLabel(
+  quantity: number,
+  unitType: UnitType,
+  gramMode: boolean,
+): string {
+  if (gramMode) return formatInventoryQuantity(quantity, true);
   switch (unitType) {
     case "GRAM":
       return `${quantity} г.`;
@@ -76,12 +82,21 @@ function formatAddedSummary(
   product: ProductWithPrice,
   index: number,
 ): string {
-  const parts = [formatQuantityLabel(summary.quantity, product.unitType)];
+  const parts = [
+    formatQuantityLabel(
+      summary.quantity,
+      product.unitType,
+      usesGramQuantity(product),
+    ),
+  ];
   if (summary.modificationName) {
     parts.push(summary.modificationName);
   }
   if (!product.isSingleType) {
     parts.push(summary.condition === "new" ? "новые" : "б/у");
+  }
+  if (summary.customDiscountPercent !== null) {
+    parts.push(`уценка ${summary.customDiscountPercent}%`);
   }
   parts.push(getYearPeriodLabel(summary.yearPeriodId));
   return `Добавлено ${index + 1}: ${parts.join(", ")}`;
@@ -93,12 +108,16 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
   const [condition, setCondition] = useState<ItemCondition>(() =>
     defaultCondition(product),
   );
-  const [yearPeriodId, setYearPeriodId] = useState<YearPeriodId>("from1990");
+  const [yearPeriodId, setYearPeriodId] = useState<YearPeriodId>("until1990");
+  const [customMarkdownEnabled, setCustomMarkdownEnabled] = useState(false);
+  const [customDiscountPercent, setCustomDiscountPercent] = useState(5);
   const [quantity, setQuantity] = useState(1);
   const [modificationId, setModificationId] = useState<string | null>(() =>
     defaultModificationId(product),
   );
   const discounts = useYearPeriodDiscounts();
+  const isAdmin = useIsAdmin();
+  const canSetCustomMarkdown = isAdmin && customMarkdownEnabled;
   const [addedLines, setAddedLines] = useState<AddedSummary[]>([]);
   const addedIdRef = useRef(0);
   const addedListEndRef = useRef<HTMLDivElement | null>(null);
@@ -109,13 +128,22 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
     product.hasModifications && product.modifications.length > 0;
   const showConditionPicker =
     !product.isSingleType && product.isNewAvailable && product.isUsedAvailable;
-  const suffix = getPriceUnitSuffix(product.unitType);
-  const discountPercent = getDiscountPercent(discounts, yearPeriodId);
+  const gramMode = usesGramQuantity(product);
+  const suffix = getInventoryPriceUnitSuffix(product.unitType, gramMode);
+  const discountPercent = resolveLineDiscountPercent(
+    {
+      yearPeriodId,
+      customDiscountPercent: canSetCustomMarkdown
+        ? customDiscountPercent
+        : null,
+    },
+    discounts,
+  );
   const canSubmit = !needsMod || Boolean(modificationId);
   const unitPrice = canSubmit
     ? resolveLineUnitPrice(product, modificationId, condition, discountPercent)
     : 0;
-  const lineTotal = unitPrice * quantity;
+  const lineTotal = computeLineTotal(unitPrice, quantity, product);
 
   const close = useCallback((fromPopState = false) => {
     setIsOpen(false);
@@ -135,7 +163,9 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
 
   const open = () => {
     setCondition(defaultCondition(product));
-    setYearPeriodId("from1990");
+    setYearPeriodId("until1990");
+    setCustomMarkdownEnabled(false);
+    setCustomDiscountPercent(5);
     setQuantity(1);
     setModificationId(defaultModificationId(product));
     setAddedLines([]);
@@ -186,12 +216,17 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
       product.modifications.find((mod) => mod.id === modificationId)?.name ??
       null;
 
+    const lineCustomDiscount = canSetCustomMarkdown
+      ? clampDiscountPercent(customDiscountPercent)
+      : null;
+
     addLine({
       productId: product.id,
       modificationId,
       condition,
       yearPeriodId,
       quantity,
+      customDiscountPercent: lineCustomDiscount,
     });
 
     addedIdRef.current += 1;
@@ -202,6 +237,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
         quantity,
         condition,
         yearPeriodId,
+        customDiscountPercent: lineCustomDiscount,
         modificationName,
       },
     ]);
@@ -318,14 +354,17 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                   Год выпуска
                 </legend>
                 <div className="grid grid-cols-2 gap-2">
-                  {VISIBLE_YEAR_PERIODS.map((period) => {
+                  {YEAR_PERIODS.map((period) => {
                     const percent = getDiscountPercent(discounts, period.id);
                     const selected = yearPeriodId === period.id;
                     return (
                       <button
                         key={period.id}
                         type="button"
-                        onClick={() => setYearPeriodId(period.id)}
+                        onClick={() => {
+                          setYearPeriodId(period.id);
+                          setCustomMarkdownEnabled(false);
+                        }}
                         className={`px-3 py-2.5 rounded-lg font-semibold border text-sm transition-colors ${
                           selected
                             ? "bg-[var(--primary-600)] border-[var(--primary-600)] text-white"
@@ -338,17 +377,76 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                             selected ? "text-white/80" : "text-[var(--gray-500)]"
                           }`}
                         >
-                          {percent > 0 ? `−${percent}%` : "без скидки"}
+                          {percent > 0 ? `−${percent}%` : "Без уценки"}
                         </span>
                       </button>
                     );
                   })}
                 </div>
+                {isAdmin ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!customMarkdownEnabled) {
+                          setCustomDiscountPercent(5);
+                        }
+                        setCustomMarkdownEnabled(true);
+                      }}
+                      className={`mt-2 w-full px-3 py-2.5 rounded-lg font-semibold border text-sm transition-colors ${
+                        customMarkdownEnabled
+                          ? "bg-[var(--accent-500)] border-[var(--accent-500)] text-white"
+                          : "bg-white border-[var(--gray-300)] text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
+                      }`}
+                    >
+                      <span className="block">Уценка</span>
+                      <span
+                        className={`block text-xs font-medium mt-0.5 ${
+                          customMarkdownEnabled
+                            ? "text-white/80"
+                            : "text-[var(--gray-500)]"
+                        }`}
+                      >
+                        {customMarkdownEnabled
+                          ? `−${clampDiscountPercent(customDiscountPercent)}%`
+                          : "свой процент"}
+                      </span>
+                    </button>
+                    {customMarkdownEnabled ? (
+                      <label className="mt-2 block">
+                        <span className="sr-only">Процент уценки</span>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min={0}
+                            max={100}
+                            step={1}
+                            value={customDiscountPercent}
+                            onChange={(e) => {
+                              if (e.target.value === "") {
+                                setCustomDiscountPercent(0);
+                                return;
+                              }
+                              const value = Number(e.target.value);
+                              setCustomDiscountPercent(
+                                clampDiscountPercent(value),
+                              );
+                            }}
+                            className="w-full px-3 py-2.5 pr-10 rounded-lg border border-[var(--gray-300)] bg-white text-[var(--gray-900)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)]"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[var(--gray-500)]">
+                            %
+                          </span>
+                        </div>
+                      </label>
+                    ) : null}
+                  </>
+                ) : null}
               </fieldset>
 
               <fieldset className="mb-5">
                 <legend className="text-sm font-medium text-[var(--gray-700)] mb-2">
-                  Количество
+                  {gramMode ? "Количество, г" : "Количество"}
                 </legend>
                 <div className="flex items-center gap-2">
                   <button

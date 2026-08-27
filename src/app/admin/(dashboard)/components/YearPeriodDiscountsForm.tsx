@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { updateGlobalSettings, type GlobalSettingsData } from "@/app/actions";
 import {
-  VISIBLE_YEAR_PERIODS,
+  YEAR_PERIODS,
   parseYearPeriodDiscounts,
   type YearPeriodDiscounts,
   type YearPeriodId,
@@ -29,14 +29,7 @@ export function YearPeriodDiscountsForm({
   const handleChange = (id: YearPeriodId, raw: string) => {
     const parsed = Number(raw);
     const next = Number.isFinite(parsed) ? parsed : 0;
-    setValues((prev) => {
-      const updated = { ...prev, [id]: next };
-      if (id === "from1990") {
-        updated.from2000 = next;
-        updated.from2010 = next;
-      }
-      return updated;
-    });
+    setValues((prev) => ({ ...prev, [id]: next }));
     setNotification(null);
   };
 
@@ -90,7 +83,7 @@ export function YearPeriodDiscountsForm({
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {VISIBLE_YEAR_PERIODS.map((period) => (
+        {YEAR_PERIODS.map((period) => (
           <label key={period.id} className="block">
             <span className="block text-sm font-medium text-slate-700 mb-1.5">
               {period.label}

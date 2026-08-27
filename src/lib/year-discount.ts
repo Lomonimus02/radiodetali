@@ -78,12 +78,16 @@ const DECADE_ROUND_PERIODS: ReadonlySet<YearPeriodId> = new Set([
   "from2010",
 ]);
 
-/** Round to 10 ₽ with remainder cutoff 0.8 (40.7→40, 40.8→50, 41→50). */
+/**
+ * Round to 10 ₽: remainder 0–7.99 → down, 8–9.99 → up.
+ * 40.7→40, 45→40, 47.9→40, 48→50.
+ * Cutoff 0.8 was wrong: 50×0.9=45 rounded back to 50, hiding «с 1990».
+ */
 export function roundToTenRublesCutoff08(price: number): number {
   if (!Number.isFinite(price) || price < 0) return 0;
   const base = Math.floor(price / 10) * 10;
   const rem = price - base;
-  return rem < 0.8 ? base : base + 10;
+  return rem < 8 ? base : base + 10;
 }
 
 function usesDecadePriceRound(

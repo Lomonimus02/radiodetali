@@ -209,7 +209,7 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
               Опись
             </h1>
             <p className="text-[var(--gray-600)] mt-1">
-              Позиции калькулятора для оценки на приёмке
+              Позиции для оценки на приёмке
             </p>
           </div>
           {rows.length > 0 && (
@@ -250,7 +250,7 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
               Опись пуста
             </h2>
             <p className="text-[var(--gray-600)] mb-6">
-              Добавьте детали из каталога через калькулятор
+              Добавьте детали из каталога кнопкой «Добавить в опись»
             </p>
             <Link
               href="/catalog"

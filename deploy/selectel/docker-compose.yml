@@ -34,17 +34,5 @@ services:
       - ./public/uploads:/app/public/uploads
     mem_limit: 512m
 
-  watchtower:
-    image: containrrr/watchtower
-    container_name: radiodetali_watchtower
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      WATCHTOWER_CLEANUP: "true"
-      WATCHTOWER_POLL_INTERVAL: 3600
-      WATCHTOWER_LABEL_ENABLE: "false"
-    command: --interval 3600 radiodetali_app
-
 volumes:
   postgres_data:

@@ -1,13 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Calculator, Minus, Plus, X } from "lucide-react";
+import Link from "next/link";
+import { ClipboardList, Minus, Plus, X } from "lucide-react";
 import type { ProductWithPrice, UnitType } from "@/app/actions";
 import { useCartStore, type ItemCondition } from "@/store";
 import { useYearPeriodDiscounts } from "./YearDiscountsProvider";
 import {
-  YEAR_PERIODS,
+  VISIBLE_YEAR_PERIODS,
   getDiscountPercent,
+  getYearPeriodLabel,
   resolveLineUnitPrice,
   shouldShowCalculator,
   type YearPeriodId,
@@ -15,6 +17,13 @@ import {
 
 interface CalculatorModalProps {
   product: ProductWithPrice;
+}
+
+interface AddedSummary {
+  quantity: number;
+  condition: ItemCondition;
+  yearPeriodId: YearPeriodId;
+  modificationName: string | null;
 }
 
 function formatPrice(price: number): string {
@@ -37,6 +46,17 @@ function getPriceUnitSuffix(unitType: UnitType): string {
   }
 }
 
+function formatQuantityLabel(quantity: number, unitType: UnitType): string {
+  switch (unitType) {
+    case "GRAM":
+      return `${quantity} г.`;
+    case "KG":
+      return `${quantity} кг.`;
+    default:
+      return `${quantity} шт.`;
+  }
+}
+
 function defaultCondition(product: ProductWithPrice): ItemCondition {
   if (product.isSingleType) return "new";
   if (product.isNewAvailable) return "new";
@@ -48,6 +68,21 @@ function defaultModificationId(product: ProductWithPrice): string | null {
     return product.modifications[0].id;
   }
   return null;
+}
+
+function formatAddedSummary(
+  summary: AddedSummary,
+  product: ProductWithPrice,
+): string {
+  const parts = [formatQuantityLabel(summary.quantity, product.unitType)];
+  if (summary.modificationName) {
+    parts.push(summary.modificationName);
+  }
+  if (!product.isSingleType) {
+    parts.push(summary.condition === "new" ? "новые" : "б/у");
+  }
+  parts.push(getYearPeriodLabel(summary.yearPeriodId));
+  return `Добавлено: ${parts.join(", ")}`;
 }
 
 export function CalculatorModal({ product }: CalculatorModalProps) {
@@ -62,10 +97,9 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
     defaultModificationId(product),
   );
   const discounts = useYearPeriodDiscounts();
-  const [addedNotice, setAddedNotice] = useState(false);
+  const [lastAdded, setLastAdded] = useState<AddedSummary | null>(null);
   const pushedRef = useRef(false);
   const closingFromPopRef = useRef(false);
-  const noticeTimerRef = useRef<number | null>(null);
 
   const needsMod =
     product.hasModifications && product.modifications.length > 0;
@@ -81,7 +115,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
 
   const close = useCallback((fromPopState = false) => {
     setIsOpen(false);
-    setAddedNotice(false);
+    setLastAdded(null);
     if (fromPopState) {
       pushedRef.current = false;
       closingFromPopRef.current = false;
@@ -100,7 +134,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
     setYearPeriodId("from1990");
     setQuantity(1);
     setModificationId(defaultModificationId(product));
-    setAddedNotice(false);
+    setLastAdded(null);
     setIsOpen(true);
     window.history.pushState({ calcModal: true }, "");
     pushedRef.current = true;
@@ -129,20 +163,16 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
     };
   }, [isOpen, close]);
 
-  useEffect(() => {
-    return () => {
-      if (noticeTimerRef.current) {
-        window.clearTimeout(noticeTimerRef.current);
-      }
-    };
-  }, []);
-
   if (!shouldShowCalculator(product)) {
     return null;
   }
 
   const handleAdd = () => {
     if (!canSubmit) return;
+
+    const modificationName =
+      product.modifications.find((mod) => mod.id === modificationId)?.name ??
+      null;
 
     addLine({
       productId: product.id,
@@ -152,14 +182,13 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
       quantity,
     });
 
+    setLastAdded({
+      quantity,
+      condition,
+      yearPeriodId,
+      modificationName,
+    });
     setQuantity(1);
-    setAddedNotice(true);
-    if (noticeTimerRef.current) {
-      window.clearTimeout(noticeTimerRef.current);
-    }
-    noticeTimerRef.current = window.setTimeout(() => {
-      setAddedNotice(false);
-    }, 2000);
   };
 
   return (
@@ -173,8 +202,8 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
         }}
         className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-[var(--accent-500)] text-[var(--accent-700)] bg-white hover:bg-[var(--accent-50)] rounded-lg font-semibold transition-colors cursor-pointer"
       >
-        <Calculator className="w-4 h-4" />
-        Добавить в калькулятор
+        <ClipboardList className="w-4 h-4" />
+        Добавить в опись
       </button>
 
       {isOpen && (
@@ -201,10 +230,14 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
 
             <div className="p-6">
               <h2 className="text-xl font-bold text-[var(--gray-900)] mb-1 pr-8">
-                Калькулятор
+                В опись
               </h2>
-              <p className="text-sm text-[var(--gray-500)] mb-5">
+              <p className="text-sm text-[var(--gray-500)] mb-1">
                 {product.name}
+              </p>
+              <p className="text-xs text-[var(--gray-500)] mb-5">
+                Каждый год и состояние — отдельная строка. Можно добавить
+                несколько вариантов этой детали.
               </p>
 
               {needsMod && (
@@ -219,7 +252,9 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                     }
                     className="w-full px-3 py-2.5 rounded-lg border border-[var(--gray-300)] bg-white text-[var(--gray-900)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)]"
                   >
-                    <option value="">Выберите {product.modLabel.toLowerCase()}</option>
+                    <option value="">
+                      Выберите {product.modLabel.toLowerCase()}
+                    </option>
                     {product.modifications.map((mod) => (
                       <option key={mod.id} value={mod.id}>
                         {mod.name}
@@ -266,7 +301,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                   Год выпуска
                 </legend>
                 <div className="grid grid-cols-2 gap-2">
-                  {YEAR_PERIODS.map((period) => {
+                  {VISIBLE_YEAR_PERIODS.map((period) => {
                     const percent = getDiscountPercent(discounts, period.id);
                     const selected = yearPeriodId === period.id;
                     return (
@@ -313,7 +348,9 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                     value={quantity}
                     onChange={(e) => {
                       const value = parseInt(e.target.value, 10);
-                      setQuantity(Number.isFinite(value) && value > 0 ? value : 1);
+                      setQuantity(
+                        Number.isFinite(value) && value > 0 ? value : 1,
+                      );
                     }}
                     className="flex-1 h-10 text-center font-semibold rounded-lg border border-[var(--gray-300)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)]"
                   />
@@ -354,9 +391,9 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                 )}
               </div>
 
-              {addedNotice && (
+              {lastAdded && (
                 <p className="mb-3 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                  Позиция добавлена в опись
+                  {formatAddedSummary(lastAdded, product)}
                 </p>
               )}
 
@@ -367,15 +404,40 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                   disabled={!canSubmit}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--accent-500)] hover:bg-[var(--accent-600)] disabled:bg-[var(--gray-300)] disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-colors"
                 >
-                  Добавить позицию
+                  {lastAdded
+                    ? "Добавить ещё вариант этой детали"
+                    : "Добавить в опись"}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => close()}
-                  className="w-full px-4 py-2.5 border border-[var(--gray-300)] hover:bg-[var(--gray-50)] text-[var(--gray-700)] rounded-lg font-medium transition-colors"
-                >
-                  Назад
-                </button>
+                {lastAdded ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => close()}
+                      className="w-full px-4 py-2.5 border border-[var(--gray-300)] hover:bg-[var(--gray-50)] text-[var(--gray-700)] rounded-lg font-medium transition-colors"
+                    >
+                      Готово
+                    </button>
+                    <Link
+                      href="/cart"
+                      onClick={() => {
+                        pushedRef.current = false;
+                        setIsOpen(false);
+                        setLastAdded(null);
+                      }}
+                      className="w-full text-center text-sm font-medium text-[var(--primary-700)] hover:text-[var(--primary-800)] py-1"
+                    >
+                      Открыть опись
+                    </Link>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => close()}
+                    className="w-full px-4 py-2.5 border border-[var(--gray-300)] hover:bg-[var(--gray-50)] text-[var(--gray-700)] rounded-lg font-medium transition-colors"
+                  >
+                    Назад
+                  </button>
+                )}
               </div>
             </div>
           </div>

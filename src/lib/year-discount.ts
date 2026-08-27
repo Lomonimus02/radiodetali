@@ -29,15 +29,20 @@ export type YearPeriodDiscounts = Record<YearPeriodId, number>;
 export const YEAR_PERIODS: { id: YearPeriodId; label: string }[] = [
   { id: "until1990", label: "до 1990" },
   { id: "from1990", label: "с 1990" },
-  { id: "from2000", label: "с 2000" },
-  { id: "from2010", label: "с 2010" },
+  { id: "from2000", label: "с 1990" },
+  { id: "from2010", label: "с 1990" },
 ];
 
+/** Периоды в калькуляторе и админке: «до 1990» и «с 1990». Остальные ключи только для старых строк описи. */
+export const VISIBLE_YEAR_PERIODS = YEAR_PERIODS.filter(
+  (period) => period.id === "until1990" || period.id === "from1990",
+);
+
 export const DEFAULT_YEAR_PERIOD_DISCOUNTS: YearPeriodDiscounts = {
-  until1990: 10,
-  from1990: 0,
-  from2000: 20,
-  from2010: 40,
+  until1990: 0,
+  from1990: 10,
+  from2000: 10,
+  from2010: 10,
 };
 
 export function getYearPeriodLabel(id: YearPeriodId): string {
@@ -68,6 +73,9 @@ export function parseYearPeriodDiscounts(raw: unknown): YearPeriodDiscounts {
       }
     }
   }
+
+  result.from2000 = result.from1990;
+  result.from2010 = result.from1990;
 
   return result;
 }

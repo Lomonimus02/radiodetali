@@ -47,7 +47,7 @@ model GlobalSettings {
   arrivalNoticeText String  @default("❗️Время прибытия необходимо согласовать заранее❗️")
 
   // Скидки калькулятора по периоду года выпуска (проценты: until1990, from1990, from2000, from2010)
-  yearPeriodDiscounts Json @default("{\"until1990\":10,\"from1990\":0,\"from2000\":20,\"from2010\":40}")
+  yearPeriodDiscounts Json @default("{\"until1990\":0,\"from1990\":10,\"from2000\":10,\"from2010\":10}")
 
   @@map("global_settings")
 }

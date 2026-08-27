@@ -52,6 +52,12 @@ function formatPrice(price: number): string {
   }).format(price);
 }
 
+function parseMarkdownPercent(raw: string): number {
+  if (raw.trim() === "") return 0;
+  const value = Number(raw.replace(",", "."));
+  return Number.isFinite(value) ? clampDiscountPercent(value) : 0;
+}
+
 function formatQuantityLabel(
   quantity: number,
   unitType: UnitType,
@@ -116,7 +122,8 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
   );
   const [yearPeriodId, setYearPeriodId] = useState<YearPeriodId>("until1990");
   const [customMarkdownEnabled, setCustomMarkdownEnabled] = useState(false);
-  const [customDiscountPercent, setCustomDiscountPercent] = useState(0);
+  const [customDiscountInput, setCustomDiscountInput] = useState("");
+  const customDiscountPercent = parseMarkdownPercent(customDiscountInput);
   const [quantity, setQuantity] = useState(1);
   const [modificationId, setModificationId] = useState<string | null>(() =>
     defaultModificationId(product),
@@ -182,7 +189,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
     setCondition(defaultCondition(product));
     setYearPeriodId("until1990");
     setCustomMarkdownEnabled(false);
-    setCustomDiscountPercent(0);
+    setCustomDiscountInput("");
     setQuantity(1);
     setModificationId(defaultModificationId(product));
     setAddedLines([]);
@@ -421,7 +428,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                           setCustomMarkdownEnabled(false);
                           return;
                         }
-                        setCustomDiscountPercent(0);
+                        setCustomDiscountInput("");
                         setCustomMarkdownEnabled(true);
                       }}
                       className={`w-full px-3 py-2.5 rounded-lg font-bold border text-sm transition-colors ${
@@ -448,19 +455,24 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                         <span className="sr-only">Процент уценки</span>
                         <div className="relative">
                           <input
-                            type="number"
-                            min={0}
-                            max={100}
-                            step={1}
-                            value={customDiscountPercent}
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            enterKeyHint="done"
+                            autoComplete="off"
+                            value={customDiscountInput}
+                            onFocus={(e) => e.target.select()}
                             onChange={(e) => {
-                              if (e.target.value === "") {
-                                setCustomDiscountPercent(0);
+                              const raw = e.target.value.replace(",", ".");
+                              if (raw === "") {
+                                setCustomDiscountInput("");
                                 return;
                               }
-                              const value = Number(e.target.value);
-                              setCustomDiscountPercent(
-                                clampDiscountPercent(value),
+                              if (!/^\d{1,3}$/.test(raw)) return;
+                              const value = Number(raw);
+                              if (!Number.isFinite(value)) return;
+                              setCustomDiscountInput(
+                                value > 100 ? "100" : raw,
                               );
                             }}
                             className="w-full px-3 py-2.5 pr-10 rounded-lg border border-[var(--gray-300)] bg-white text-[var(--gray-900)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-600)]"

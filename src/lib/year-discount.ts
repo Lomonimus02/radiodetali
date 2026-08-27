@@ -37,7 +37,7 @@ export const DEFAULT_YEAR_PERIOD_DISCOUNTS: YearPeriodDiscounts = {
   until1990: 0,
   from1990: 10,
   from2000: 20,
-  from2010: 30,
+  from2010: 40,
 };
 
 export function getYearPeriodLabel(id: YearPeriodId): string {
@@ -72,16 +72,47 @@ export function parseYearPeriodDiscounts(raw: unknown): YearPeriodDiscounts {
   return result;
 }
 
+const DECADE_ROUND_PERIODS: ReadonlySet<YearPeriodId> = new Set([
+  "from1990",
+  "from2000",
+  "from2010",
+]);
+
+/** Round to 10 ₽ with remainder cutoff 0.8 (40.7→40, 40.8→50, 41→50). */
+export function roundToTenRublesCutoff08(price: number): number {
+  if (!Number.isFinite(price) || price < 0) return 0;
+  const base = Math.floor(price / 10) * 10;
+  const rem = price - base;
+  return rem < 0.8 ? base : base + 10;
+}
+
+function usesDecadePriceRound(
+  yearPeriodId: YearPeriodId,
+  applyYearOverlay: boolean,
+  useCustomMarkdown: boolean,
+): boolean {
+  if (useCustomMarkdown) return true;
+  return applyYearOverlay && DECADE_ROUND_PERIODS.has(yearPeriodId);
+}
+
 /**
  * Overlay фактора золота поверх уже посчитанной витринной цены:
  * процент N = меньше золота → цена × (1−N/100).
  * Не использует формулы из price-calculator.ts.
+ * Decade-round for from1990|from2000|from2010 (year overlay) and for manual «Уценка».
  */
 export function applyYearDiscount(
   basePrice: number,
   discountPercent: number,
+  yearPeriodId: YearPeriodId,
+  applyYearOverlay: boolean,
+  useCustomMarkdown: boolean,
 ): number {
-  return Math.round(applyYearPercentToAmount(basePrice, discountPercent));
+  const raw = applyYearPercentToAmount(basePrice, discountPercent);
+  if (usesDecadePriceRound(yearPeriodId, applyYearOverlay, useCustomMarkdown)) {
+    return roundToTenRublesCutoff08(raw);
+  }
+  return Math.round(raw);
 }
 
 /** Same overlay as year markdown, without ruble rounding — for metal content. */
@@ -157,10 +188,16 @@ export function resolveLineUnitPrice(
   modificationId: string | null,
   condition: LineCondition,
   discountPercent: number,
+  yearPeriodId: YearPeriodId,
+  applyYearOverlay: boolean,
+  useCustomMarkdown: boolean,
 ): number {
   return applyYearDiscount(
     resolveLineBasePrice(product, modificationId, condition),
     discountPercent,
+    yearPeriodId,
+    applyYearOverlay,
+    useCustomMarkdown,
   );
 }
 

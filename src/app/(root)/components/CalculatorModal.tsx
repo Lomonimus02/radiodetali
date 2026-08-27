@@ -150,7 +150,15 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
   );
   const canSubmit = !needsMod || Boolean(modificationId);
   const unitPrice = canSubmit
-    ? resolveLineUnitPrice(product, modificationId, condition, discountPercent)
+    ? resolveLineUnitPrice(
+        product,
+        modificationId,
+        condition,
+        discountPercent,
+        yearPeriodId,
+        applyYearDiscount,
+        canSetCustomMarkdown,
+      )
     : 0;
   const lineTotal = computeLineTotal(unitPrice, quantity, product);
 

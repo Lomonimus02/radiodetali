@@ -184,16 +184,21 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
     () =>
       items.map((line) => {
         const product = productsById[line.productId] ?? null;
+        const applyYearOverlay = product
+          ? shouldApplyYearDiscount(product)
+          : false;
+        const useCustomMarkdown =
+          typeof line.customDiscountPercent === "number" &&
+          Number.isFinite(line.customDiscountPercent);
         const unitPrice = product
           ? resolveLineUnitPrice(
               product,
               line.modificationId,
               line.condition,
-              resolveLineDiscountPercent(
-                line,
-                discounts,
-                shouldApplyYearDiscount(product),
-              ),
+              resolveLineDiscountPercent(line, discounts, applyYearOverlay),
+              line.yearPeriodId,
+              applyYearOverlay,
+              useCustomMarkdown,
             )
           : 0;
         const modName = product?.modifications.find(
@@ -711,11 +716,6 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
                     Связаться по телефону
                   </Link>
                 </div>
-
-                <p className="text-xs text-[var(--gray-500)] mt-4 text-center">
-                  Цены с учётом года выпуска актуальны на момент просмотра.
-                  Окончательная сумма определяется при оценке.
-                </p>
               </div>
             </div>
           </div>

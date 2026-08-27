@@ -99,6 +99,7 @@ export function resolveLineDiscountPercent(
     customDiscountPercent?: number | null;
   },
   discounts: YearPeriodDiscounts,
+  applyYearDiscount = true,
 ): number {
   if (
     typeof line.customDiscountPercent === "number" &&
@@ -106,6 +107,8 @@ export function resolveLineDiscountPercent(
   ) {
     return clampDiscountPercent(line.customDiscountPercent);
   }
+
+  if (!applyYearDiscount) return 0;
 
   return getDiscountPercent(discounts, line.yearPeriodId);
 }

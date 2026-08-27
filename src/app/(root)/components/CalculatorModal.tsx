@@ -25,6 +25,10 @@ import {
   getInventoryPriceUnitSuffix,
   usesGramQuantity,
 } from "@/lib/gram-quantity";
+import {
+  shouldApplyYearDiscount,
+  shouldShowYearPicker,
+} from "@/lib/inventory-print-groups";
 
 interface CalculatorModalProps {
   product: ProductWithPrice;
@@ -98,7 +102,9 @@ function formatAddedSummary(
   if (summary.customDiscountPercent !== null) {
     parts.push(`уценка ${summary.customDiscountPercent}%`);
   }
-  parts.push(getYearPeriodLabel(summary.yearPeriodId));
+  if (shouldShowYearPicker(product)) {
+    parts.push(getYearPeriodLabel(summary.yearPeriodId));
+  }
   return `Добавлено ${index + 1}: ${parts.join(", ")}`;
 }
 
@@ -129,6 +135,8 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
   const showConditionPicker =
     !product.isSingleType && product.isNewAvailable && product.isUsedAvailable;
   const gramMode = usesGramQuantity(product);
+  const showYearPicker = shouldShowYearPicker(product);
+  const applyYearDiscount = shouldApplyYearDiscount(product);
   const suffix = getInventoryPriceUnitSuffix(product.unitType, gramMode);
   const discountPercent = resolveLineDiscountPercent(
     {
@@ -138,6 +146,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
         : null,
     },
     discounts,
+    applyYearDiscount,
   );
   const canSubmit = !needsMod || Boolean(modificationId);
   const unitPrice = canSubmit
@@ -271,7 +280,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
             onClick={() => close()}
           />
 
-          <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl animate-[fadeIn_0.2s_ease-out]">
+          <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl animate-[fadeIn_0.2s_ease-out] font-semibold">
             <button
               type="button"
               onClick={() => close()}
@@ -282,20 +291,20 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
             </button>
 
             <div className="p-6">
-              <h2 className="text-xl font-bold text-[var(--gray-900)] mb-1 pr-8">
+              <h2 className="text-xl font-extrabold text-[var(--gray-900)] mb-1 pr-8">
                 В опись
               </h2>
-              <p className="text-sm text-[var(--gray-500)] mb-1">
+              <p className="text-sm font-bold text-[var(--gray-800)] mb-1">
                 {product.name}
               </p>
-              <p className="text-xs text-[var(--gray-500)] mb-5">
+              <p className="text-xs font-semibold text-[var(--gray-600)] mb-5">
                 Каждый год и состояние — отдельная строка. Можно добавить
                 несколько вариантов этой детали.
               </p>
 
               {needsMod && (
                 <fieldset className="mb-4">
-                  <legend className="text-sm font-medium text-[var(--gray-700)] mb-2">
+                  <legend className="text-sm font-bold text-[var(--gray-800)] mb-2">
                     {product.modLabel || "Модификация"}
                   </legend>
                   <select
@@ -303,7 +312,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                     onChange={(e) =>
                       setModificationId(e.target.value || null)
                     }
-                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--gray-300)] bg-white text-[var(--gray-900)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)]"
+                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--gray-300)] bg-white text-[var(--gray-900)] font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)]"
                   >
                     <option value="">
                       Выберите {product.modLabel.toLowerCase()}
@@ -319,14 +328,14 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
 
               {showConditionPicker && (
                 <fieldset className="mb-4">
-                  <legend className="text-sm font-medium text-[var(--gray-700)] mb-2">
+                  <legend className="text-sm font-bold text-[var(--gray-800)] mb-2">
                     Состояние
                   </legend>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => setCondition("new")}
-                      className={`px-3 py-2.5 rounded-lg font-semibold border transition-colors ${
+                      className={`px-3 py-2.5 rounded-lg font-bold border transition-colors ${
                         condition === "new"
                           ? "bg-green-500 border-green-500 text-white"
                           : "bg-white border-[var(--gray-300)] text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
@@ -337,7 +346,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                     <button
                       type="button"
                       onClick={() => setCondition("used")}
-                      className={`px-3 py-2.5 rounded-lg font-semibold border transition-colors ${
+                      className={`px-3 py-2.5 rounded-lg font-bold border transition-colors ${
                         condition === "used"
                           ? "bg-amber-500 border-amber-500 text-white"
                           : "bg-white border-[var(--gray-300)] text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
@@ -349,43 +358,56 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                 </fieldset>
               )}
 
-              <fieldset className="mb-4">
-                <legend className="text-sm font-medium text-[var(--gray-700)] mb-2">
-                  Год выпуска
-                </legend>
-                <div className="grid grid-cols-2 gap-2">
-                  {YEAR_PERIODS.map((period) => {
-                    const percent = getDiscountPercent(discounts, period.id);
-                    const selected =
-                      yearPeriodId === period.id && !customMarkdownEnabled;
-                    return (
-                      <button
-                        key={period.id}
-                        type="button"
-                        onClick={() => {
-                          setYearPeriodId(period.id);
-                          setCustomMarkdownEnabled(false);
-                        }}
-                        className={`px-3 py-2.5 rounded-lg font-semibold border text-sm transition-colors ${
-                          selected
-                            ? "bg-[var(--primary-600)] border-[var(--primary-600)] text-white"
-                            : "bg-white border-[var(--gray-300)] text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
-                        }`}
-                      >
-                        <span className="block">{period.label}</span>
-                        <span
-                          className={`block text-xs font-medium mt-0.5 ${
-                            selected ? "text-white/80" : "text-[var(--gray-500)]"
+              {showYearPicker ? (
+                <fieldset className="mb-4">
+                  <legend className="text-sm font-bold text-[var(--gray-800)] mb-2">
+                    Год выпуска
+                  </legend>
+                  {!applyYearDiscount ? (
+                    <p className="text-xs font-semibold text-[var(--gray-600)] mb-2">
+                      Для проверки по паспорту, на цену не влияет
+                    </p>
+                  ) : null}
+                  <div className="grid grid-cols-2 gap-2">
+                    {YEAR_PERIODS.map((period) => {
+                      const percent = getDiscountPercent(discounts, period.id);
+                      const selected =
+                        yearPeriodId === period.id && !customMarkdownEnabled;
+                      return (
+                        <button
+                          key={period.id}
+                          type="button"
+                          onClick={() => {
+                            setYearPeriodId(period.id);
+                            setCustomMarkdownEnabled(false);
+                          }}
+                          className={`px-3 py-2.5 rounded-lg font-bold border text-sm transition-colors ${
+                            selected
+                              ? "bg-[var(--primary-600)] border-[var(--primary-600)] text-white"
+                              : "bg-white border-[var(--gray-300)] text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
                           }`}
                         >
-                          {percent > 0 ? `−${percent}%` : "Без уценки"}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-                {isAdmin ? (
-                  <>
+                          <span className="block">{period.label}</span>
+                          {applyYearDiscount ? (
+                            <span
+                              className={`block text-xs font-semibold mt-0.5 ${
+                                selected
+                                  ? "text-white/80"
+                                  : "text-[var(--gray-500)]"
+                              }`}
+                            >
+                              {percent > 0 ? `−${percent}%` : "Без уценки"}
+                            </span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+              ) : null}
+
+              {isAdmin ? (
+                <div className="mb-4">
                     <button
                       type="button"
                       onClick={() => {
@@ -394,7 +416,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                         }
                         setCustomMarkdownEnabled(true);
                       }}
-                      className={`mt-2 w-full px-3 py-2.5 rounded-lg font-semibold border text-sm transition-colors ${
+                      className={`w-full px-3 py-2.5 rounded-lg font-bold border text-sm transition-colors ${
                         customMarkdownEnabled
                           ? "bg-[var(--primary-600)] border-[var(--primary-600)] text-white"
                           : "bg-white border-[var(--gray-300)] text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
@@ -402,7 +424,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                     >
                       <span className="block">Уценка</span>
                       <span
-                        className={`block text-xs font-medium mt-0.5 ${
+                        className={`block text-xs font-semibold mt-0.5 ${
                           customMarkdownEnabled
                             ? "text-white/80"
                             : "text-[var(--gray-500)]"
@@ -441,12 +463,11 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                         </div>
                       </label>
                     ) : null}
-                  </>
-                ) : null}
-              </fieldset>
+                </div>
+              ) : null}
 
               <fieldset className="mb-5">
-                <legend className="text-sm font-medium text-[var(--gray-700)] mb-2">
+                <legend className="text-sm font-bold text-[var(--gray-800)] mb-2">
                   {gramMode ? "Количество, г" : "Количество"}
                 </legend>
                 <div className="flex items-center gap-2">
@@ -468,7 +489,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                         Number.isFinite(value) && value > 0 ? value : 1,
                       );
                     }}
-                    className="flex-1 h-10 text-center font-semibold rounded-lg border border-[var(--gray-300)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)]"
+                    className="flex-1 h-10 text-center font-bold rounded-lg border border-[var(--gray-300)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)]"
                   />
                   <button
                     type="button"
@@ -484,18 +505,18 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
               <div className="mb-5 rounded-xl bg-[var(--gray-50)] border border-[var(--gray-200)] px-4 py-3">
                 {canSubmit ? (
                   <>
-                    <div className="flex justify-between text-sm text-[var(--gray-600)]">
+                    <div className="flex justify-between text-sm font-semibold text-[var(--gray-700)]">
                       <span>Цена за ед.</span>
-                      <span className="font-semibold text-[var(--gray-900)] tabular-nums">
+                      <span className="font-bold text-[var(--gray-900)] tabular-nums">
                         {formatPrice(unitPrice)}
                         {suffix}
                       </span>
                     </div>
                     <div className="flex justify-between mt-2">
-                      <span className="text-sm font-medium text-[var(--gray-700)]">
+                      <span className="text-sm font-bold text-[var(--gray-800)]">
                         Сумма позиции
                       </span>
-                      <span className="text-lg font-bold text-[var(--accent-600)] tabular-nums">
+                      <span className="text-lg font-extrabold text-[var(--accent-600)] tabular-nums">
                         {formatPrice(lineTotal)}
                       </span>
                     </div>
@@ -512,7 +533,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                   {addedLines.map((item, index) => (
                     <p
                       key={item.id}
-                      className="text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2"
+                      className="text-sm font-semibold text-green-800 bg-green-50 border border-green-200 rounded-lg px-3 py-2"
                     >
                       {formatAddedSummary(item, product, index)}
                     </p>
@@ -526,7 +547,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                   type="button"
                   onClick={handleAdd}
                   disabled={!canSubmit}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--accent-500)] hover:bg-[var(--accent-600)] disabled:bg-[var(--gray-300)] disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--accent-500)] hover:bg-[var(--accent-600)] disabled:bg-[var(--gray-300)] disabled:cursor-not-allowed text-white rounded-lg font-bold transition-colors"
                 >
                   {addedLines.length > 0
                     ? "Добавить ещё вариант этой детали"
@@ -537,7 +558,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                     <button
                       type="button"
                       onClick={() => close()}
-                      className="w-full px-4 py-2.5 border border-[var(--gray-300)] hover:bg-[var(--gray-50)] text-[var(--gray-700)] rounded-lg font-medium transition-colors"
+                      className="w-full px-4 py-2.5 border border-[var(--gray-300)] hover:bg-[var(--gray-50)] text-[var(--gray-800)] rounded-lg font-bold transition-colors"
                     >
                       Готово
                     </button>
@@ -548,7 +569,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                         setIsOpen(false);
                         setAddedLines([]);
                       }}
-                      className="w-full text-center text-sm font-medium text-[var(--primary-700)] hover:text-[var(--primary-800)] py-1"
+                      className="w-full text-center text-sm font-bold text-[var(--primary-700)] hover:text-[var(--primary-800)] py-1"
                     >
                       Открыть опись
                     </Link>
@@ -557,7 +578,7 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                   <button
                     type="button"
                     onClick={() => close()}
-                    className="w-full px-4 py-2.5 border border-[var(--gray-300)] hover:bg-[var(--gray-50)] text-[var(--gray-700)] rounded-lg font-medium transition-colors"
+                    className="w-full px-4 py-2.5 border border-[var(--gray-300)] hover:bg-[var(--gray-50)] text-[var(--gray-800)] rounded-lg font-bold transition-colors"
                   >
                     Назад
                   </button>

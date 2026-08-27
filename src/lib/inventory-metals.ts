@@ -175,7 +175,7 @@ function addAuToBucket(
   bucket.all += au;
 }
 
-/** Au (мг) only for chips + connectors; year discount is ignored. */
+/** Au (мг) only for transistors, ICs, diodes. Connectors are excluded. Year discount is ignored. */
 export function accumulateGoldAuByGroup(
   lines: InventoryLine[],
   productsById: Record<string, InventoryMetalProduct | undefined>,
@@ -197,7 +197,7 @@ export function accumulateGoldAuByGroup(
       productName: product.name,
       productSlug: product.slug,
     });
-    if (groupId !== "chips" && groupId !== "connectors") continue;
+    if (groupId !== "chips") continue;
 
     const unit = resolveLineMetalContent(
       product,
@@ -222,9 +222,9 @@ export function accumulateGoldAuByGroup(
     chips,
     connectors,
     grand: {
-      new: chips.new + connectors.new,
-      used: chips.used + connectors.used,
-      all: chips.all + connectors.all,
+      new: chips.new,
+      used: chips.used,
+      all: chips.all,
     },
   };
 }

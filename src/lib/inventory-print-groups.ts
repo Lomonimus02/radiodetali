@@ -32,25 +32,56 @@ export function isGoldBearingGroup(id: PrintGroupId): id is GoldBearingGroupId {
   return id === "chips" || id === "connectors";
 }
 
-export function isGoldBearing(input: {
+type CatalogHint = {
   categorySlug?: string | null;
   categoryName?: string | null;
   productName?: string | null;
   productSlug?: string | null;
-}): boolean {
+  name?: string | null;
+  slug?: string | null;
+};
+
+function catalogFields(input: CatalogHint): {
+  categorySlug: string;
+  productSlug: string;
+  categoryName: string;
+  productName: string;
+} {
+  return {
+    categorySlug: (input.categorySlug ?? "").toLowerCase(),
+    productSlug: (input.productSlug ?? input.slug ?? "").toLowerCase(),
+    categoryName: normalizeText(input.categoryName ?? ""),
+    productName: normalizeText(input.productName ?? input.name ?? ""),
+  };
+}
+
+export function isRelay(input: CatalogHint): boolean {
+  const { categorySlug, productSlug, categoryName, productName } =
+    catalogFields(input);
+  const slugMatch = [categorySlug, productSlug]
+    .filter(Boolean)
+    .some((part) => slugEqualsOrPrefixed(part, "rele"));
+  return slugMatch || `${categoryName} ${productName}`.includes("реле");
+}
+
+export function shouldShowYearPicker(input: CatalogHint): boolean {
+  const group = classifyPrintGroup(input);
+  return group === "chips" || group === "connectors" || isRelay(input);
+}
+
+/** Year overlay on price: only transistors, ICs, diodes, connectors. */
+export function shouldApplyYearDiscount(input: CatalogHint): boolean {
+  const group = classifyPrintGroup(input);
+  return group === "chips" || group === "connectors";
+}
+
+export function isGoldBearing(input: CatalogHint): boolean {
   return isGoldBearingGroup(classifyPrintGroup(input));
 }
 
-export function classifyPrintGroup(input: {
-  categorySlug?: string | null;
-  categoryName?: string | null;
-  productName?: string | null;
-  productSlug?: string | null;
-}): PrintGroupId {
-  const categorySlug = (input.categorySlug ?? "").toLowerCase();
-  const productSlug = (input.productSlug ?? "").toLowerCase();
-  const categoryName = normalizeText(input.categoryName ?? "");
-  const productName = normalizeText(input.productName ?? "");
+export function classifyPrintGroup(input: CatalogHint): PrintGroupId {
+  const { categorySlug, productSlug, categoryName, productName } =
+    catalogFields(input);
 
   const slugOrCatHasKm =
     categorySlug.includes("km") ||

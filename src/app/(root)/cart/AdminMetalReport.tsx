@@ -90,7 +90,6 @@ export function AdminMetalReport({
       </div>
 
       <div className="space-y-3">
-        <AuRow label="Разъёмы" value={totals.connectors.all} />
         <AuRow
           label="Новые микросхемы, транзисторы и диоды"
           value={totals.chips.new}
@@ -103,8 +102,8 @@ export function AdminMetalReport({
 
       <div className="mt-4 pt-4 border-t border-[var(--gray-200)]">
         <AuRow
-          label="Итого Au по золотосодержащим"
-          value={totals.grand.all}
+          label="Итого Au по микросхемам, транзисторам и диодам"
+          value={totals.chips.all}
         />
       </div>
     </section>

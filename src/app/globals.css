@@ -171,10 +171,22 @@ a, button, input, select, textarea {
     color: #111 !important;
     overflow: visible !important;
     height: auto !important;
+    max-width: 100%;
   }
 
   @page {
+    size: A4;
     margin: 12mm;
+  }
+
+  jdiv,
+  #jivo_container,
+  #jivo-iframe-container,
+  #jvLabelWrap,
+  iframe[id*="jivo"],
+  iframe[src*="jivo"],
+  [id^="jivo"] {
+    display: none !important;
   }
 
   html.print-internal-report .admin-metal-report {
@@ -200,6 +212,8 @@ a, button, input, select, textarea {
 
   .inventory-ledger {
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     border-collapse: collapse;
     table-layout: fixed;
     font-size: 11px;
@@ -208,6 +222,8 @@ a, button, input, select, textarea {
 
   .inventory-ledger th,
   .inventory-ledger td {
+    box-sizing: border-box;
+    overflow: hidden;
     border: 1px solid #000;
     padding: 3px 5px;
     vertical-align: middle;
@@ -224,7 +240,7 @@ a, button, input, select, textarea {
   }
 
   .inventory-ledger .col-name {
-    width: 36%;
+    width: 32%;
     text-align: left;
   }
 
@@ -234,12 +250,21 @@ a, button, input, select, textarea {
     text-align: center;
   }
 
-  .inventory-ledger .col-qty,
-  .inventory-ledger .col-price,
-  .inventory-ledger .col-sum {
+  .inventory-ledger .col-qty {
     width: 10%;
     text-align: right;
     white-space: nowrap;
+  }
+
+  .inventory-ledger .col-price,
+  .inventory-ledger .col-sum {
+    width: 12%;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .inventory-ledger .col-sum {
+    padding-right: 8px;
   }
 
   .inventory-ledger .group-title {
@@ -249,9 +274,13 @@ a, button, input, select, textarea {
   }
 
   .inventory-ledger .group-total td,
-  .inventory-ledger .gold-bearing-total td,
   .inventory-ledger .grand-total td {
     font-weight: 700;
+  }
+
+  .inventory-ledger .gold-bearing-spacer td {
+    border: none;
+    height: 22px;
   }
 
   .inventory-print-section {

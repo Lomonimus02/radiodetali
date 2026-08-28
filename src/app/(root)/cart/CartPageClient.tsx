@@ -610,13 +610,8 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
                     ))}
                   </tbody>
                   <tfoot>
-                    <tr className="gold-bearing-total">
-                      <td colSpan={6} className="text-right">
-                        Итого золотосодержащие
-                      </td>
-                      <td className="col-sum tabular-nums">
-                        {formatPrice(goldBearingSum)}
-                      </td>
+                    <tr className="gold-bearing-spacer">
+                      <td colSpan={7}>&nbsp;</td>
                     </tr>
                     <tr className="grand-total">
                       <td colSpan={6} className="text-right">

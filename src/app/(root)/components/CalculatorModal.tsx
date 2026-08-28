@@ -4,7 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ClipboardList, Minus, Plus, X } from "lucide-react";
 import type { ProductWithPrice, UnitType } from "@/app/actions";
-import { useCartStore, type ItemCondition } from "@/store";
+import {
+  useCartStore,
+  type InventoryLine,
+  type ItemCondition,
+} from "@/store";
 import {
   useIsAdmin,
   useYearPeriodDiscounts,
@@ -22,7 +26,10 @@ import {
 import {
   computeLineTotal,
   formatInventoryQuantity,
+  formatQuantityDraft,
   getInventoryPriceUnitSuffix,
+  isQuantityDraft,
+  parseQuantityInput,
   usesGramQuantity,
 } from "@/lib/gram-quantity";
 import {
@@ -32,6 +39,8 @@ import {
 
 interface CalculatorModalProps {
   product: ProductWithPrice;
+  editLine?: InventoryLine;
+  onClose?: () => void;
 }
 
 interface AddedSummary {
@@ -118,20 +127,79 @@ function formatAddedSummary(
   return `Добавлено ${index + 1}: ${parts.join(", ")}`;
 }
 
-export function CalculatorModal({ product }: CalculatorModalProps) {
+function stepQuantityInput(
+  raw: string,
+  gramMode: boolean,
+  delta: number,
+): string {
+  const parsed = parseQuantityInput(raw, gramMode);
+  if (parsed === null) {
+    if (delta <= 0) return raw;
+    return "1";
+  }
+  const min = gramMode ? 0.1 : 1;
+  const next = parsed + delta;
+  if (next < min) {
+    return formatQuantityDraft(min, gramMode);
+  }
+  return formatQuantityDraft(
+    gramMode ? Math.round(next * 10) / 10 : next,
+    gramMode,
+  );
+}
+
+export function CalculatorModal({
+  product,
+  editLine,
+  onClose,
+}: CalculatorModalProps) {
   const addLine = useCartStore((state) => state.addLine);
-  const [isOpen, setIsOpen] = useState(false);
-  const [condition, setCondition] = useState<ItemCondition>(() =>
-    defaultCondition(product),
+  const replaceLine = useCartStore((state) => state.replaceLine);
+  const isEditing = Boolean(editLine);
+  const showConditionPicker =
+    !product.isSingleType && product.isNewAvailable && product.isUsedAvailable;
+  const gramMode = usesGramQuantity(product);
+  const showYearPicker = shouldShowYearPicker(product);
+  const applyYearDiscount = shouldApplyYearDiscount(product);
+
+  const [isOpen, setIsOpen] = useState(
+    isEditing && shouldShowCalculator(product),
   );
-  const [yearPeriodId, setYearPeriodId] = useState<YearPeriodId>("until1990");
-  const [customMarkdownEnabled, setCustomMarkdownEnabled] = useState(false);
-  const [customDiscountInput, setCustomDiscountInput] = useState("");
+  const [condition, setCondition] = useState<ItemCondition | null>(() => {
+    if (editLine) return editLine.condition;
+    return showConditionPicker ? null : defaultCondition(product);
+  });
+  const [yearPeriodId, setYearPeriodId] = useState<YearPeriodId | null>(() => {
+    if (editLine) return editLine.yearPeriodId;
+    return showYearPicker ? null : "until1990";
+  });
+  const [customMarkdownEnabled, setCustomMarkdownEnabled] = useState(() =>
+    Boolean(
+      editLine &&
+        typeof editLine.customDiscountPercent === "number" &&
+        Number.isFinite(editLine.customDiscountPercent),
+    ),
+  );
+  const [customDiscountInput, setCustomDiscountInput] = useState(() => {
+    if (
+      editLine &&
+      typeof editLine.customDiscountPercent === "number" &&
+      Number.isFinite(editLine.customDiscountPercent)
+    ) {
+      return String(editLine.customDiscountPercent).replace(".", ",");
+    }
+    return "";
+  });
   const customDiscountPercent = parseMarkdownPercent(customDiscountInput);
-  const [quantity, setQuantity] = useState(1);
-  const [modificationId, setModificationId] = useState<string | null>(() =>
-    defaultModificationId(product),
+  const [quantityInput, setQuantityInput] = useState(() =>
+    editLine ? formatQuantityDraft(editLine.quantity, gramMode) : "",
   );
+  const [modificationId, setModificationId] = useState<string | null>(() =>
+    editLine ? editLine.modificationId : defaultModificationId(product),
+  );
+  const [conditionError, setConditionError] = useState(false);
+  const [yearError, setYearError] = useState(false);
+  const [quantityError, setQuantityError] = useState(false);
   const discounts = useYearPeriodDiscounts();
   const isAdmin = useIsAdmin();
   const canSetCustomMarkdown = isAdmin && customMarkdownEnabled;
@@ -143,24 +211,26 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
 
   const needsMod =
     product.hasModifications && product.modifications.length > 0;
-  const showConditionPicker =
-    !product.isSingleType && product.isNewAvailable && product.isUsedAvailable;
-  const gramMode = usesGramQuantity(product);
-  const showYearPicker = shouldShowYearPicker(product);
-  const applyYearDiscount = shouldApplyYearDiscount(product);
   const suffix = getInventoryPriceUnitSuffix(product.unitType, gramMode);
-  const discountPercent = resolveLineDiscountPercent(
-    {
-      yearPeriodId,
-      customDiscountPercent: canSetCustomMarkdown
-        ? customDiscountPercent
-        : null,
-    },
-    discounts,
-    applyYearDiscount,
-  );
+  const gatesReady =
+    (!showConditionPicker || condition !== null) &&
+    (!showYearPicker || yearPeriodId !== null);
   const canSubmit = !needsMod || Boolean(modificationId);
-  const unitPrice = canSubmit
+  const showPrice =
+    canSubmit && gatesReady && condition !== null && yearPeriodId !== null;
+  const discountPercent = showPrice
+    ? resolveLineDiscountPercent(
+        {
+          yearPeriodId,
+          customDiscountPercent: canSetCustomMarkdown
+            ? customDiscountPercent
+            : null,
+        },
+        discounts,
+        applyYearDiscount,
+      )
+    : 0;
+  const unitPrice = showPrice
     ? resolveLineUnitPrice(
         product,
         modificationId,
@@ -171,32 +241,42 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
         canSetCustomMarkdown,
       )
     : 0;
-  const lineTotal = computeLineTotal(unitPrice, quantity, product);
+  const previewQuantity = parseQuantityInput(quantityInput, gramMode) ?? 0;
+  const lineTotal = computeLineTotal(unitPrice, previewQuantity, product);
 
-  const close = useCallback((fromPopState = false) => {
-    setIsOpen(false);
-    setAddedLines([]);
-    if (fromPopState) {
+  const close = useCallback(
+    (fromPopState = false) => {
+      setIsOpen(false);
+      setAddedLines([]);
+      if (fromPopState) {
+        pushedRef.current = false;
+        closingFromPopRef.current = false;
+        onClose?.();
+        return;
+      }
+      if (pushedRef.current && !closingFromPopRef.current) {
+        pushedRef.current = false;
+        window.history.back();
+        onClose?.();
+        return;
+      }
       pushedRef.current = false;
-      closingFromPopRef.current = false;
-      return;
-    }
-    if (pushedRef.current && !closingFromPopRef.current) {
-      pushedRef.current = false;
-      window.history.back();
-      return;
-    }
-    pushedRef.current = false;
-  }, []);
+      onClose?.();
+    },
+    [onClose],
+  );
 
   const open = () => {
-    setCondition(defaultCondition(product));
-    setYearPeriodId("until1990");
+    setCondition(showConditionPicker ? null : defaultCondition(product));
+    setYearPeriodId(showYearPicker ? null : "until1990");
     setCustomMarkdownEnabled(false);
     setCustomDiscountInput("");
-    setQuantity(1);
+    setQuantityInput("");
     setModificationId(defaultModificationId(product));
     setAddedLines([]);
+    setConditionError(false);
+    setYearError(false);
+    setQuantityError(false);
     setIsOpen(true);
     window.history.pushState({ calcModal: true }, "");
     pushedRef.current = true;
@@ -204,6 +284,11 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
 
   useEffect(() => {
     if (!isOpen) return;
+
+    if (!pushedRef.current) {
+      window.history.pushState({ calcModal: true }, "");
+      pushedRef.current = true;
+    }
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
@@ -237,25 +322,86 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
     return null;
   }
 
+  const requireGates = (): boolean => {
+    if (showConditionPicker && condition === null) {
+      setConditionError(true);
+      setYearError(false);
+      setQuantityError(false);
+      return false;
+    }
+    if (showYearPicker && yearPeriodId === null) {
+      setYearError(true);
+      setConditionError(false);
+      setQuantityError(false);
+      return false;
+    }
+    return true;
+  };
+
+  const resetAfterAdd = () => {
+    setCondition(showConditionPicker ? null : defaultCondition(product));
+    setYearPeriodId(showYearPicker ? null : "until1990");
+    setQuantityInput("");
+    setConditionError(false);
+    setYearError(false);
+    setQuantityError(false);
+  };
+
+  const handlePlus = () => {
+    if (!requireGates()) return;
+    setQuantityError(false);
+    setQuantityInput((raw) => stepQuantityInput(raw, gramMode, 1));
+  };
+
+  const handleMinus = () => {
+    if (!requireGates()) return;
+    setQuantityInput((raw) => stepQuantityInput(raw, gramMode, -1));
+  };
+
   const handleAdd = () => {
     if (!canSubmit) return;
+    if (!requireGates()) return;
+
+    const quantity = parseQuantityInput(quantityInput, gramMode);
+    if (quantity === null) {
+      setQuantityError(true);
+      return;
+    }
+
+    const resolvedCondition = condition ?? defaultCondition(product);
+    const resolvedYear = yearPeriodId ?? "until1990";
 
     const modificationName =
       product.modifications.find((mod) => mod.id === modificationId)?.name ??
       null;
 
-    const lineCustomDiscount = canSetCustomMarkdown
-      ? clampDiscountPercent(customDiscountPercent)
-      : null;
+    let lineCustomDiscount: number | null;
+    if (isAdmin) {
+      lineCustomDiscount = canSetCustomMarkdown
+        ? clampDiscountPercent(customDiscountPercent)
+        : null;
+    } else if (editLine) {
+      lineCustomDiscount = editLine.customDiscountPercent;
+    } else {
+      lineCustomDiscount = null;
+    }
 
-    addLine({
+    const payload = {
       productId: product.id,
       modificationId,
-      condition,
-      yearPeriodId,
+      condition: resolvedCondition,
+      yearPeriodId: resolvedYear,
       quantity,
       customDiscountPercent: lineCustomDiscount,
-    });
+    };
+
+    if (editLine) {
+      replaceLine(editLine.lineId, payload);
+      close();
+      return;
+    }
+
+    addLine(payload);
 
     addedIdRef.current += 1;
     setAddedLines((prev) => [
@@ -263,29 +409,31 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
       {
         id: addedIdRef.current,
         quantity,
-        condition,
-        yearPeriodId,
+        condition: resolvedCondition,
+        yearPeriodId: resolvedYear,
         customDiscountPercent: lineCustomDiscount,
         modificationName,
       },
     ]);
-    setQuantity(1);
+    resetAfterAdd();
   };
 
   return (
     <>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          open();
-        }}
-        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-[var(--accent-500)] text-[var(--accent-700)] bg-white hover:bg-[var(--accent-50)] rounded-lg font-semibold transition-colors cursor-pointer"
-      >
-        <ClipboardList className="w-4 h-4" />
-        Добавить в опись
-      </button>
+      {isEditing ? null : (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            open();
+          }}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-[var(--accent-500)] text-[var(--accent-700)] bg-white hover:bg-[var(--accent-50)] rounded-lg font-semibold transition-colors cursor-pointer"
+        >
+          <ClipboardList className="w-4 h-4" />
+          Добавить в опись
+        </button>
+      )}
 
       {isOpen && (
         <div
@@ -311,14 +459,15 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
 
             <div className="p-6">
               <h2 className="text-xl font-extrabold text-[var(--gray-900)] mb-1 pr-8">
-                В опись
+                {isEditing ? "Изменить позицию" : "В опись"}
               </h2>
               <p className="text-sm font-bold text-[var(--gray-800)] mb-1">
                 {product.name}
               </p>
               <p className="text-xs font-semibold text-[var(--gray-600)] mb-5">
-                Каждый год и состояние — отдельная строка. Можно добавить
-                несколько вариантов этой детали.
+                {isEditing
+                  ? "Изменения сохранятся в этой строке описи."
+                  : "Каждый год и состояние — отдельная строка. Можно добавить несколько вариантов этой детали."}
               </p>
 
               {needsMod && (
@@ -353,7 +502,10 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
-                      onClick={() => setCondition("new")}
+                      onClick={() => {
+                        setCondition("new");
+                        setConditionError(false);
+                      }}
                       className={`px-3 py-2.5 rounded-lg font-bold border transition-colors ${
                         condition === "new"
                           ? "bg-green-500 border-green-500 text-white"
@@ -364,7 +516,10 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setCondition("used")}
+                      onClick={() => {
+                        setCondition("used");
+                        setConditionError(false);
+                      }}
                       className={`px-3 py-2.5 rounded-lg font-bold border transition-colors ${
                         condition === "used"
                           ? "bg-amber-500 border-amber-500 text-white"
@@ -374,6 +529,14 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                       Б/У
                     </button>
                   </div>
+                  {conditionError ? (
+                    <p
+                      className="mt-2 text-sm font-semibold text-red-600"
+                      aria-live="polite"
+                    >
+                      Выберите состояние детали
+                    </p>
+                  ) : null}
                 </fieldset>
               )}
 
@@ -396,7 +559,13 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                           key={period.id}
                           type="button"
                           onClick={() => {
+                            if (showConditionPicker && condition === null) {
+                              setConditionError(true);
+                              setYearError(false);
+                              return;
+                            }
                             setYearPeriodId(period.id);
+                            setYearError(false);
                           }}
                           className={`px-3 py-2.5 rounded-lg font-bold border text-sm transition-colors ${
                             selected
@@ -420,6 +589,14 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                       );
                     })}
                   </div>
+                  {yearError ? (
+                    <p
+                      className="mt-2 text-sm font-semibold text-red-600"
+                      aria-live="polite"
+                    >
+                      Выберите год выпуска
+                    </p>
+                  ) : null}
                 </fieldset>
               ) : null}
 
@@ -502,37 +679,49 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg border border-[var(--gray-300)] hover:bg-[var(--gray-50)]"
+                    onClick={handleMinus}
+                    disabled={!gatesReady}
+                    className="w-10 h-10 flex items-center justify-center rounded-lg border border-[var(--gray-300)] hover:bg-[var(--gray-50)] disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label="Уменьшить"
                   >
                     <Minus className="w-4 h-4" />
                   </button>
                   <input
-                    type="number"
-                    min={1}
-                    value={quantity}
+                    type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    disabled={!gatesReady}
+                    value={quantityInput}
+                    onFocus={(e) => e.target.select()}
                     onChange={(e) => {
-                      const value = parseInt(e.target.value, 10);
-                      setQuantity(
-                        Number.isFinite(value) && value > 0 ? value : 1,
-                      );
+                      const raw = e.target.value;
+                      if (!isQuantityDraft(raw, gramMode)) return;
+                      setQuantityInput(raw);
+                      setQuantityError(false);
                     }}
-                    className="flex-1 h-10 text-center font-bold rounded-lg border border-[var(--gray-300)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)]"
+                    className="flex-1 h-10 text-center font-bold rounded-lg border border-[var(--gray-300)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)] disabled:bg-[var(--gray-100)] disabled:text-[var(--gray-400)] disabled:cursor-not-allowed"
                   />
                   <button
                     type="button"
-                    onClick={() => setQuantity((value) => value + 1)}
+                    onClick={handlePlus}
                     className="w-10 h-10 flex items-center justify-center rounded-lg border border-[var(--gray-300)] hover:bg-[var(--gray-50)]"
                     aria-label="Увеличить"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
+                {quantityError ? (
+                  <p
+                    className="mt-2 text-sm font-semibold text-red-600"
+                    aria-live="polite"
+                  >
+                    Укажите количество
+                  </p>
+                ) : null}
               </fieldset>
 
               <div className="mb-5 rounded-xl bg-[var(--gray-50)] border border-[var(--gray-200)] px-4 py-3">
-                {canSubmit ? (
+                {showPrice ? (
                   <>
                     <div className="flex justify-between text-sm font-semibold text-[var(--gray-700)]">
                       <span>Цена за ед.</span>
@@ -552,12 +741,14 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                   </>
                 ) : (
                   <p className="text-sm text-[var(--gray-500)]">
-                    Выберите {product.modLabel.toLowerCase()}, чтобы увидеть цену
+                    {!canSubmit
+                      ? `Выберите ${product.modLabel.toLowerCase()}, чтобы увидеть цену`
+                      : "Укажите параметры позиции, чтобы увидеть цену"}
                   </p>
                 )}
               </div>
 
-              {addedLines.length > 0 && (
+              {!isEditing && addedLines.length > 0 && (
                 <div className="mb-3 space-y-2" aria-live="polite">
                   {addedLines.map((item, index) => (
                     <p
@@ -578,11 +769,21 @@ export function CalculatorModal({ product }: CalculatorModalProps) {
                   disabled={!canSubmit}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--accent-500)] hover:bg-[var(--accent-600)] disabled:bg-[var(--gray-300)] disabled:cursor-not-allowed text-white rounded-lg font-bold transition-colors"
                 >
-                  {addedLines.length > 0
-                    ? "Добавить ещё вариант этой детали"
-                    : "Добавить в опись"}
+                  {isEditing
+                    ? "Сохранить"
+                    : addedLines.length > 0
+                      ? "Добавить ещё вариант этой детали"
+                      : "Добавить в опись"}
                 </button>
-                {addedLines.length > 0 ? (
+                {isEditing ? (
+                  <button
+                    type="button"
+                    onClick={() => close()}
+                    className="w-full px-4 py-2.5 border border-[var(--gray-300)] hover:bg-[var(--gray-50)] text-[var(--gray-800)] rounded-lg font-bold transition-colors"
+                  >
+                    Назад
+                  </button>
+                ) : addedLines.length > 0 ? (
                   <>
                     <button
                       type="button"

@@ -89,7 +89,40 @@ export function formatInventoryQuantity(
   quantity: number,
   gramMode: boolean,
 ): string {
-  return gramMode ? `${quantity} г.` : String(quantity);
+  if (!gramMode) return String(quantity);
+  const formatted = quantity.toLocaleString("ru-RU", {
+    maximumFractionDigits: 1,
+  });
+  return `${formatted} г.`;
+}
+
+export function formatQuantityDraft(
+  quantity: number,
+  gramMode: boolean,
+): string {
+  if (!Number.isFinite(quantity)) return "";
+  if (!gramMode) return String(quantity);
+  const rounded = Math.round(quantity * 10) / 10;
+  return String(rounded).replace(".", ",");
+}
+
+export function isQuantityDraft(raw: string, gramMode: boolean): boolean {
+  if (raw === "") return true;
+  if (gramMode) return /^\d*([.,]\d{0,1})?$/.test(raw);
+  return /^\d*$/.test(raw);
+}
+
+export function parseQuantityInput(
+  raw: string,
+  gramMode: boolean,
+): number | null {
+  const trimmed = raw.trim();
+  if (trimmed === "" || trimmed === "." || trimmed === ",") return null;
+  const value = Number(trimmed.replace(",", "."));
+  if (!Number.isFinite(value) || value <= 0) return null;
+  if (gramMode) return Math.round(value * 10) / 10;
+  if (!Number.isInteger(value)) return null;
+  return value;
 }
 
 export function getInventoryPriceUnitSuffix(

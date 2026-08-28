@@ -27,6 +27,7 @@ interface CartState {
   hasHydrated: boolean;
 
   addLine: (payload: AddLineInput) => void;
+  replaceLine: (lineId: string, payload: AddLineInput) => void;
   removeLine: (lineId: string) => void;
   updateLineQuantity: (lineId: string, quantity: number) => void;
   clearCart: () => void;
@@ -34,9 +35,11 @@ interface CartState {
   getTotalPieces: () => number;
 }
 
-function normalizeQuantity(quantity: number): number {
-  if (!Number.isFinite(quantity)) return 1;
-  return Math.max(1, Math.floor(quantity));
+function normalizeQuantity(quantity: number): number | null {
+  if (!Number.isFinite(quantity) || quantity <= 0) return null;
+  const rounded = Math.round(quantity * 10) / 10;
+  if (rounded <= 0) return null;
+  return rounded;
 }
 
 function normalizeCustomDiscountPercent(value: unknown): number | null {
@@ -60,13 +63,16 @@ export const useCartStore = create<CartState>()(
       hasHydrated: false,
 
       addLine: (payload) => {
+        const quantity = normalizeQuantity(payload.quantity);
+        if (quantity === null) return;
+
         const line: InventoryLine = {
           lineId: crypto.randomUUID(),
           productId: payload.productId,
           modificationId: payload.modificationId,
           condition: payload.condition,
           yearPeriodId: payload.yearPeriodId,
-          quantity: normalizeQuantity(payload.quantity),
+          quantity,
           customDiscountPercent: normalizeCustomDiscountPercent(
             payload.customDiscountPercent,
           ),
@@ -74,6 +80,29 @@ export const useCartStore = create<CartState>()(
 
         set((state) => ({
           items: [...state.items, line],
+        }));
+      },
+
+      replaceLine: (lineId, payload) => {
+        const quantity = normalizeQuantity(payload.quantity);
+        if (quantity === null) return;
+
+        const next: InventoryLine = {
+          lineId,
+          productId: payload.productId,
+          modificationId: payload.modificationId,
+          condition: payload.condition,
+          yearPeriodId: payload.yearPeriodId,
+          quantity,
+          customDiscountPercent: normalizeCustomDiscountPercent(
+            payload.customDiscountPercent,
+          ),
+        };
+
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.lineId === lineId ? next : item,
+          ),
         }));
       },
 
@@ -85,7 +114,8 @@ export const useCartStore = create<CartState>()(
 
       updateLineQuantity: (lineId, quantity) => {
         set((state) => {
-          if (!Number.isFinite(quantity) || quantity < 1) {
+          const normalized = normalizeQuantity(quantity);
+          if (normalized === null) {
             return {
               items: state.items.filter((item) => item.lineId !== lineId),
             };
@@ -94,7 +124,7 @@ export const useCartStore = create<CartState>()(
           return {
             items: state.items.map((item) =>
               item.lineId === lineId
-                ? { ...item, quantity: Math.floor(quantity) }
+                ? { ...item, quantity: normalized }
                 : item,
             ),
           };

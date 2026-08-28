@@ -7,6 +7,7 @@ import {
   Trash2,
   Minus,
   Plus,
+  Pencil,
   ArrowLeft,
   Send,
   AlertCircle,
@@ -16,10 +17,12 @@ import {
 import { useCartStore, type InventoryLine, type ItemCondition } from "@/store";
 import { useSiteContacts } from "../components/SiteContactsProvider";
 import { useYearPeriodDiscounts } from "../components/YearDiscountsProvider";
+import { CalculatorModal } from "../components/CalculatorModal";
 import {
   getYearPeriodLabel,
   resolveLineDiscountPercent,
   resolveLineUnitPrice,
+  shouldShowCalculator,
 } from "@/lib/year-discount";
 import {
   classifyPrintGroup,
@@ -31,7 +34,10 @@ import {
 import {
   computeLineTotal,
   formatInventoryQuantity,
+  formatQuantityDraft,
   getInventoryPriceUnitSuffix,
+  isQuantityDraft,
+  parseQuantityInput,
   usesGramQuantity,
 } from "@/lib/gram-quantity";
 import type { ProductWithPrice, ProductsResult } from "@/app/actions";
@@ -102,6 +108,70 @@ interface InventoryRow {
   displayName: string;
 }
 
+function InventoryQtyControl({
+  quantity,
+  gramMode,
+  onQuantityChange,
+}: {
+  quantity: number;
+  gramMode: boolean;
+  onQuantityChange: (quantity: number) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const display = draft ?? formatQuantityDraft(quantity, gramMode);
+
+  return (
+    <div className="inline-flex items-center gap-1 print:hidden">
+      <button
+        type="button"
+        onClick={() => {
+          setDraft(null);
+          onQuantityChange(quantity - 1);
+        }}
+        className="w-7 h-7 flex items-center justify-center rounded border border-[var(--gray-200)] hover:bg-[var(--gray-50)]"
+        aria-label={gramMode ? "Уменьшить на 1 г" : "Уменьшить"}
+      >
+        <Minus className="w-3 h-3" />
+      </button>
+      <input
+        type="text"
+        inputMode={gramMode ? "decimal" : "numeric"}
+        autoComplete="off"
+        value={display}
+        onFocus={(e) => {
+          setDraft(formatQuantityDraft(quantity, gramMode));
+          e.target.select();
+        }}
+        onChange={(e) => {
+          const raw = e.target.value;
+          if (!isQuantityDraft(raw, gramMode)) return;
+          setDraft(raw);
+          const parsed = parseQuantityInput(raw, gramMode);
+          if (parsed === null) return;
+          onQuantityChange(parsed);
+        }}
+        onBlur={() => setDraft(null)}
+        className="w-14 h-7 text-center font-semibold bg-transparent border-none outline-none tabular-nums"
+        aria-label={gramMode ? "Количество, г" : "Количество"}
+      />
+      {gramMode ? (
+        <span className="text-xs text-[var(--gray-500)]">г.</span>
+      ) : null}
+      <button
+        type="button"
+        onClick={() => {
+          setDraft(null);
+          onQuantityChange(quantity + 1);
+        }}
+        className="w-7 h-7 flex items-center justify-center rounded border border-[var(--gray-200)] hover:bg-[var(--gray-50)]"
+        aria-label={gramMode ? "Увеличить на 1 г" : "Увеличить"}
+      >
+        <Plus className="w-3 h-3" />
+      </button>
+    </div>
+  );
+}
+
 export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
   const items = useCartStore((state) => state.items);
   const updateLineQuantity = useCartStore((state) => state.updateLineQuantity);
@@ -118,6 +188,7 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showMetalReport, setShowMetalReport] = useState(false);
+  const [editingLine, setEditingLine] = useState<InventoryLine | null>(null);
 
   const productsByIdRef = useRef(productsById);
 
@@ -432,65 +503,13 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
                           )}
                         </td>
                         <td className="px-2 py-2 text-center">
-                          <div className="inline-flex items-center gap-1 print:hidden">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                updateLineQuantity(
-                                  row.line.lineId,
-                                  row.line.quantity - 1,
-                                )
-                              }
-                              className="w-7 h-7 flex items-center justify-center rounded border border-[var(--gray-200)] hover:bg-[var(--gray-50)]"
-                              aria-label={
-                                rowGramMode(row.product)
-                                  ? "Уменьшить на 1 г"
-                                  : "Уменьшить"
-                              }
-                            >
-                              <Minus className="w-3 h-3" />
-                            </button>
-                            <input
-                              type="number"
-                              min={1}
-                              value={row.line.quantity}
-                              onChange={(e) => {
-                                const value = parseInt(e.target.value, 10);
-                                updateLineQuantity(
-                                  row.line.lineId,
-                                  Number.isFinite(value) ? value : 1,
-                                );
-                              }}
-                              className="w-12 h-7 text-center font-semibold bg-transparent border-none outline-none tabular-nums"
-                              aria-label={
-                                rowGramMode(row.product)
-                                  ? "Количество, г"
-                                  : "Количество"
-                              }
-                            />
-                            {rowGramMode(row.product) ? (
-                              <span className="text-xs text-[var(--gray-500)]">
-                                г.
-                              </span>
-                            ) : null}
-                            <button
-                              type="button"
-                              onClick={() =>
-                                updateLineQuantity(
-                                  row.line.lineId,
-                                  row.line.quantity + 1,
-                                )
-                              }
-                              className="w-7 h-7 flex items-center justify-center rounded border border-[var(--gray-200)] hover:bg-[var(--gray-50)]"
-                              aria-label={
-                                rowGramMode(row.product)
-                                  ? "Увеличить на 1 г"
-                                  : "Увеличить"
-                              }
-                            >
-                              <Plus className="w-3 h-3" />
-                            </button>
-                          </div>
+                          <InventoryQtyControl
+                            quantity={row.line.quantity}
+                            gramMode={rowGramMode(row.product)}
+                            onQuantityChange={(quantity) =>
+                              updateLineQuantity(row.line.lineId, quantity)
+                            }
+                          />
                           <span className="hidden print:inline tabular-nums">
                             {formatInventoryQuantity(
                               row.line.quantity,
@@ -506,14 +525,27 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
                           {formatPrice(row.lineTotal)}
                         </td>
                         <td className="px-2 py-2 print:hidden">
-                          <button
-                            type="button"
-                            onClick={() => removeLine(row.line.lineId)}
-                            className="w-8 h-8 flex items-center justify-center text-[var(--gray-400)] hover:text-red-500 hover:bg-red-50 rounded"
-                            title="Удалить строку"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center justify-end gap-0.5">
+                            {row.product && shouldShowCalculator(row.product) ? (
+                              <button
+                                type="button"
+                                onClick={() => setEditingLine(row.line)}
+                                className="w-8 h-8 flex items-center justify-center text-[var(--gray-400)] hover:text-[var(--primary-600)] hover:bg-[var(--primary-50)] rounded"
+                                title="Изменить"
+                                aria-label="Изменить строку"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                            ) : null}
+                            <button
+                              type="button"
+                              onClick={() => removeLine(row.line.lineId)}
+                              className="w-8 h-8 flex items-center justify-center text-[var(--gray-400)] hover:text-red-500 hover:bg-red-50 rounded"
+                              title="Удалить строку"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                         ))}
@@ -662,7 +694,9 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
                   {totalGrams > 0 ? (
                     <div className="flex justify-between text-[var(--gray-600)]">
                       <span>Всего, г.:</span>
-                      <span>{totalGrams}</span>
+                      <span>
+                        {formatInventoryQuantity(totalGrams, true)}
+                      </span>
                     </div>
                   ) : null}
                   <div className="pt-3 border-t border-[var(--gray-200)] space-y-2">
@@ -716,6 +750,16 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
           </div>
         )}
       </div>
+      {editingLine &&
+      productsById[editingLine.productId] &&
+      shouldShowCalculator(productsById[editingLine.productId]) ? (
+        <CalculatorModal
+          key={editingLine.lineId}
+          product={productsById[editingLine.productId]}
+          editLine={editingLine}
+          onClose={() => setEditingLine(null)}
+        />
+      ) : null}
     </div>
   );
 }

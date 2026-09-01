@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { AlertTriangle, AlignJustify, ArrowRight } from "lucide-react";
+import { AlertTriangle, ArrowRight } from "lucide-react";
 import {
   type CategoryBannerConfig,
   type CategoryBannerAlign,
@@ -241,7 +241,7 @@ export function CategoryBanners({
     normalizeInfoPageButtonColor(infoPageButtonTextColor) ??
     INFO_PAGE_BUTTON_DEFAULT_TEXT_COLOR;
   const infoButtonClassName =
-    "flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--primary-700)] py-3 text-center font-semibold text-white underline underline-offset-4 transition hover:brightness-90 hover:shadow-md";
+    "block w-full rounded-2xl bg-[var(--primary-700)] py-3 text-center font-semibold text-white underline underline-offset-4 transition hover:brightness-90 hover:shadow-md";
   const infoButtonStyle: { backgroundColor?: string; color: string } = {
     color: resolvedButtonTextColor,
   };
@@ -269,7 +269,6 @@ export function CategoryBanners({
       {showInfoButton &&
         (isPreviewSlug ? (
           <span className={infoButtonClassName} style={infoButtonStyle}>
-            <AlignJustify className="h-5 w-5 shrink-0" aria-hidden />
             {infoLabel}
           </span>
         ) : (
@@ -278,7 +277,6 @@ export function CategoryBanners({
             className={infoButtonClassName}
             style={infoButtonStyle}
           >
-            <AlignJustify className="h-5 w-5 shrink-0" aria-hidden />
             {infoLabel}
           </Link>
         ))}

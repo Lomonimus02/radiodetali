@@ -70,7 +70,7 @@ export default async function RootLayout({
       isAdmin={isAdmin}
     >
     <SiteContactsProvider contacts={sellContactInfo}>
-      <div className="h-full flex flex-col bg-[var(--background)] overflow-y-auto overflow-x-hidden overscroll-none print:h-auto print:overflow-visible print:bg-white" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="storefront-shell h-full flex flex-col bg-[var(--background)] overflow-y-auto overflow-x-hidden overscroll-none print:h-auto print:overflow-visible print:bg-white" style={{ WebkitOverflowScrolling: 'touch' }}>
       <div className="sticky top-0 z-50 bg-[var(--gray-700)] shrink-0 print:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <TopAlert
           show={settings?.showArrivalNotice ?? true}

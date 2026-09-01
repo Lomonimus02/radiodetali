@@ -62,7 +62,10 @@ html {
   /* iOS / Telegram WebView: тёмный фон чтобы любой gap/rubber-band показывал тёмный */
   background: var(--gray-700);
   overflow: hidden;
+  /* 100% = ICB (часто stale после CriOS restore); 100dvh / --app-height ловят visual viewport */
   height: 100%;
+  height: 100dvh;
+  height: var(--app-height, 100dvh);
 }
 
 body {

@@ -62,3 +62,101 @@ export function parseInfoPageBlocks(raw: unknown): CategoryInfoBlock[] {
 
   return blocks;
 }
+
+/** Фон кнопки по умолчанию (--primary-700) */
+export const INFO_PAGE_BUTTON_DEFAULT_COLOR = "#104488";
+
+/** Встроенный пресет «Красный» */
+export const INFO_PAGE_BUTTON_RED_COLOR = "#DC2626";
+
+/** Текст кнопки по умолчанию */
+export const INFO_PAGE_BUTTON_DEFAULT_TEXT_COLOR = "#FFFFFF";
+
+/** Встроенный пресет текста «Чёрный» (для светлого фона) */
+export const INFO_PAGE_BUTTON_BLACK_TEXT_COLOR = "#111827";
+
+const INFO_PAGE_BUTTON_BUILTIN_PRESET_COLORS = new Set([
+  INFO_PAGE_BUTTON_RED_COLOR,
+  INFO_PAGE_BUTTON_DEFAULT_TEXT_COLOR,
+  INFO_PAGE_BUTTON_BLACK_TEXT_COLOR,
+]);
+
+export type BoldSegment = { text: string; bold: boolean };
+
+/** Разбивает текст по `**жирный**` без HTML. Несовпавшие `**` остаются как есть. */
+export function parseBoldSegments(text: string): BoldSegment[] {
+  if (!text) return [];
+
+  const segments: BoldSegment[] = [];
+  const re = /\*\*(.+?)\*\*/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = re.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({ text: text.slice(lastIndex, match.index), bold: false });
+    }
+    segments.push({ text: match[1], bold: true });
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    segments.push({ text: text.slice(lastIndex), bold: false });
+  }
+
+  if (segments.length === 0) {
+    segments.push({ text, bold: false });
+  }
+
+  return segments;
+}
+
+export function normalizeInfoPageButtonColor(
+  value: string | null | undefined,
+): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  if (/^#([0-9A-Fa-f]{3})$/.test(trimmed)) {
+    const r = trimmed[1];
+    const g = trimmed[2];
+    const b = trimmed[3];
+    return `#${r}${r}${g}${g}${b}${b}`.toUpperCase();
+  }
+  if (/^#([0-9A-Fa-f]{6})$/.test(trimmed)) {
+    return trimmed.toUpperCase();
+  }
+  return null;
+}
+
+export function parseInfoPageButtonColorPresets(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const item of raw) {
+    const hex = normalizeInfoPageButtonColor(
+      typeof item === "string" ? item : null,
+    );
+    if (!hex) continue;
+    if (INFO_PAGE_BUTTON_BUILTIN_PRESET_COLORS.has(hex)) continue;
+    if (seen.has(hex)) continue;
+    seen.add(hex);
+    result.push(hex);
+  }
+
+  return result;
+}
+
+export function mergeInfoPageButtonColorPreset(
+  existing: string[],
+  hex: string,
+): string[] {
+  const color = normalizeInfoPageButtonColor(hex);
+  if (!color || INFO_PAGE_BUTTON_BUILTIN_PRESET_COLORS.has(color)) {
+    return parseInfoPageButtonColorPresets(existing);
+  }
+  const presets = parseInfoPageButtonColorPresets(existing);
+  if (presets.includes(color)) return presets;
+  return [...presets, color];
+}

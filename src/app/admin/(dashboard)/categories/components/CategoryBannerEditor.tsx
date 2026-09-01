@@ -32,6 +32,8 @@ interface CategoryBannerEditorProps {
   bannerTextLegacy: string;
   infoPageEnabled?: boolean;
   infoPageButtonLabel?: string | null;
+  infoPageButtonColor?: string | null;
+  infoPageButtonTextColor?: string | null;
   values: CategoryBannerFormValues;
   onWarningMessageChange: (value: string) => void;
   onChange: <K extends keyof CategoryBannerFormValues>(
@@ -48,6 +50,8 @@ export function CategoryBannerEditor({
   bannerTextLegacy,
   infoPageEnabled = false,
   infoPageButtonLabel,
+  infoPageButtonColor,
+  infoPageButtonTextColor,
   values,
   onWarningMessageChange,
   onChange,
@@ -375,6 +379,8 @@ export function CategoryBannerEditor({
               banner={previewBanner}
               infoPageEnabled={infoPageEnabled}
               infoPageButtonLabel={infoPageButtonLabel}
+              infoPageButtonColor={infoPageButtonColor}
+              infoPageButtonTextColor={infoPageButtonTextColor}
             />
           ) : (
             <p className="text-sm text-slate-400 text-center py-6">

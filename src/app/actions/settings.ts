@@ -6,6 +6,11 @@ import {
   parseYearPeriodDiscounts,
   type YearPeriodDiscounts,
 } from "@/lib/year-discount";
+import {
+  mergeInfoPageButtonColorPreset,
+  normalizeInfoPageButtonColor,
+  parseInfoPageButtonColorPresets,
+} from "@/lib/category-info";
 
 // ============================================================================
 // ТИПЫ
@@ -69,6 +74,8 @@ export interface GlobalSettingsData {
   arrivalNoticeText: string;
   // Скидки калькулятора по периоду года выпуска (%)
   yearPeriodDiscounts: YearPeriodDiscounts;
+  // Общие пресеты цвета кнопки информационной страницы
+  infoPageButtonColorPresets: string[];
 }
 
 /**
@@ -259,6 +266,7 @@ function serializeGlobalSettings(settings: {
   showArrivalNotice: boolean;
   arrivalNoticeText: string | null;
   yearPeriodDiscounts: unknown;
+  infoPageButtonColorPresets?: unknown;
 }): GlobalSettingsData {
   return {
     id: settings.id,
@@ -280,6 +288,9 @@ function serializeGlobalSettings(settings: {
       settings.arrivalNoticeText?.trim() ||
       "❗️Время прибытия необходимо согласовать заранее❗️",
     yearPeriodDiscounts: parseYearPeriodDiscounts(settings.yearPeriodDiscounts),
+    infoPageButtonColorPresets: parseInfoPageButtonColorPresets(
+      settings.infoPageButtonColorPresets,
+    ),
   };
 }
 
@@ -446,5 +457,68 @@ export async function getPriceMarkup(): Promise<number> {
   } catch (error) {
     console.error("Ошибка при получении коэффициента наценки:", error);
     return DEFAULT_MARKUP;
+  }
+}
+
+/**
+ * Сохранить hex-цвет в общий список пресетов кнопки информационной страницы.
+ * Не применяет цвет к категории — только добавляет образец для других форм.
+ */
+export async function saveInfoPageButtonColorPreset(
+  hex: string,
+): Promise<GlobalSettingsResult> {
+  try {
+    const color = normalizeInfoPageButtonColor(hex);
+    if (!color) {
+      return {
+        success: false,
+        error: "Укажите корректный hex-цвет",
+      };
+    }
+
+    let settings = await prisma.globalSettings.findUnique({
+      where: { id: "global" },
+    });
+
+    if (!settings) {
+      settings = await prisma.globalSettings.create({
+        data: {
+          id: "global",
+          priceMarkup: DEFAULT_MARKUP,
+          phoneNumber: "",
+          email: "",
+          telegramUsername: "",
+          address: "",
+          workSchedule: "",
+          vkLink: "",
+          telegramBotToken: "",
+          telegramChatId: "",
+        },
+      });
+    }
+
+    const presets = mergeInfoPageButtonColorPreset(
+      parseInfoPageButtonColorPresets(settings.infoPageButtonColorPresets),
+      color,
+    );
+
+    const updated = await prisma.globalSettings.update({
+      where: { id: "global" },
+      data: { infoPageButtonColorPresets: presets },
+    });
+
+    revalidatePath("/", "layout");
+
+    return {
+      success: true,
+      data: serializeGlobalSettings(updated),
+    };
+  } catch (error) {
+    console.error("Ошибка при сохранении пресета цвета кнопки:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Неизвестная ошибка",
+    };
   }
 }

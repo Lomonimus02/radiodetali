@@ -4,6 +4,7 @@ import { getGlobalSettings, isAuthenticated } from "@/app/actions";
 import type { HeaderContactInfo } from "./components/Header";
 import type { FooterContactInfo } from "./components/Footer";
 import { JivoWidget } from "./components/JivoWidget";
+import { IosChromeRestoreReload } from "./components/IosChromeRestoreReload";
 import { SiteContactsProvider } from "./components/SiteContactsProvider";
 import { YearDiscountsProvider } from "./components/YearDiscountsProvider";
 import { buildSellContactInfo, formatPhoneHref, formatTelegramHref } from "@/lib/site";
@@ -84,6 +85,7 @@ export default async function RootLayout({
       <div className="print:hidden">
         <CartIndicator />
         <JivoWidget />
+        <IosChromeRestoreReload />
       </div>
     </div>
     </SiteContactsProvider>

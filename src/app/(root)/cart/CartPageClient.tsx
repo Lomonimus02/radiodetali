@@ -27,8 +27,8 @@ import {
 import {
   classifyPrintGroup,
   groupRowsForPrint,
-  isGoldBearingGroup,
   shouldApplyYearDiscount,
+  shouldCountGoldBearingSum,
   shouldShowYearPicker,
 } from "@/lib/inventory-print-groups";
 import {
@@ -337,13 +337,10 @@ export function CartPageClient({ isAdmin }: { isAdmin: boolean }) {
   const goldBearingSum = useMemo(
     () =>
       rows.reduce((sum, row) => {
-        const groupId = classifyPrintGroup({
-          categorySlug: row.product?.categorySlug,
-          categoryName: row.product?.categoryName,
-          productName: row.product?.name,
-          productSlug: row.product?.slug,
-        });
-        return isGoldBearingGroup(groupId) ? sum + row.lineTotal : sum;
+        if (!row.product) return sum;
+        return shouldCountGoldBearingSum(row.product)
+          ? sum + row.lineTotal
+          : sum;
       }, 0),
     [rows],
   );

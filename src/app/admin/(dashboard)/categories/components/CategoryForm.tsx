@@ -101,6 +101,12 @@ export function CategoryForm({
   const [infoPageBlocks, setInfoPageBlocks] = useState<CategoryInfoBlock[]>(
     () => parseInfoPageBlocks(editCategory?.infoPageBlocks),
   );
+  const [infoPageButtonColor, setInfoPageButtonColor] = useState(
+    editCategory?.infoPageButtonColor || "",
+  );
+  const [infoPageButtonTextColor, setInfoPageButtonTextColor] = useState(
+    editCategory?.infoPageButtonTextColor || "",
+  );
 
   const isEditing = !!editCategory;
 
@@ -249,6 +255,8 @@ export function CategoryForm({
           bannerTitleLines: data.bannerTitleLines,
           infoPageEnabled,
           infoPageButtonLabel: infoPageButtonLabel.trim() || null,
+          infoPageButtonColor: infoPageButtonColor.trim() || null,
+          infoPageButtonTextColor: infoPageButtonTextColor.trim() || null,
           infoPageBlocks,
           isPinnedToDashboard: data.isPinnedToDashboard,
           customRateAu: parseRate(data.customRateAu),
@@ -277,6 +285,8 @@ export function CategoryForm({
           bannerTitleLines: data.bannerTitleLines,
           infoPageEnabled,
           infoPageButtonLabel: infoPageButtonLabel.trim() || null,
+          infoPageButtonColor: infoPageButtonColor.trim() || null,
+          infoPageButtonTextColor: infoPageButtonTextColor.trim() || null,
           infoPageBlocks,
           isPinnedToDashboard: data.isPinnedToDashboard,
           customRateAu: parseRate(data.customRateAu),
@@ -475,6 +485,8 @@ export function CategoryForm({
             infoPageButtonLabel={
               infoPageButtonLabel.trim() || defaultInfoButtonLabel(watchName)
             }
+            infoPageButtonColor={infoPageButtonColor}
+            infoPageButtonTextColor={infoPageButtonTextColor}
             values={{
               bannerTitle: watch("bannerTitle"),
               bannerAlign: watch("bannerAlign"),
@@ -498,9 +510,13 @@ export function CategoryForm({
             categoryName={watchName}
             enabled={infoPageEnabled}
             buttonLabel={infoPageButtonLabel}
+            buttonColor={infoPageButtonColor}
+            buttonTextColor={infoPageButtonTextColor}
             blocks={infoPageBlocks}
             onEnabledChange={setInfoPageEnabled}
             onButtonLabelChange={setInfoPageButtonLabel}
+            onButtonColorChange={setInfoPageButtonColor}
+            onButtonTextColorChange={setInfoPageButtonTextColor}
             onBlocksChange={setInfoPageBlocks}
           />
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { AlertTriangle, ArrowRight } from "lucide-react";
+import { AlertTriangle, AlignJustify, ArrowRight } from "lucide-react";
 import {
   type CategoryBannerConfig,
   type CategoryBannerAlign,
@@ -10,7 +10,11 @@ import {
   resolveBannerDisplay,
   resolveCategoryBannerContent,
 } from "@/lib/category-banner";
-import { resolveInfoButtonLabel } from "@/lib/category-info";
+import {
+  INFO_PAGE_BUTTON_DEFAULT_TEXT_COLOR,
+  normalizeInfoPageButtonColor,
+  resolveInfoButtonLabel,
+} from "@/lib/category-info";
 
 export interface CategoryBannersProps {
   categoryName: string;
@@ -20,6 +24,8 @@ export interface CategoryBannersProps {
   bannerTextLegacy?: string | null;
   infoPageEnabled?: boolean;
   infoPageButtonLabel?: string | null;
+  infoPageButtonColor?: string | null;
+  infoPageButtonTextColor?: string | null;
 }
 
 function getDecorLineColor(
@@ -211,6 +217,8 @@ export function CategoryBanners({
   bannerTextLegacy,
   infoPageEnabled = false,
   infoPageButtonLabel,
+  infoPageButtonColor,
+  infoPageButtonTextColor,
 }: CategoryBannersProps) {
   const rawContent = resolveCategoryBannerContent(
     warningMessage,
@@ -228,8 +236,18 @@ export function CategoryBanners({
   const isPreviewSlug = !categorySlug || categorySlug === "preview";
   const infoHref = isPreviewSlug ? "#" : `/catalog/${categorySlug}/guide`;
   const infoLabel = resolveInfoButtonLabel(infoPageButtonLabel, categoryName);
+  const resolvedButtonColor = normalizeInfoPageButtonColor(infoPageButtonColor);
+  const resolvedButtonTextColor =
+    normalizeInfoPageButtonColor(infoPageButtonTextColor) ??
+    INFO_PAGE_BUTTON_DEFAULT_TEXT_COLOR;
   const infoButtonClassName =
-    "block w-full rounded-2xl bg-[var(--primary-700)] py-3 text-center font-semibold text-white transition-colors hover:bg-[var(--primary-800)]";
+    "flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--primary-700)] py-3 text-center font-semibold text-white underline underline-offset-4 transition hover:brightness-90 hover:shadow-md";
+  const infoButtonStyle: { backgroundColor?: string; color: string } = {
+    color: resolvedButtonTextColor,
+  };
+  if (resolvedButtonColor) {
+    infoButtonStyle.backgroundColor = resolvedButtonColor;
+  }
 
   return (
     <div className="mb-6 space-y-2">
@@ -250,9 +268,17 @@ export function CategoryBanners({
 
       {showInfoButton &&
         (isPreviewSlug ? (
-          <span className={infoButtonClassName}>{infoLabel}</span>
+          <span className={infoButtonClassName} style={infoButtonStyle}>
+            <AlignJustify className="h-5 w-5 shrink-0" aria-hidden />
+            {infoLabel}
+          </span>
         ) : (
-          <Link href={infoHref} className={infoButtonClassName}>
+          <Link
+            href={infoHref}
+            className={infoButtonClassName}
+            style={infoButtonStyle}
+          >
+            <AlignJustify className="h-5 w-5 shrink-0" aria-hidden />
             {infoLabel}
           </Link>
         ))}

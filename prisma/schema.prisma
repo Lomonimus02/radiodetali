@@ -49,6 +49,9 @@ model GlobalSettings {
   // Скидки калькулятора по периоду года выпуска (проценты: until1990, from1990, from2000, from2010)
   yearPeriodDiscounts Json @default("{\"until1990\":0,\"from1990\":10,\"from2000\":20,\"from2010\":40}")
 
+  // Общие пресеты цвета кнопки информационной страницы (массив hex-строк)
+  infoPageButtonColorPresets Json @default("[]")
+
   @@map("global_settings")
 }
 
@@ -104,9 +107,11 @@ model Category {
   bannerShowGuide    Boolean             @default(true)
 
   // CMS-страница категории (/catalog/[slug]/guide)
-  infoPageEnabled     Boolean @default(false)
-  infoPageButtonLabel String?
-  infoPageBlocks      Json    @default("[]")
+  infoPageEnabled         Boolean @default(false)
+  infoPageButtonLabel     String?
+  infoPageButtonColor     String? // CSS-цвет фона кнопки (hex), null = primary-700
+  infoPageButtonTextColor String? // CSS-цвет текста кнопки (hex), null = белый
+  infoPageBlocks          Json    @default("[]")
 
   // Закрепить управление курсом на Дашборде
   isPinnedToDashboard Boolean @default(false)
@@ -138,6 +143,13 @@ enum UnitType {
   KG    // Килограмм (кг)
 }
 
+// Ручной флаг учёта золота в описи (AUTO = текущая логика по категории)
+enum InventoryMetalsMode {
+  AUTO
+  INCLUDE
+  EXCLUDE
+}
+
 // Модель товара (радиодеталь)
 model Product {
   id          String   @id @default(cuid())
@@ -159,6 +171,8 @@ model Product {
   isPriceOnRequest Boolean @default(false)
   // Лицо категории на Главной (Showcase)
   isShowcaseFace Boolean @default(false)
+  // Учёт Au в внутреннем отчёте и «Итого золотосодержащие» (не влияет на цену)
+  inventoryMetalsMode InventoryMetalsMode @default(AUTO)
 
   // Содержание металлов в граммах для НОВЫХ товаров
   contentGold      Decimal @default(0) @db.Decimal(18, 10)

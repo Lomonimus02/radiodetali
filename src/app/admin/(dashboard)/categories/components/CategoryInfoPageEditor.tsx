@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import {
   ChevronDown,
@@ -11,7 +11,16 @@ import {
   X,
 } from "lucide-react";
 import {
+  getGlobalSettings,
+  saveInfoPageButtonColorPreset,
+} from "@/app/actions";
+import {
   defaultInfoButtonLabel,
+  INFO_PAGE_BUTTON_BLACK_TEXT_COLOR,
+  INFO_PAGE_BUTTON_DEFAULT_COLOR,
+  INFO_PAGE_BUTTON_DEFAULT_TEXT_COLOR,
+  INFO_PAGE_BUTTON_RED_COLOR,
+  normalizeInfoPageButtonColor,
   type CategoryInfoBlock,
 } from "@/lib/category-info";
 
@@ -19,9 +28,13 @@ interface CategoryInfoPageEditorProps {
   categoryName: string;
   enabled: boolean;
   buttonLabel: string;
+  buttonColor: string;
+  buttonTextColor: string;
   blocks: CategoryInfoBlock[];
   onEnabledChange: (enabled: boolean) => void;
   onButtonLabelChange: (label: string) => void;
+  onButtonColorChange: (color: string) => void;
+  onButtonTextColorChange: (color: string) => void;
   onBlocksChange: (blocks: CategoryInfoBlock[]) => void;
 }
 
@@ -33,12 +46,51 @@ export function CategoryInfoPageEditor({
   categoryName,
   enabled,
   buttonLabel,
+  buttonColor,
+  buttonTextColor,
   blocks,
   onEnabledChange,
   onButtonLabelChange,
+  onButtonColorChange,
+  onButtonTextColorChange,
   onBlocksChange,
 }: CategoryInfoPageEditorProps) {
   const placeholder = defaultInfoButtonLabel(categoryName || "категории");
+  const [presets, setPresets] = useState<string[]>([]);
+  const [presetMessage, setPresetMessage] = useState<string | null>(null);
+  const [isSavingPreset, startSavePreset] = useTransition();
+
+  useEffect(() => {
+    let cancelled = false;
+    getGlobalSettings().then((result) => {
+      if (cancelled || !result.success) return;
+      setPresets(result.data.infoPageButtonColorPresets);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleSavePreset = (hex: string | null) => {
+    if (!hex) {
+      setPresetMessage(
+        "Выберите цвет, чтобы сохранить его в общий список.",
+      );
+      return;
+    }
+
+    startSavePreset(async () => {
+      const result = await saveInfoPageButtonColorPreset(hex);
+      if (result.success) {
+        setPresets(result.data.infoPageButtonColorPresets);
+        setPresetMessage(
+          "Цвет сохранён в общий список. Чтобы применить его к этой категории, выберите образец и сохраните категорию.",
+        );
+      } else {
+        setPresetMessage(result.error);
+      }
+    });
+  };
 
   const handleEnabledChange = (next: boolean) => {
     onEnabledChange(next);
@@ -125,6 +177,42 @@ export function CategoryInfoPageEditor({
           </p>
         </div>
 
+        <InfoButtonColorField
+          label="Цвет кнопки"
+          value={buttonColor}
+          onChange={onButtonColorChange}
+          presets={presets}
+          defaultHex={INFO_PAGE_BUTTON_DEFAULT_COLOR}
+          placeholder="#104488"
+          builtinSwatches={[
+            { hex: INFO_PAGE_BUTTON_RED_COLOR, label: "Красный" },
+          ]}
+          isSavingPreset={isSavingPreset}
+          onSavePreset={handleSavePreset}
+        />
+
+        <InfoButtonColorField
+          label="Цвет текста"
+          value={buttonTextColor}
+          onChange={onButtonTextColorChange}
+          presets={presets}
+          defaultHex={INFO_PAGE_BUTTON_DEFAULT_TEXT_COLOR}
+          placeholder="#FFFFFF"
+          builtinSwatches={[
+            { hex: INFO_PAGE_BUTTON_DEFAULT_TEXT_COLOR, label: "Белый" },
+            { hex: INFO_PAGE_BUTTON_BLACK_TEXT_COLOR, label: "Чёрный" },
+          ]}
+          isSavingPreset={isSavingPreset}
+          onSavePreset={handleSavePreset}
+        />
+        <p className="text-xs text-slate-500 -mt-2">
+          «Сохранить цвет» добавляет образец для других категорий и не
+          применяет его к этой. Выберите образец и сохраните категорию.
+        </p>
+        {presetMessage && (
+          <p className="text-xs text-slate-600 -mt-2">{presetMessage}</p>
+        )}
+
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-sm font-medium text-slate-700">Блоки</span>
@@ -195,14 +283,11 @@ export function CategoryInfoPageEditor({
                   </div>
 
                   {block.type === "text" ? (
-                    <textarea
-                      rows={4}
-                      value={block.content}
-                      onChange={(e) =>
-                        updateBlock(block.id, { content: e.target.value })
+                    <TextBlockEditor
+                      content={block.content}
+                      onChange={(content) =>
+                        updateBlock(block.id, { content })
                       }
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500 resize-y text-sm"
-                      placeholder="Обычный текст, без HTML и разметки"
                     />
                   ) : (
                     <ImageBlockEditor
@@ -216,6 +301,159 @@ export function CategoryInfoPageEditor({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function swatchClass(active: boolean): string {
+  return `inline-flex items-center px-3 py-1.5 rounded-full border text-sm transition-colors ${
+    active
+      ? "border-indigo-500 bg-indigo-50 text-indigo-700 font-medium"
+      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+  }`;
+}
+
+function InfoButtonColorField({
+  label,
+  value,
+  onChange,
+  presets,
+  defaultHex,
+  placeholder,
+  builtinSwatches,
+  isSavingPreset,
+  onSavePreset,
+}: {
+  label: string;
+  value: string;
+  onChange: (color: string) => void;
+  presets: string[];
+  defaultHex: string;
+  placeholder: string;
+  builtinSwatches: { hex: string; label: string }[];
+  isSavingPreset: boolean;
+  onSavePreset: (hex: string | null) => void;
+}) {
+  const selectedHex = normalizeInfoPageButtonColor(value);
+  const colorInputValue = (selectedHex || defaultHex).toLowerCase();
+
+  return (
+    <div>
+      <span className="block text-sm font-medium text-slate-700 mb-2">
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-2 mb-3">
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          className={swatchClass(!selectedHex)}
+        >
+          По умолчанию
+        </button>
+        {builtinSwatches.map((swatch) => (
+          <button
+            key={swatch.hex}
+            type="button"
+            onClick={() => onChange(swatch.hex)}
+            className={swatchClass(selectedHex === swatch.hex)}
+          >
+            <span
+              className="inline-block w-3 h-3 rounded-full mr-1.5 align-middle border border-slate-300/80"
+              style={{ backgroundColor: swatch.hex }}
+            />
+            {swatch.label}
+          </button>
+        ))}
+        {presets.map((hex) => (
+          <button
+            key={hex}
+            type="button"
+            title={hex}
+            onClick={() => onChange(hex)}
+            className={swatchClass(selectedHex === hex)}
+          >
+            <span
+              className="inline-block w-3 h-3 rounded-full mr-1.5 align-middle border border-slate-300/80"
+              style={{ backgroundColor: hex }}
+            />
+            {hex}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          type="color"
+          value={colorInputValue}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-10 w-14 cursor-pointer rounded-lg border border-slate-300 bg-white p-1"
+          title="Выбрать цвет"
+        />
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="w-32 px-3 py-2 rounded-lg border border-slate-300 text-sm font-mono"
+        />
+        <button
+          type="button"
+          onClick={() => onSavePreset(selectedHex)}
+          disabled={isSavingPreset}
+          className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+        >
+          {isSavingPreset ? "Сохранение..." : "Сохранить цвет"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TextBlockEditor({
+  content,
+  onChange,
+}: {
+  content: string;
+  onChange: (content: string) => void;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const applyBold = () => {
+    const el = textareaRef.current;
+    if (!el) {
+      onChange(`**${content}**`);
+      return;
+    }
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const selected = content.slice(start, end);
+    const next =
+      content.slice(0, start) + "**" + selected + "**" + content.slice(end);
+    onChange(next);
+    const nextStart = start + 2;
+    const nextEnd = end + 2;
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(nextStart, nextEnd);
+    });
+  };
+
+  return (
+    <div className="space-y-2">
+      <button
+        type="button"
+        onClick={applyBold}
+        className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50"
+      >
+        Жирный
+      </button>
+      <textarea
+        ref={textareaRef}
+        rows={4}
+        value={content}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500 resize-y text-sm"
+        placeholder="можно выделить фрагмент и нажать Жирный (**текст**)"
+      />
     </div>
   );
 }

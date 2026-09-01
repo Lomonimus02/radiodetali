@@ -10,6 +10,7 @@ import {
   type CategoryData,
   type MetalRatesData,
   type UnitType,
+  type InventoryMetalsMode,
 } from "@/app/actions";
 import {
   Save,
@@ -63,6 +64,7 @@ interface FormData {
   isSingleType: boolean;
   isPriceOnRequest: boolean;
   isShowcaseFace: boolean;
+  inventoryMetalsMode: InventoryMetalsMode;
   // Содержание металлов для НОВЫХ
   contentGold: number;
   contentSilver: number;
@@ -161,6 +163,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
       isSingleType: product?.isSingleType ?? false,
       isPriceOnRequest: product?.isPriceOnRequest ?? false,
       isShowcaseFace: product?.isShowcaseFace ?? false,
+      inventoryMetalsMode: product?.inventoryMetalsMode ?? "AUTO",
       // Содержание металлов для НОВЫХ
       contentGold: product?.contentGold || 0,
       contentSilver: product?.contentSilver || 0,
@@ -428,6 +431,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
           isSingleType: data.isSingleType,
           isPriceOnRequest: data.isPriceOnRequest,
           isShowcaseFace: data.isShowcaseFace,
+          inventoryMetalsMode: data.inventoryMetalsMode,
           hasModifications: data.hasModifications,
           modLabel: data.modLabel,
           modifications: data.hasModifications ? data.modifications : [],
@@ -467,6 +471,7 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
           isSingleType: data.isSingleType,
           isPriceOnRequest: data.isPriceOnRequest,
           isShowcaseFace: data.isShowcaseFace,
+          inventoryMetalsMode: data.inventoryMetalsMode,
           hasModifications: data.hasModifications,
           modLabel: data.modLabel,
           modifications: data.hasModifications ? data.modifications : [],
@@ -958,6 +963,50 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
                   </p>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* Учёт золота в описи — и для товаров с модификациями */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <h2 className="text-lg font-semibold text-slate-800 mb-2">
+              Учёт в описи
+            </h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Влияет на внутренний отчёт по золоту (Au) и строку «Итого
+              золотосодержащие». На цену не влияет.
+            </p>
+            <div className="space-y-2">
+              {(
+                [
+                  {
+                    value: "AUTO" as const,
+                    label: "Автоматически (по категории)",
+                  },
+                  {
+                    value: "INCLUDE" as const,
+                    label: "Учитывать в описи",
+                  },
+                  {
+                    value: "EXCLUDE" as const,
+                    label: "Не учитывать в описи",
+                  },
+                ] as const
+              ).map((option) => (
+                <label
+                  key={option.value}
+                  className="flex items-center gap-3 cursor-pointer rounded-lg border border-slate-200 px-3 py-2.5 hover:bg-slate-50"
+                >
+                  <input
+                    type="radio"
+                    value={option.value}
+                    {...register("inventoryMetalsMode")}
+                    className="w-4 h-4 border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span className="text-sm font-medium text-slate-800">
+                    {option.label}
+                  </span>
+                </label>
+              ))}
             </div>
           </div>
 

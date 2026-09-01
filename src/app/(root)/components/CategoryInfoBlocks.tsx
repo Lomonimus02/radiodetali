@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import Image from "next/image";
 import { ImageModal } from "./ImageModal";
-import type { CategoryInfoBlock } from "@/lib/category-info";
+import {
+  parseBoldSegments,
+  type CategoryInfoBlock,
+} from "@/lib/category-info";
 
 export function CategoryInfoBlocks({ blocks }: { blocks: CategoryInfoBlock[] }) {
   if (blocks.length === 0) return null;
@@ -18,7 +21,13 @@ export function CategoryInfoBlocks({ blocks }: { blocks: CategoryInfoBlock[] }) 
               key={block.id}
               className="whitespace-pre-wrap text-[var(--gray-700)] leading-relaxed"
             >
-              {block.content}
+              {parseBoldSegments(block.content).map((segment, index) =>
+                segment.bold ? (
+                  <strong key={index}>{segment.text}</strong>
+                ) : (
+                  <Fragment key={index}>{segment.text}</Fragment>
+                ),
+              )}
             </p>
           );
         }

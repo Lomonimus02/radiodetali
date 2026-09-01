@@ -19,6 +19,8 @@ interface CategoryPageClientProps {
     banner: CategoryBannerConfig;
     infoPageEnabled: boolean;
     infoPageButtonLabel: string | null;
+    infoPageButtonColor: string | null;
+    infoPageButtonTextColor: string | null;
   };
   products: ProductWithPrice[];
   total: number;
@@ -91,6 +93,8 @@ export function CategoryPageClient({
           banner={category.banner}
           infoPageEnabled={category.infoPageEnabled}
           infoPageButtonLabel={category.infoPageButtonLabel}
+          infoPageButtonColor={category.infoPageButtonColor}
+          infoPageButtonTextColor={category.infoPageButtonTextColor}
         />
 
         {products.length === 0 ? (

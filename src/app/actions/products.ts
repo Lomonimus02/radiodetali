@@ -26,6 +26,11 @@ export interface ProductFilters {
 export type UnitType = "PIECE" | "GRAM" | "KG";
 
 /**
+ * Ручной флаг учёта золота в описи (AUTO = логика по категории)
+ */
+export type InventoryMetalsMode = "AUTO" | "INCLUDE" | "EXCLUDE";
+
+/**
  * Модификация товара с рассчитанными ценами
  */
 export interface ModificationWithPrice {
@@ -86,6 +91,8 @@ export interface ProductWithPrice {
   isPriceOnRequest: boolean;
   // Лицо категории на Главной
   isShowcaseFace: boolean;
+  // Учёт Au в описи (не влияет на цену)
+  inventoryMetalsMode: InventoryMetalsMode;
   // Модификации
   hasModifications: boolean;
   modLabel: string;
@@ -143,6 +150,7 @@ export interface CreateProductInput {
   isSingleType?: boolean;
   isPriceOnRequest?: boolean;
   isShowcaseFace?: boolean;
+  inventoryMetalsMode?: InventoryMetalsMode;
   // Модификации
   hasModifications?: boolean;
   modLabel?: string;
@@ -192,6 +200,7 @@ export interface UpdateProductInput {
   isSingleType?: boolean;
   isPriceOnRequest?: boolean;
   isShowcaseFace?: boolean;
+  inventoryMetalsMode?: InventoryMetalsMode;
   // Модификации
   hasModifications?: boolean;
   modLabel?: string;
@@ -272,6 +281,7 @@ interface DbProductWithCategory {
   isSingleType: boolean;
   isPriceOnRequest: boolean;
   isShowcaseFace: boolean;
+  inventoryMetalsMode: InventoryMetalsMode;
   // Модификации
   hasModifications: boolean;
   modLabel?: string;
@@ -582,6 +592,7 @@ function serializeProduct(
     isSingleType: product.isSingleType,
     isPriceOnRequest: product.isPriceOnRequest,
     isShowcaseFace: product.isShowcaseFace,
+    inventoryMetalsMode: product.inventoryMetalsMode ?? "AUTO",
     hasModifications: product.hasModifications,
     modLabel: product.modLabel ?? "Модификация",
     modifications: modificationsWithPrices,
@@ -1194,6 +1205,7 @@ export async function createProduct(
         isSingleType: input.isSingleType ?? false,
         isPriceOnRequest: input.isPriceOnRequest ?? false,
         isShowcaseFace: input.isShowcaseFace ?? false,
+        inventoryMetalsMode: input.inventoryMetalsMode ?? "AUTO",
         hasModifications: input.hasModifications ?? false,
         modLabel: input.modLabel ?? "Модификация",
         // Модификации — создаём вложенно если переданы
@@ -1336,6 +1348,9 @@ export async function updateProduct(
     if (input.isSingleType !== undefined) updateData.isSingleType = input.isSingleType;
     if (input.isPriceOnRequest !== undefined) updateData.isPriceOnRequest = input.isPriceOnRequest;
     if (input.isShowcaseFace !== undefined) updateData.isShowcaseFace = input.isShowcaseFace;
+    if (input.inventoryMetalsMode !== undefined) {
+      updateData.inventoryMetalsMode = input.inventoryMetalsMode;
+    }
     if (input.hasModifications !== undefined) updateData.hasModifications = input.hasModifications;
     if (input.modLabel !== undefined) updateData.modLabel = input.modLabel;
     // sortOrder обрабатывается отдельно через reorder

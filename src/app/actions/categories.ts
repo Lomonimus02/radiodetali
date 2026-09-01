@@ -6,6 +6,7 @@ import { Prisma } from "@prisma/client";
 import type { CategoryBannerAlign, CategoryBannerTheme } from "@prisma/client";
 import { normalizeBannerTextColor } from "@/lib/category-banner";
 import {
+  normalizeInfoPageButtonColor,
   parseInfoPageBlocks,
   type CategoryInfoBlock,
 } from "@/lib/category-info";
@@ -75,11 +76,19 @@ function pickBannerInput(input: {
 function pickInfoPageFields(category: {
   infoPageEnabled: boolean;
   infoPageButtonLabel: string | null;
+  infoPageButtonColor: string | null;
+  infoPageButtonTextColor: string | null;
   infoPageBlocks: unknown;
 }) {
   return {
     infoPageEnabled: category.infoPageEnabled,
     infoPageButtonLabel: category.infoPageButtonLabel,
+    infoPageButtonColor: normalizeInfoPageButtonColor(
+      category.infoPageButtonColor,
+    ),
+    infoPageButtonTextColor: normalizeInfoPageButtonColor(
+      category.infoPageButtonTextColor,
+    ),
     infoPageBlocks: parseInfoPageBlocks(category.infoPageBlocks),
   };
 }
@@ -87,12 +96,24 @@ function pickInfoPageFields(category: {
 function pickInfoPageInput(input: {
   infoPageEnabled?: boolean;
   infoPageButtonLabel?: string | null;
+  infoPageButtonColor?: string | null;
+  infoPageButtonTextColor?: string | null;
   infoPageBlocks?: CategoryInfoBlock[];
 }) {
   const data: Record<string, unknown> = {};
   if (input.infoPageEnabled !== undefined) data.infoPageEnabled = input.infoPageEnabled;
   if (input.infoPageButtonLabel !== undefined) {
     data.infoPageButtonLabel = input.infoPageButtonLabel?.trim() || null;
+  }
+  if (input.infoPageButtonColor !== undefined) {
+    data.infoPageButtonColor = normalizeInfoPageButtonColor(
+      input.infoPageButtonColor,
+    );
+  }
+  if (input.infoPageButtonTextColor !== undefined) {
+    data.infoPageButtonTextColor = normalizeInfoPageButtonColor(
+      input.infoPageButtonTextColor,
+    );
   }
   if (input.infoPageBlocks !== undefined) {
     data.infoPageBlocks = parseInfoPageBlocks(
@@ -128,6 +149,8 @@ export interface CategoryData {
   bannerShowGuide: boolean;
   infoPageEnabled: boolean;
   infoPageButtonLabel: string | null;
+  infoPageButtonColor: string | null;
+  infoPageButtonTextColor: string | null;
   infoPageBlocks: CategoryInfoBlock[];
   isPinnedToDashboard: boolean;
   customRateAu: number | null;
@@ -164,6 +187,8 @@ export interface CreateCategoryInput {
   bannerShowGuide?: boolean;
   infoPageEnabled?: boolean;
   infoPageButtonLabel?: string | null;
+  infoPageButtonColor?: string | null;
+  infoPageButtonTextColor?: string | null;
   infoPageBlocks?: CategoryInfoBlock[];
   isPinnedToDashboard?: boolean;
   customRateAu?: number | null;
@@ -197,6 +222,8 @@ export interface UpdateCategoryInput {
   bannerShowGuide?: boolean;
   infoPageEnabled?: boolean;
   infoPageButtonLabel?: string | null;
+  infoPageButtonColor?: string | null;
+  infoPageButtonTextColor?: string | null;
   infoPageBlocks?: CategoryInfoBlock[];
   isPinnedToDashboard?: boolean;
   customRateAu?: number | null;

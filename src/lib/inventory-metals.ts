@@ -3,7 +3,10 @@ import {
   quantityToPriceMultiplier,
   usesGramQuantity,
 } from "@/lib/gram-quantity";
-import { classifyPrintGroup } from "@/lib/inventory-print-groups";
+import {
+  shouldCountInventoryAu,
+  type InventoryMetalsMode,
+} from "@/lib/inventory-print-groups";
 import {
   applyYearPercentToAmount,
   clampDiscountPercent,
@@ -21,6 +24,7 @@ export type MetalTotals = {
 export type InventoryMetalProduct = {
   isSingleType: boolean;
   unitType?: "PIECE" | "GRAM" | "KG" | null;
+  inventoryMetalsMode?: InventoryMetalsMode | null;
   categorySlug?: string | null;
   categoryName?: string | null;
   slug?: string | null;
@@ -198,13 +202,17 @@ export function accumulateGoldAuByGroup(
     const product = productsById[line.productId];
     if (!product) continue;
 
-    const groupId = classifyPrintGroup({
-      categorySlug: product.categorySlug,
-      categoryName: product.categoryName,
-      productName: product.name,
-      productSlug: product.slug,
-    });
-    if (groupId !== "chips") continue;
+    if (
+      !shouldCountInventoryAu({
+        categorySlug: product.categorySlug,
+        categoryName: product.categoryName,
+        productName: product.name,
+        productSlug: product.slug,
+        inventoryMetalsMode: product.inventoryMetalsMode,
+      })
+    ) {
+      continue;
+    }
 
     const unit = resolveLineMetalContent(
       product,
@@ -224,9 +232,8 @@ export function accumulateGoldAuByGroup(
         : 0;
     let au = applyYearPercentToAmount(unit.au * scale, yearPercent);
     au = applyYearPercentToAmount(au, customPercent);
-    const bucket = groupId === "chips" ? chips : connectors;
     addAuToBucket(
-      bucket,
+      chips,
       au,
       usesNewContent(product.isSingleType, line.condition),
     );

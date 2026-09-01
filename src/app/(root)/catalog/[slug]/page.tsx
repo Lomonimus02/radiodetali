@@ -116,6 +116,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             banner: bannerConfigFromCategory(category),
             infoPageEnabled: category.infoPageEnabled,
             infoPageButtonLabel: category.infoPageButtonLabel,
+            infoPageButtonColor: category.infoPageButtonColor,
+            infoPageButtonTextColor: category.infoPageButtonTextColor,
           }}
           products={productsResult.data}
           total={productsResult.total}

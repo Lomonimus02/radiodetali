@@ -79,6 +79,38 @@ export function isGoldBearing(input: CatalogHint): boolean {
   return isGoldBearingGroup(classifyPrintGroup(input));
 }
 
+export type InventoryMetalsMode = "AUTO" | "INCLUDE" | "EXCLUDE";
+
+export type InventoryMetalsHint = CatalogHint & {
+  inventoryMetalsMode?: InventoryMetalsMode | null;
+};
+
+function resolveInventoryMetalsMode(
+  product: InventoryMetalsHint,
+): InventoryMetalsMode {
+  const mode = product.inventoryMetalsMode;
+  if (mode === "INCLUDE" || mode === "EXCLUDE") return mode;
+  return "AUTO";
+}
+
+/** Au внутреннего отчёта: AUTO = только chips (разъёмы skip). */
+export function shouldCountInventoryAu(product: InventoryMetalsHint): boolean {
+  const mode = resolveInventoryMetalsMode(product);
+  if (mode === "EXCLUDE") return false;
+  if (mode === "INCLUDE") return true;
+  return classifyPrintGroup(product) === "chips";
+}
+
+/** Строка «Итого золотосодержащие»: AUTO = chips + connectors. */
+export function shouldCountGoldBearingSum(
+  product: InventoryMetalsHint,
+): boolean {
+  const mode = resolveInventoryMetalsMode(product);
+  if (mode === "EXCLUDE") return false;
+  if (mode === "INCLUDE") return true;
+  return isGoldBearing(product);
+}
+
 export function classifyPrintGroup(input: CatalogHint): PrintGroupId {
   const { categorySlug, productSlug, categoryName, productName } =
     catalogFields(input);

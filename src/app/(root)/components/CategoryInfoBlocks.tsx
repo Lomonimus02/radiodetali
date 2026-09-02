@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ImageModal } from "./ImageModal";
 import {
   parseBoldSegments,
+  resolveBoldFontWeight,
   type CategoryInfoBlock,
 } from "@/lib/category-info";
 
@@ -23,7 +24,18 @@ export function CategoryInfoBlocks({ blocks }: { blocks: CategoryInfoBlock[] }) 
             >
               {parseBoldSegments(block.content).map((segment, index) =>
                 segment.bold ? (
-                  <strong key={index}>{segment.text}</strong>
+                  <strong
+                    key={index}
+                    style={
+                      block.boldScale != null
+                        ? {
+                            fontWeight: resolveBoldFontWeight(block.boldScale),
+                          }
+                        : undefined
+                    }
+                  >
+                    {segment.text}
+                  </strong>
                 ) : (
                   <Fragment key={index}>{segment.text}</Fragment>
                 ),

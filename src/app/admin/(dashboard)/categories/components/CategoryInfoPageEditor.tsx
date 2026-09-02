@@ -285,8 +285,12 @@ export function CategoryInfoPageEditor({
                   {block.type === "text" ? (
                     <TextBlockEditor
                       content={block.content}
+                      boldScale={block.boldScale}
                       onChange={(content) =>
                         updateBlock(block.id, { content })
+                      }
+                      onBoldScaleChange={(boldScale) =>
+                        updateBlock(block.id, { boldScale })
                       }
                     />
                   ) : (
@@ -410,12 +414,19 @@ function InfoButtonColorField({
 
 function TextBlockEditor({
   content,
+  boldScale,
   onChange,
+  onBoldScaleChange,
 }: {
   content: string;
+  boldScale?: number;
   onChange: (content: string) => void;
+  onBoldScaleChange: (scale: number | undefined) => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [scaleDraft, setScaleDraft] = useState(() =>
+    boldScale != null && Number.isFinite(boldScale) ? String(boldScale) : "",
+  );
 
   const applyBold = () => {
     const el = textareaRef.current;
@@ -437,15 +448,41 @@ function TextBlockEditor({
     });
   };
 
+  const handleScaleDraftChange = (raw: string) => {
+    setScaleDraft(raw);
+    const trimmed = raw.trim();
+    if (trimmed === "") {
+      onBoldScaleChange(undefined);
+      return;
+    }
+    const value = Number(trimmed.replace(",", "."));
+    if (Number.isFinite(value)) {
+      onBoldScaleChange(value);
+    }
+  };
+
   return (
     <div className="space-y-2">
-      <button
-        type="button"
-        onClick={applyBold}
-        className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50"
-      >
-        Жирный
-      </button>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={applyBold}
+          className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          Жирный
+        </button>
+        <label className="inline-flex items-center gap-1.5 text-sm text-slate-700">
+          Жирность
+          <input
+            type="text"
+            inputMode="decimal"
+            value={scaleDraft}
+            onChange={(e) => handleScaleDraftChange(e.target.value)}
+            placeholder="1.5"
+            className="w-16 px-2 py-1.5 rounded-lg border border-slate-300 bg-white text-sm"
+          />
+        </label>
+      </div>
       <textarea
         ref={textareaRef}
         rows={4}

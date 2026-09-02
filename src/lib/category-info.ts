@@ -2,6 +2,7 @@ export type CategoryInfoTextBlock = {
   id: string;
   type: "text";
   content: string;
+  boldScale?: number;
 };
 
 export type CategoryInfoImageBlock = {
@@ -29,6 +30,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function parseBoldScale(raw: unknown): number | undefined {
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+  return undefined;
+}
+
+/** CSS font-weight для `**…**`. Пустой scale — как раньше (700). */
+export function resolveBoldFontWeight(scale?: number): number {
+  if (scale === undefined || !Number.isFinite(scale)) return 700;
+  const weight = Math.round((400 * scale) / 100) * 100;
+  return Math.min(900, Math.max(100, weight));
+}
+
 export function parseInfoPageBlocks(raw: unknown): CategoryInfoBlock[] {
   if (!Array.isArray(raw)) return [];
 
@@ -44,7 +57,12 @@ export function parseInfoPageBlocks(raw: unknown): CategoryInfoBlock[] {
 
     if (item.type === "text") {
       const content = typeof item.content === "string" ? item.content.trim() : "";
-      blocks.push({ id, type: "text", content });
+      const boldScale = parseBoldScale(item.boldScale);
+      if (boldScale !== undefined) {
+        blocks.push({ id, type: "text", content, boldScale });
+      } else {
+        blocks.push({ id, type: "text", content });
+      }
       continue;
     }
 

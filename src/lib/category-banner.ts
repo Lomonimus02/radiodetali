@@ -111,7 +111,7 @@ export function resolveCategoryBannerContent(
     return { title, text: body };
   }
   if (title) {
-    return { title: null, text: title };
+    return { title, text: "" };
   }
   return null;
 }

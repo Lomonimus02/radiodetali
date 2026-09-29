@@ -45,6 +45,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.7,
     },
+    {
+      url: `${BASE_URL}/blog`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
   ];
 
   try {
@@ -93,7 +99,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.6,
       }));
 
-    return [...staticPages, ...categoryPages, ...productPages, ...guidePages];
+    const articles = await prisma.article.findMany({
+      where: { published: true },
+      select: { slug: true, updatedAt: true },
+    });
+
+    const articlePages: MetadataRoute.Sitemap = articles.map((article) => ({
+      url: `${BASE_URL}/blog/${article.slug}`,
+      lastModified: article.updatedAt,
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    }));
+
+    return [...staticPages, ...categoryPages, ...productPages, ...guidePages, ...articlePages];
   } catch (error) {
     // Если БД недоступна, возвращаем только статические страницы
     console.error("Sitemap: Database unavailable, returning static pages only", error);

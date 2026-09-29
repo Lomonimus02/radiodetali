@@ -13,6 +13,7 @@ export {
   updateMetalRates,
   getGlobalSettings,
   updateGlobalSettings,
+  updatePromoSettings,
   getPriceMarkup,
   saveInfoPageButtonColorPreset,
   type MetalRatesData,
@@ -21,6 +22,7 @@ export {
   type GlobalSettingsData,
   type UpdateGlobalSettingsInput,
   type GlobalSettingsResult,
+  type UpdatePromoSettingsInput,
 } from "./settings";
 
 export type { YearPeriodDiscounts, YearPeriodId } from "@/lib/year-discount";
@@ -103,3 +105,20 @@ export {
   type ReviewsResult,
   type ReviewActionResult,
 } from "./reviews";
+
+// Статьи
+export {
+  getPublishedArticles,
+  getPublishedArticleBySlug,
+  adminListArticles,
+  adminGetArticleById,
+  createArticle,
+  updateArticle,
+  deleteArticle,
+  type ArticleListItem,
+  type PublishedArticlesPage,
+  type ArticleInput,
+  type ArticleResult,
+  type ArticlesAdminResult,
+  type DeleteArticleResult,
+} from "./articles";

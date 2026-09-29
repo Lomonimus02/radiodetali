@@ -52,6 +52,12 @@ model GlobalSettings {
   // Общие пресеты цвета кнопки информационной страницы (массив hex-строк)
   infoPageButtonColorPresets Json @default("[]")
 
+  // Попап акции (текст, не влияет на расчёт цен). promoUpdatedAt без @updatedAt.
+  promoEnabled   Boolean  @default(true)
+  promoText      String   @default("Подпишитесь на сообщество ВКонтакте — получите +1% к выплате") @db.Text
+  promoTerms     String   @default("Подпишитесь на наше сообщество ВКонтакте и напишите нам сообщение. Акция действует до указанной даты. Подробности уточняйте у менеджера.") @db.Text
+  promoUpdatedAt DateTime @default(now())
+
   @@map("global_settings")
 }
 
@@ -263,5 +269,21 @@ model Review {
   createdAt DateTime @default(now())
 
   @@map("reviews")
+}
+
+// SEO-статьи раздела «Полезная информация»
+model Article {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  excerpt   String?  @db.Text
+  body      String   @db.Text
+  imageUrl  String?
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, createdAt])
+  @@map("articles")
 }
 

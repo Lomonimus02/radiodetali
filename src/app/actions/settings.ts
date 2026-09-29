@@ -2,6 +2,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { isAuthenticated } from "./auth";
+import { DEFAULT_PROMO_TERMS, DEFAULT_PROMO_TEXT } from "@/lib/promo";
 import {
   parseYearPeriodDiscounts,
   type YearPeriodDiscounts,
@@ -76,6 +78,11 @@ export interface GlobalSettingsData {
   yearPeriodDiscounts: YearPeriodDiscounts;
   // Общие пресеты цвета кнопки информационной страницы
   infoPageButtonColorPresets: string[];
+  // Попап акции (только текст, не влияет на цены)
+  promoEnabled: boolean;
+  promoText: string;
+  promoTerms: string;
+  promoUpdatedAt: Date;
 }
 
 /**
@@ -267,6 +274,10 @@ function serializeGlobalSettings(settings: {
   arrivalNoticeText: string | null;
   yearPeriodDiscounts: unknown;
   infoPageButtonColorPresets?: unknown;
+  promoEnabled?: boolean;
+  promoText?: string | null;
+  promoTerms?: string | null;
+  promoUpdatedAt?: Date;
 }): GlobalSettingsData {
   return {
     id: settings.id,
@@ -291,6 +302,10 @@ function serializeGlobalSettings(settings: {
     infoPageButtonColorPresets: parseInfoPageButtonColorPresets(
       settings.infoPageButtonColorPresets,
     ),
+    promoEnabled: settings.promoEnabled ?? true,
+    promoText: settings.promoText ?? DEFAULT_PROMO_TEXT,
+    promoTerms: settings.promoTerms ?? DEFAULT_PROMO_TERMS,
+    promoUpdatedAt: settings.promoUpdatedAt ?? new Date(0),
   };
 }
 
@@ -440,6 +455,82 @@ export async function updateGlobalSettings(
       success: false,
       error:
         error instanceof Error ? error.message : "Неизвестная ошибка",
+    };
+  }
+}
+
+export interface UpdatePromoSettingsInput {
+  promoEnabled: boolean;
+  promoText: string;
+  promoTerms: string;
+}
+
+/**
+ * Сохранить текст попапа акции.
+ * promoUpdatedAt меняется только если изменились текст или условия,
+ * чтобы закрытие в localStorage сбрасывалось именно при правке объявления.
+ */
+export async function updatePromoSettings(
+  input: UpdatePromoSettingsInput,
+): Promise<GlobalSettingsResult> {
+  try {
+    if (!(await isAuthenticated())) {
+      return { success: false, error: "Не авторизован" };
+    }
+
+    const promoText = input.promoText.trim();
+    const promoTerms = input.promoTerms.trim();
+
+    if (input.promoEnabled && !promoText) {
+      return { success: false, error: "Укажите текст акции" };
+    }
+
+    const current = await prisma.globalSettings.findUnique({
+      where: { id: "global" },
+    });
+
+    const textChanged = (current?.promoText ?? "") !== promoText;
+    const termsChanged = (current?.promoTerms ?? "") !== promoTerms;
+    const promoUpdatedAt =
+      !current || textChanged || termsChanged ? new Date() : current.promoUpdatedAt;
+
+    const settings = await prisma.globalSettings.upsert({
+      where: { id: "global" },
+      update: {
+        promoEnabled: input.promoEnabled,
+        promoText,
+        promoTerms,
+        promoUpdatedAt,
+      },
+      create: {
+        id: "global",
+        priceMarkup: DEFAULT_MARKUP,
+        phoneNumber: "",
+        email: "",
+        telegramUsername: "",
+        address: "",
+        workSchedule: "",
+        vkLink: "",
+        telegramBotToken: "",
+        telegramChatId: "",
+        promoEnabled: input.promoEnabled,
+        promoText,
+        promoTerms,
+        promoUpdatedAt,
+      },
+    });
+
+    revalidatePath("/", "layout");
+
+    return {
+      success: true,
+      data: serializeGlobalSettings(settings),
+    };
+  } catch (error) {
+    console.error("Ошибка при сохранении акции:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Неизвестная ошибка",
     };
   }
 }

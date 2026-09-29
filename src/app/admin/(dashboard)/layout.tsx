@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Settings,
   MessageSquare,
+  BookOpen,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { logoutAdmin } from "@/app/actions";
@@ -38,6 +39,11 @@ const navItems: NavItem[] = [
     href: "/admin/reviews",
     label: "Отзывы",
     icon: <MessageSquare className="w-5 h-5" />,
+  },
+  {
+    href: "/admin/articles",
+    label: "Статьи",
+    icon: <BookOpen className="w-5 h-5" />,
   },
   {
     href: "/admin/settings",

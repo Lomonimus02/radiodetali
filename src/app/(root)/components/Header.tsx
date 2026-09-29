@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Search, Menu, X, Zap, Package, Phone, MapPin, Loader2, ChevronRight, Home, Mail, ClipboardList } from "lucide-react";
+import { Search, Menu, X, Zap, Package, Phone, MapPin, Loader2, ChevronRight, Home, Mail, ClipboardList, BookOpen } from "lucide-react";
 import { findBestMatchProduct, getProducts, ProductWithPrice } from "@/app/actions";
 import { MobileSearchOverlay } from "./MobileSearchOverlay";
 
@@ -130,6 +130,7 @@ export function Header({ contactInfo }: HeaderProps) {
   const menuItems = [
     { href: "/", label: "Главная", icon: Home },
     { href: "/catalog", label: "Каталог", icon: Package },
+    { href: "/blog", label: "Полезная информация", icon: BookOpen },
     { href: "/postal", label: "Почтовые отправления", icon: Mail },
     { href: "/contacts", label: "Контакты", icon: MapPin },
     { href: "/how-to-sell", label: "Как сдать", icon: ClipboardList },
@@ -155,7 +156,7 @@ export function Header({ contactInfo }: HeaderProps) {
             {/* Search bar - desktop */}
             <form
               onSubmit={handleSearch}
-              className="hidden md:flex flex-1 max-w-2xl mx-4"
+              className="hidden md:flex flex-1 min-w-0 max-w-2xl mx-4"
             >
               <div className="relative w-full group">
                 <input
@@ -277,38 +278,45 @@ export function Header({ contactInfo }: HeaderProps) {
             </form>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-6">
+            <nav className="hidden lg:flex shrink-0 items-center gap-3">
               <Link
                 href="/catalog"
-                className="flex items-center gap-2 hover:text-[var(--accent-400)] transition-colors"
+                className="flex items-center gap-2 whitespace-nowrap hover:text-[var(--accent-400)] transition-colors"
               >
                 <Package className="w-5 h-5" />
                 Каталог
               </Link>
               <Link
+                href="/blog"
+                className="flex items-center gap-2 whitespace-nowrap hover:text-[var(--accent-400)] transition-colors"
+              >
+                <BookOpen className="w-5 h-5" />
+                Полезная информация
+              </Link>
+              <Link
                 href="/postal"
-                className="flex items-center gap-2 hover:text-[var(--accent-400)] transition-colors"
+                className="flex items-center gap-2 whitespace-nowrap hover:text-[var(--accent-400)] transition-colors"
               >
                 <Mail className="w-5 h-5" />
                 Почтовые отправления
               </Link>
               <Link
                 href="/how-to-sell"
-                className="flex items-center gap-2 hover:text-[var(--accent-400)] transition-colors"
+                className="flex items-center gap-2 whitespace-nowrap hover:text-[var(--accent-400)] transition-colors"
               >
                 <ClipboardList className="w-5 h-5" />
                 Как сдать
               </Link>
               <Link
                 href="/about"
-                className="flex items-center gap-2 hover:text-[var(--accent-400)] transition-colors"
+                className="flex items-center gap-2 whitespace-nowrap hover:text-[var(--accent-400)] transition-colors"
               >
                 <Zap className="w-5 h-5" />
                 О нас
               </Link>
               <Link
                 href="/contacts"
-                className="flex items-center gap-2 hover:text-[var(--accent-400)] transition-colors"
+                className="flex items-center gap-2 whitespace-nowrap hover:text-[var(--accent-400)] transition-colors"
               >
                 <MapPin className="w-5 h-5" />
                 Контакты

@@ -4,6 +4,7 @@ import { getGlobalSettings, isAuthenticated } from "@/app/actions";
 import type { HeaderContactInfo } from "./components/Header";
 import type { FooterContactInfo } from "./components/Footer";
 import { JivoWidget } from "./components/JivoWidget";
+import { PromoPopup } from "./components/PromoPopup";
 import { IosChromeRestoreReload } from "./components/IosChromeRestoreReload";
 import { SiteContactsProvider } from "./components/SiteContactsProvider";
 import { YearDiscountsProvider } from "./components/YearDiscountsProvider";
@@ -84,6 +85,13 @@ export default async function RootLayout({
       </div>
       <div className="print:hidden">
         <CartIndicator />
+        <PromoPopup
+          enabled={settings?.promoEnabled ?? false}
+          text={settings?.promoText ?? ""}
+          terms={settings?.promoTerms ?? ""}
+          updatedAt={settings ? settings.promoUpdatedAt.toISOString() : ""}
+          vkHref={settings?.vkLink || "https://vk.com/dragsoyuz"}
+        />
         <JivoWidget />
         <IosChromeRestoreReload />
       </div>

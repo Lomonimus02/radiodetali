@@ -57,6 +57,10 @@ model GlobalSettings {
   promoText      String   @default("Подпишитесь на сообщество ВКонтакте — получите +1% к выплате") @db.Text
   promoTerms     String   @default("Подпишитесь на наше сообщество ВКонтакте и напишите нам сообщение. Акция действует до указанной даты. Подробности уточняйте у менеджера.") @db.Text
   promoUpdatedAt DateTime @default(now())
+  // Ссылка и подписи кнопки попапа. Пустой URL скрывает кнопку и подпись.
+  promoButtonUrl     String @default("")
+  promoButtonLabel   String @default("")
+  promoButtonCaption String @default("")
 
   @@map("global_settings")
 }

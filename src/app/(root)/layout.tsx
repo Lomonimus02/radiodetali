@@ -90,7 +90,9 @@ export default async function RootLayout({
           text={settings?.promoText ?? ""}
           terms={settings?.promoTerms ?? ""}
           updatedAt={settings ? settings.promoUpdatedAt.toISOString() : ""}
-          vkHref={settings?.vkLink || "https://vk.com/dragsoyuz"}
+          buttonUrl={settings?.promoButtonUrl ?? ""}
+          buttonLabel={settings?.promoButtonLabel ?? ""}
+          buttonCaption={settings?.promoButtonCaption ?? ""}
         />
         <JivoWidget />
         <IosChromeRestoreReload />

@@ -195,6 +195,8 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
           value={values.body}
           onChange={(body) => setField("body", body)}
           rows={12}
+          allowTable
+          hint="Выделите фрагмент и нажмите «Жирный» — в тексте появится **жирный**. Кнопка «Таблица» вставляет одну сравнительную таблицу."
         />
 
         <div>

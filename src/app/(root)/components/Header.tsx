@@ -130,10 +130,10 @@ export function Header({ contactInfo }: HeaderProps) {
   const menuItems = [
     { href: "/", label: "Главная", icon: Home },
     { href: "/catalog", label: "Каталог", icon: Package },
-    { href: "/blog", label: "Полезная информация", icon: BookOpen },
     { href: "/postal", label: "Почтовые отправления", icon: Mail },
     { href: "/contacts", label: "Контакты", icon: MapPin },
     { href: "/how-to-sell", label: "Как сдать", icon: ClipboardList },
+    { href: "/blog", label: "Полезная информация", icon: BookOpen },
     { href: "/about", label: "О нас", icon: Zap },
   ];
 
@@ -287,13 +287,6 @@ export function Header({ contactInfo }: HeaderProps) {
                 Каталог
               </Link>
               <Link
-                href="/blog"
-                className="flex items-center gap-2 whitespace-nowrap hover:text-[var(--accent-400)] transition-colors"
-              >
-                <BookOpen className="w-5 h-5" />
-                Полезная информация
-              </Link>
-              <Link
                 href="/postal"
                 className="flex items-center gap-2 whitespace-nowrap hover:text-[var(--accent-400)] transition-colors"
               >
@@ -313,6 +306,13 @@ export function Header({ contactInfo }: HeaderProps) {
               >
                 <Zap className="w-5 h-5" />
                 О нас
+              </Link>
+              <Link
+                href="/blog"
+                className="flex items-center gap-2 whitespace-nowrap hover:text-[var(--accent-400)] transition-colors"
+              >
+                <BookOpen className="w-5 h-5" />
+                Полезная информация
               </Link>
               <Link
                 href="/contacts"

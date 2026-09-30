@@ -42,7 +42,7 @@ const navItems: NavItem[] = [
   },
   {
     href: "/admin/articles",
-    label: "Статьи",
+    label: "Полезная информация",
     icon: <BookOpen className="w-5 h-5" />,
   },
   {

@@ -3,7 +3,13 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { isAuthenticated } from "./auth";
-import { DEFAULT_PROMO_TERMS, DEFAULT_PROMO_TEXT } from "@/lib/promo";
+import {
+  DEFAULT_PROMO_BUTTON_CAPTION,
+  DEFAULT_PROMO_BUTTON_LABEL,
+  DEFAULT_PROMO_BUTTON_URL,
+  DEFAULT_PROMO_TERMS,
+  DEFAULT_PROMO_TEXT,
+} from "@/lib/promo";
 import {
   parseYearPeriodDiscounts,
   type YearPeriodDiscounts,
@@ -83,6 +89,9 @@ export interface GlobalSettingsData {
   promoText: string;
   promoTerms: string;
   promoUpdatedAt: Date;
+  promoButtonUrl: string;
+  promoButtonLabel: string;
+  promoButtonCaption: string;
 }
 
 /**
@@ -278,6 +287,9 @@ function serializeGlobalSettings(settings: {
   promoText?: string | null;
   promoTerms?: string | null;
   promoUpdatedAt?: Date;
+  promoButtonUrl?: string | null;
+  promoButtonLabel?: string | null;
+  promoButtonCaption?: string | null;
 }): GlobalSettingsData {
   return {
     id: settings.id,
@@ -306,6 +318,9 @@ function serializeGlobalSettings(settings: {
     promoText: settings.promoText ?? DEFAULT_PROMO_TEXT,
     promoTerms: settings.promoTerms ?? DEFAULT_PROMO_TERMS,
     promoUpdatedAt: settings.promoUpdatedAt ?? new Date(0),
+    promoButtonUrl: settings.promoButtonUrl ?? DEFAULT_PROMO_BUTTON_URL,
+    promoButtonLabel: settings.promoButtonLabel ?? DEFAULT_PROMO_BUTTON_LABEL,
+    promoButtonCaption: settings.promoButtonCaption ?? DEFAULT_PROMO_BUTTON_CAPTION,
   };
 }
 
@@ -334,6 +349,9 @@ export async function getGlobalSettings(): Promise<GlobalSettingsResult> {
           vkLink: "",
           telegramBotToken: "",
           telegramChatId: "",
+          promoButtonUrl: DEFAULT_PROMO_BUTTON_URL,
+          promoButtonLabel: DEFAULT_PROMO_BUTTON_LABEL,
+          promoButtonCaption: DEFAULT_PROMO_BUTTON_CAPTION,
         },
       });
     }
@@ -463,11 +481,14 @@ export interface UpdatePromoSettingsInput {
   promoEnabled: boolean;
   promoText: string;
   promoTerms: string;
+  promoButtonUrl: string;
+  promoButtonLabel: string;
+  promoButtonCaption: string;
 }
 
 /**
  * Сохранить текст попапа акции.
- * promoUpdatedAt меняется только если изменились текст или условия,
+ * promoUpdatedAt меняется, если изменились текст, условия, ссылка, текст кнопки или подпись,
  * чтобы закрытие в localStorage сбрасывалось именно при правке объявления.
  */
 export async function updatePromoSettings(
@@ -480,6 +501,9 @@ export async function updatePromoSettings(
 
     const promoText = input.promoText.trim();
     const promoTerms = input.promoTerms.trim();
+    const promoButtonUrl = input.promoButtonUrl.trim();
+    const promoButtonLabel = input.promoButtonLabel.trim();
+    const promoButtonCaption = input.promoButtonCaption.trim();
 
     if (input.promoEnabled && !promoText) {
       return { success: false, error: "Укажите текст акции" };
@@ -491,8 +515,13 @@ export async function updatePromoSettings(
 
     const textChanged = (current?.promoText ?? "") !== promoText;
     const termsChanged = (current?.promoTerms ?? "") !== promoTerms;
+    const urlChanged = (current?.promoButtonUrl ?? "") !== promoButtonUrl;
+    const labelChanged = (current?.promoButtonLabel ?? "") !== promoButtonLabel;
+    const captionChanged = (current?.promoButtonCaption ?? "") !== promoButtonCaption;
     const promoUpdatedAt =
-      !current || textChanged || termsChanged ? new Date() : current.promoUpdatedAt;
+      !current || textChanged || termsChanged || urlChanged || labelChanged || captionChanged
+        ? new Date()
+        : current.promoUpdatedAt;
 
     const settings = await prisma.globalSettings.upsert({
       where: { id: "global" },
@@ -500,6 +529,9 @@ export async function updatePromoSettings(
         promoEnabled: input.promoEnabled,
         promoText,
         promoTerms,
+        promoButtonUrl,
+        promoButtonLabel,
+        promoButtonCaption,
         promoUpdatedAt,
       },
       create: {
@@ -516,6 +548,9 @@ export async function updatePromoSettings(
         promoEnabled: input.promoEnabled,
         promoText,
         promoTerms,
+        promoButtonUrl,
+        promoButtonLabel,
+        promoButtonCaption,
         promoUpdatedAt,
       },
     });

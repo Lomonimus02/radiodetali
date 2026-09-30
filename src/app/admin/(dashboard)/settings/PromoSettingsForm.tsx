@@ -9,16 +9,25 @@ type PromoSettingsFormProps = {
   initialEnabled: boolean;
   initialText: string;
   initialTerms: string;
+  initialButtonUrl: string;
+  initialButtonLabel: string;
+  initialButtonCaption: string;
 };
 
 export function PromoSettingsForm({
   initialEnabled,
   initialText,
   initialTerms,
+  initialButtonUrl,
+  initialButtonLabel,
+  initialButtonCaption,
 }: PromoSettingsFormProps) {
   const [promoEnabled, setPromoEnabled] = useState(initialEnabled);
   const [promoText, setPromoText] = useState(initialText);
   const [promoTerms, setPromoTerms] = useState(initialTerms);
+  const [promoButtonUrl, setPromoButtonUrl] = useState(initialButtonUrl);
+  const [promoButtonLabel, setPromoButtonLabel] = useState(initialButtonLabel);
+  const [promoButtonCaption, setPromoButtonCaption] = useState(initialButtonCaption);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -33,12 +42,18 @@ export function PromoSettingsForm({
         promoEnabled,
         promoText,
         promoTerms,
+        promoButtonUrl,
+        promoButtonLabel,
+        promoButtonCaption,
       });
 
       if (result.success) {
         setPromoText(result.data.promoText);
         setPromoTerms(result.data.promoTerms);
         setPromoEnabled(result.data.promoEnabled);
+        setPromoButtonUrl(result.data.promoButtonUrl);
+        setPromoButtonLabel(result.data.promoButtonLabel);
+        setPromoButtonCaption(result.data.promoButtonCaption);
         setSuccess(true);
         setTimeout(() => setSuccess(false), 5000);
       } else {
@@ -93,6 +108,58 @@ export function PromoSettingsForm({
         onChange={setPromoTerms}
         rows={6}
       />
+
+      <div>
+        <label htmlFor="promoButtonUrl" className="mb-1.5 block text-sm font-medium text-slate-700">
+          Ссылка кнопки
+        </label>
+        <input
+          id="promoButtonUrl"
+          type="text"
+          value={promoButtonUrl}
+          onChange={(event) => setPromoButtonUrl(event.target.value)}
+          disabled={isPending}
+          placeholder="https://"
+          className="w-full rounded-lg border border-slate-200 px-4 py-2.5 transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+        />
+        <p className="mt-1 text-xs text-slate-500">
+          Пустая ссылка скрывает кнопку и подпись. Нужен адрес http или https.
+        </p>
+      </div>
+
+      <div>
+        <label htmlFor="promoButtonLabel" className="mb-1.5 block text-sm font-medium text-slate-700">
+          Текст кнопки
+        </label>
+        <input
+          id="promoButtonLabel"
+          type="text"
+          value={promoButtonLabel}
+          onChange={(event) => setPromoButtonLabel(event.target.value)}
+          disabled={isPending}
+          className="w-full rounded-lg border border-slate-200 px-4 py-2.5 transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+        />
+        <p className="mt-1 text-xs text-slate-500">
+          Если ссылка задана, а текст пустой, на кнопке будет «Подробнее».
+        </p>
+      </div>
+
+      <div>
+        <label htmlFor="promoButtonCaption" className="mb-1.5 block text-sm font-medium text-slate-700">
+          Подпись кнопки
+        </label>
+        <input
+          id="promoButtonCaption"
+          type="text"
+          value={promoButtonCaption}
+          onChange={(event) => setPromoButtonCaption(event.target.value)}
+          disabled={isPending}
+          className="w-full rounded-lg border border-slate-200 px-4 py-2.5 transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+        />
+        <p className="mt-1 text-xs text-slate-500">
+          Показывается под кнопкой. Пустая подпись не выводится.
+        </p>
+      </div>
 
       <button
         type="submit"

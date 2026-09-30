@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublishedArticles } from "@/app/actions";
+import { stripArticleTables } from "@/lib/article-body";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,9 @@ function parsePage(raw: string | undefined): number | null {
 }
 
 function previewText(excerpt: string | null, body: string): string {
-  const raw = (excerpt?.trim() || body.replace(/\*\*/g, "")).replace(/\s+/g, " ").trim();
+  const raw = (excerpt?.trim() || stripArticleTables(body).replace(/\*\*/g, ""))
+    .replace(/\s+/g, " ")
+    .trim();
   if (raw.length <= 160) return raw;
   return `${raw.slice(0, 160).trimEnd()}…`;
 }

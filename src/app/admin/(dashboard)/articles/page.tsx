@@ -25,8 +25,7 @@ export default async function AdminArticlesPage() {
             <BookOpen className="h-6 w-6 text-indigo-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Статьи</h1>
-            <p className="text-sm text-slate-500">Раздел «Полезная информация» на сайте</p>
+            <h1 className="text-2xl font-bold text-slate-900">Полезная информация</h1>
           </div>
         </div>
         <Link

@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { ExternalLink, X } from "lucide-react";
+import { PROMO_BUTTON_EMPTY_LABEL, promoButtonHref } from "@/lib/promo";
 import { BoldText } from "./BoldText";
-
-const DEFAULT_VK_HREF = "https://vk.com/dragsoyuz";
 
 const STORAGE_KEY = "dragsoyuz-promo-dismissed";
 
@@ -34,27 +33,25 @@ function isDismissed(updatedAt: string): boolean {
   }
 }
 
-function vkCommunityHref(raw: string): string {
-  const value = raw.trim();
-  if (!value) return DEFAULT_VK_HREF;
-  try {
-    const url = new URL(value);
-    if (url.protocol === "http:" || url.protocol === "https:") return url.href;
-  } catch {
-    // оставляем ссылку сообщества по умолчанию
-  }
-  return DEFAULT_VK_HREF;
-}
-
 type PromoPopupProps = {
   enabled: boolean;
   text: string;
   terms: string;
   updatedAt: string;
-  vkHref: string;
+  buttonUrl: string;
+  buttonLabel: string;
+  buttonCaption: string;
 };
 
-export function PromoPopup({ enabled, text, terms, updatedAt, vkHref }: PromoPopupProps) {
+export function PromoPopup({
+  enabled,
+  text,
+  terms,
+  updatedAt,
+  buttonUrl,
+  buttonLabel,
+  buttonCaption,
+}: PromoPopupProps) {
   const dismissed = useSyncExternalStore(
     subscribe,
     () => isDismissed(updatedAt),
@@ -90,7 +87,9 @@ export function PromoPopup({ enabled, text, terms, updatedAt, vkHref }: PromoPop
   if (!visible) return null;
 
   const termsText = terms.trim();
-  const communityHref = vkCommunityHref(vkHref);
+  const buttonHref = promoButtonHref(buttonUrl);
+  const buttonText = buttonLabel.trim() || PROMO_BUTTON_EMPTY_LABEL;
+  const captionText = buttonCaption.trim();
 
   return (
     <div
@@ -133,18 +132,22 @@ export function PromoPopup({ enabled, text, terms, updatedAt, vkHref }: PromoPop
             </div>
           ) : null}
 
-          <a
-            href={communityHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[var(--primary-900)] px-4 text-sm font-medium text-white hover:bg-[var(--primary-800)]"
-          >
-            Условия акции во ВКонтакте
-            <ExternalLink className="h-4 w-4" aria-hidden="true" />
-          </a>
-          <p className="mt-2 text-xs text-[var(--gray-500)]">
-            Откроется страница сообщества в новой вкладке
-          </p>
+          {buttonHref ? (
+            <>
+              <a
+                href={buttonHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[var(--primary-900)] px-4 text-sm font-medium text-white hover:bg-[var(--primary-800)]"
+              >
+                {buttonText}
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              </a>
+              {captionText ? (
+                <p className="mt-2 text-xs text-[var(--gray-500)]">{captionText}</p>
+              ) : null}
+            </>
+          ) : null}
         </div>
       </div>
     </div>

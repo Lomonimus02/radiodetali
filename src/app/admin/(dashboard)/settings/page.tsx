@@ -1,6 +1,12 @@
 import { Megaphone, Shield } from "lucide-react";
 import { getGlobalSettings } from "@/app/actions";
-import { DEFAULT_PROMO_TERMS, DEFAULT_PROMO_TEXT } from "@/lib/promo";
+import {
+  DEFAULT_PROMO_BUTTON_CAPTION,
+  DEFAULT_PROMO_BUTTON_LABEL,
+  DEFAULT_PROMO_BUTTON_URL,
+  DEFAULT_PROMO_TERMS,
+  DEFAULT_PROMO_TEXT,
+} from "@/lib/promo";
 import { ChangePasswordForm } from "./ChangePasswordForm";
 import { PromoSettingsForm } from "./PromoSettingsForm";
 
@@ -36,6 +42,9 @@ export default async function SettingsPage() {
             initialEnabled={settings?.promoEnabled ?? true}
             initialText={settings?.promoText ?? DEFAULT_PROMO_TEXT}
             initialTerms={settings?.promoTerms ?? DEFAULT_PROMO_TERMS}
+            initialButtonUrl={settings?.promoButtonUrl ?? DEFAULT_PROMO_BUTTON_URL}
+            initialButtonLabel={settings?.promoButtonLabel ?? DEFAULT_PROMO_BUTTON_LABEL}
+            initialButtonCaption={settings?.promoButtonCaption ?? DEFAULT_PROMO_BUTTON_CAPTION}
           />
         </div>
       </div>

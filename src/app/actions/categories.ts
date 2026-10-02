@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import type { CategoryBannerAlign, CategoryBannerTheme } from "@prisma/client";
 import { normalizeBannerTextColor } from "@/lib/category-banner";
+import { applyHundredPrice } from "@/lib/hundred-price";
 import {
   normalizeInfoPageButtonColor,
   parseInfoPageBlocks,
@@ -854,7 +855,8 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
         // Подкатегории с их товарами и кастомными курсами
         children: {
           select: {
-            // ÐšÐ°ÑÑ‚Ð¾Ð¼Ð½Ñ‹Ðµ ÐºÑƒÑ€ÑÑ‹ Ð¿Ð¾Ð´ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸
+            slug: true,
+            name: true,
             customRateAu: true,
             customRateAg: true,
             customRatePt: true,
@@ -912,6 +914,8 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
       // Ð¢Ð¾Ð²Ð°Ñ€Ñ‹ Ð¸Ð· Ñ€Ð¾Ð´Ð¸Ñ‚ÐµÐ»ÑŒÑÐºÐ¾Ð¹ ÐºÐ°Ñ‚ÐµÐ³Ð¾Ñ€Ð¸Ð¸ + Ð¸Ð½Ñ„Ð¾Ñ€Ð¼Ð°Ñ†Ð¸Ñ Ð¾ ÐºÑƒÑ€ÑÐ°Ñ…
       const productsWithRates = category.products.map(p => ({
         ...p,
+        categorySlug: category.slug,
+        categoryName: category.name,
         categoryRates: parentCategoryRates,
       }));
       
@@ -919,6 +923,8 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
       const childProductsWithRates = category.children.flatMap(child => 
         child.products.map(p => ({
           ...p,
+          categorySlug: child.slug,
+          categoryName: child.name,
           categoryRates: {
             customRateAu: child.customRateAu,
             customRateAg: child.customRateAg,
@@ -1003,15 +1009,20 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
 
       // Ð”Ð¾Ð±Ð°Ð²Ð»ÑÐµÐ¼ Ñ‚Ð¾Ð²Ð°Ñ€ Ð² Ñ€ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚, ÐµÑÐ»Ð¸ Ð½Ð°ÑˆÐ»Ð¸ (Ñ Ð»ÑŽÐ±Ð¾Ð¹ Ñ†ÐµÐ½Ð¾Ð¹ > 0)
       if (chosenProduct && maxEffectivePrice > 0) {
+        const priceHint = {
+          categorySlug: chosenProduct.categorySlug,
+          categoryName: chosenProduct.categoryName,
+          productSlug: chosenProduct.slug,
+          productName: chosenProduct.name,
+        };
         showcaseItems.push({
-          // Ð”Ð°Ð½Ð½Ñ‹Ðµ Ñ‚Ð¾Ð²Ð°Ñ€Ð°
           id: chosenProduct.id,
           name: chosenProduct.name,
           slug: chosenProduct.slug,
           description: chosenProduct.description,
           image: chosenProduct.image,
-          priceNew: chosenPriceNew,
-          priceUsed: chosenPriceUsed,
+          priceNew: applyHundredPrice(chosenPriceNew, priceHint),
+          priceUsed: applyHundredPrice(chosenPriceUsed, priceHint),
           isNewAvailable: chosenProduct.isNewAvailable,
           isUsedAvailable: chosenProduct.isUsedAvailable,
           isSingleType: chosenProduct.isSingleType,
@@ -1030,7 +1041,12 @@ export async function getCategoryShowcase(limit: number = 10): Promise<CategoryS
               effectiveMarkup,
               effectiveMarkupUsed,
             );
-            return { id: mod.id, name: mod.name, priceNew: modPrices.priceNew, priceUsed: modPrices.priceUsed };
+            return {
+              id: mod.id,
+              name: mod.name,
+              priceNew: applyHundredPrice(modPrices.priceNew, priceHint) ?? modPrices.priceNew,
+              priceUsed: applyHundredPrice(modPrices.priceUsed, priceHint) ?? modPrices.priceUsed,
+            };
           }),
           categorySlug: category.slug,
           categoryName: category.name,

@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { calculateProductPrices, calculateModificationPrices } from "@/lib/price-calculator";
+import { applyHundredPrice } from "@/lib/hundred-price";
 import type { ModificationPrices } from "@/lib/price-calculator";
 import { revalidatePath } from "next/cache";
 import Fuse from "fuse.js";
@@ -517,6 +518,13 @@ function serializeProduct(
     customRatePd: product.category.customRatePd,
   };
   
+  const priceHint = {
+    categorySlug: product.category.slug,
+    categoryName: product.category.name,
+    productSlug: product.slug,
+    productName: product.name,
+  };
+
   const { priceNew, priceUsed } = calculateProductPrices(
     {
       contentGold: product.contentGold,
@@ -568,8 +576,8 @@ function serializeProduct(
       contentAgUsed: mod.contentAgUsed,
       contentPtUsed: mod.contentPtUsed,
       contentPdUsed: mod.contentPdUsed,
-      priceNew: modPrices.priceNew,
-      priceUsed: modPrices.priceUsed,
+      priceNew: applyHundredPrice(modPrices.priceNew, priceHint) ?? modPrices.priceNew,
+      priceUsed: applyHundredPrice(modPrices.priceUsed, priceHint) ?? modPrices.priceUsed,
     };
   });
 
@@ -619,8 +627,8 @@ function serializeProduct(
     isUsedAvailable: product.isUsedAvailable,
     manualPriceNew: toNumberOrNull(product.manualPriceNew),
     manualPriceUsed: toNumberOrNull(product.manualPriceUsed),
-    priceNew,
-    priceUsed: product.isSingleType ? null : priceUsed, // Для единого типа Б/У цена не нужна
+    priceNew: applyHundredPrice(priceNew, priceHint),
+    priceUsed: product.isSingleType ? null : applyHundredPrice(priceUsed, priceHint), // Для единого типа Б/У цена не нужна
     matchedModificationName: matchedModificationName ?? null,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,

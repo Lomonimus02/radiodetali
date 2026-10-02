@@ -159,7 +159,7 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
 
         <div>
           <label htmlFor="article-slug" className="mb-2 block text-sm font-medium text-slate-700">
-            Адрес
+            Ссылка на статью
           </label>
           <input
             id="article-slug"
@@ -172,7 +172,9 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
             placeholder="poleznaya-informatsiya"
           />
           <p className="mt-1 text-xs text-slate-500">
-            Латиница, цифры и дефисы. При создании подставляется из названия.
+            Это не почтовый адрес. Статья откроется как драгсоюз.рф/blog/
+            {values.slug || "…"}. Латиница, цифры и дефисы, при создании
+            подставляется из названия.
           </p>
         </div>
 

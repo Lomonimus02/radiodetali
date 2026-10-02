@@ -29,6 +29,10 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { getMetalDisplaySymbol } from "@/lib/precious-metals";
+import {
+  roundRublesToHundred,
+  shouldRoundPriceToHundred,
+} from "@/lib/hundred-price";
 
 const DISPLAY_METAL_FIELDS = [
   { key: "displayContentGold" as const, label: "Золото", symbol: "Au", unit: "мг" },
@@ -305,10 +309,20 @@ export function ProductForm({ product, categories, metalRates, defaultCategoryId
       (watchContentPalladiumUsed || 0) * ratePd
     ) * markupUsed;
     
-    return { priceNew, priceUsed };
+    const roundToHundred = shouldRoundPriceToHundred({
+      categorySlug: selectedCategory?.slug,
+      categoryName: selectedCategory?.name,
+      productName: watchName,
+    });
+
+    return {
+      priceNew: roundToHundred ? roundRublesToHundred(priceNew) : priceNew,
+      priceUsed: roundToHundred ? roundRublesToHundred(priceUsed) : priceUsed,
+    };
   }, [
     metalRates,
     selectedCategory,
+    watchName,
     watchPriceMarkup,
     watchPriceMarkupUsed,
     watchContentGold,

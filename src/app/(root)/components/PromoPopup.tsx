@@ -103,19 +103,24 @@ export function PromoPopup({
         className="relative flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-[var(--gray-200)] bg-white shadow-xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <button
-          type="button"
-          onClick={close}
-          aria-label="Закрыть"
-          className="absolute right-2 top-2 z-10 flex h-11 w-11 items-center justify-center rounded-lg bg-white text-[var(--gray-600)] hover:bg-[var(--gray-100)]"
-        >
-          <X className="h-5 w-5" />
-        </button>
-
-        <div className="overflow-y-auto p-6 pt-14">
-          <h2 id="promo-popup-title" className="text-xl font-bold text-[var(--gray-900)]">
+        <div className="relative border-b border-[var(--gray-200)] px-14 py-3">
+          <h2
+            id="promo-popup-title"
+            className="text-center text-xl font-bold text-[var(--gray-900)]"
+          >
             Акция
           </h2>
+          <button
+            type="button"
+            onClick={close}
+            aria-label="Закрыть"
+            className="absolute right-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md bg-red-600 text-white shadow-sm hover:bg-red-700"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto p-6">
 
           <BoldText
             text={text}

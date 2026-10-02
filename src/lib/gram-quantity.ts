@@ -1,3 +1,5 @@
+import { roundRublesToHundred, shouldRoundPriceToHundred } from "@/lib/hundred-price";
+
 export type GramUnitType = "PIECE" | "GRAM" | "KG";
 
 export type GramQuantityProduct = {
@@ -74,15 +76,28 @@ export function lineTotalFromGrams(
   return Math.round(price * multiplier);
 }
 
+function finishLineTotal(
+  total: number,
+  product: GramQuantityProduct | null | undefined,
+): number {
+  if (product && shouldRoundPriceToHundred(product)) {
+    return roundRublesToHundred(total);
+  }
+  return total;
+}
+
 export function computeLineTotal(
   unitPrice: number,
   quantity: number,
   product: GramQuantityProduct | null | undefined,
 ): number {
   if (!product || !usesGramQuantity(product)) {
-    return unitPrice * quantity;
+    return finishLineTotal(unitPrice * quantity, product);
   }
-  return lineTotalFromGrams(unitPrice, quantity, product.unitType);
+  return finishLineTotal(
+    lineTotalFromGrams(unitPrice, quantity, product.unitType),
+    product,
+  );
 }
 
 export function formatInventoryQuantity(

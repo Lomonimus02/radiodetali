@@ -116,6 +116,7 @@ export {
   updateArticle,
   deleteArticle,
   type ArticleListItem,
+  type ArticleFaqItem,
   type PublishedArticlesPage,
   type ArticleInput,
   type ArticleResult,

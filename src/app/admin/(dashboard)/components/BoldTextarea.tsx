@@ -1,7 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { insertArticleTable } from "@/lib/article-body";
+import {
+  insertArticleMarkup,
+  insertArticleTable,
+  type ArticleMarkupKind,
+} from "@/lib/article-body";
 
 type BoldTextareaProps = {
   id: string;
@@ -11,7 +15,11 @@ type BoldTextareaProps = {
   rows?: number;
   hint?: string;
   allowTable?: boolean;
+  allowStructure?: boolean;
 };
+
+const toolButtonClass =
+  "inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50";
 
 export function BoldTextarea({
   id,
@@ -21,6 +29,7 @@ export function BoldTextarea({
   rows = 5,
   hint = "Выделите фрагмент и нажмите «Жирный» — в тексте появится **жирный**.",
   allowTable = false,
+  allowStructure = false,
 }: BoldTextareaProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [tableMessage, setTableMessage] = useState<string | null>(null);
@@ -44,6 +53,20 @@ export function BoldTextarea({
     });
   };
 
+  const applyMarkup = (kind: ArticleMarkupKind) => {
+    const el = textareaRef.current;
+    const start = el?.selectionStart ?? value.length;
+    const end = el?.selectionEnd ?? value.length;
+    const result = insertArticleMarkup(value, start, end, kind);
+    setTableMessage(null);
+    onChange(result.value);
+    const cursor = result.cursor;
+    requestAnimationFrame(() => {
+      el?.focus();
+      el?.setSelectionRange(cursor, cursor);
+    });
+  };
+
   const applyTable = () => {
     const el = textareaRef.current;
     const start = el?.selectionStart ?? value.length;
@@ -64,25 +87,30 @@ export function BoldTextarea({
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between gap-3">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <label htmlFor={id} className="block text-sm font-medium text-slate-700">
           {label}
         </label>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {allowStructure ? (
+            <>
+              <button type="button" onClick={() => applyMarkup("heading")} className={toolButtonClass}>
+                Подзаголовок
+              </button>
+              <button type="button" onClick={() => applyMarkup("ul")} className={toolButtonClass}>
+                Список
+              </button>
+              <button type="button" onClick={() => applyMarkup("ol")} className={toolButtonClass}>
+                Нумерованный список
+              </button>
+            </>
+          ) : null}
           {allowTable ? (
-            <button
-              type="button"
-              onClick={applyTable}
-              className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-            >
+            <button type="button" onClick={applyTable} className={toolButtonClass}>
               Таблица
             </button>
           ) : null}
-          <button
-            type="button"
-            onClick={applyBold}
-            className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-          >
+          <button type="button" onClick={applyBold} className={toolButtonClass}>
             Жирный
           </button>
         </div>

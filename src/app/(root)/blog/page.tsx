@@ -23,9 +23,12 @@ function parsePage(raw: string | undefined): number | null {
 }
 
 function previewText(excerpt: string | null, body: string): string {
-  const raw = (excerpt?.trim() || stripArticleTables(body).replace(/\*\*/g, ""))
-    .replace(/\s+/g, " ")
-    .trim();
+  const plainBody = stripArticleTables(body)
+    .replace(/\*\*/g, "")
+    .replace(/^##\s+/gm, "")
+    .replace(/^\d+\.\s+/gm, "")
+    .replace(/^-\s+/gm, "");
+  const raw = (excerpt?.trim() || plainBody).replace(/\s+/g, " ").trim();
   if (raw.length <= 160) return raw;
   return `${raw.slice(0, 160).trimEnd()}…`;
 }

@@ -7,6 +7,11 @@ import { isAuthenticated } from "./auth";
 
 const PAGE_SIZE_DEFAULT = 10;
 
+export type ArticleFaqItem = {
+  question: string;
+  answer: string;
+};
+
 export type ArticleListItem = {
   id: string;
   title: string;
@@ -15,6 +20,10 @@ export type ArticleListItem = {
   body: string;
   imageUrl: string | null;
   published: boolean;
+  seoTitle: string;
+  seoDescription: string;
+  authorName: string;
+  faq: ArticleFaqItem[];
   createdAt: Date;
   updatedAt: Date;
 };
@@ -33,7 +42,57 @@ export type ArticleInput = {
   body: string;
   imageUrl: string;
   published: boolean;
+  seoTitle: string;
+  seoDescription: string;
+  authorName: string;
+  faq: ArticleFaqItem[];
 };
+
+function normalizeArticleFaq(value: unknown): ArticleFaqItem[] {
+  if (!Array.isArray(value)) return [];
+  const items: ArticleFaqItem[] = [];
+  for (const entry of value) {
+    if (!entry || typeof entry !== "object") continue;
+    const record = entry as { question?: unknown; answer?: unknown };
+    const question = typeof record.question === "string" ? record.question.trim() : "";
+    const answer = typeof record.answer === "string" ? record.answer.trim() : "";
+    if (!question || !answer) continue;
+    items.push({ question, answer });
+  }
+  return items;
+}
+
+function mapArticle(article: {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  body: string;
+  imageUrl: string | null;
+  published: boolean;
+  seoTitle: string;
+  seoDescription: string;
+  authorName: string;
+  faq: Prisma.JsonValue;
+  createdAt: Date;
+  updatedAt: Date;
+}): ArticleListItem {
+  return {
+    id: article.id,
+    title: article.title,
+    slug: article.slug,
+    excerpt: article.excerpt,
+    body: article.body,
+    imageUrl: article.imageUrl,
+    published: article.published,
+    seoTitle: article.seoTitle ?? "",
+    seoDescription: article.seoDescription ?? "",
+    authorName: article.authorName ?? "",
+    faq: normalizeArticleFaq(article.faq),
+    createdAt: article.createdAt,
+    updatedAt: article.updatedAt,
+  };
+}
 
 export type ArticleResult =
   | { success: true; data: ArticleListItem }
@@ -92,22 +151,23 @@ export async function getPublishedArticles(input: {
   const where = { published: true };
   const total = await prisma.article.count({ where });
   const pageCount = total === 0 ? 1 : Math.ceil(total / pageSize);
-  const items = await prisma.article.findMany({
+  const rows = await prisma.article.findMany({
     where,
     orderBy: { createdAt: "desc" },
     skip: (page - 1) * pageSize,
     take: pageSize,
   });
 
-  return { items, total, page, pageCount };
+  return { items: rows.map(mapArticle), total, page, pageCount };
 }
 
 export async function getPublishedArticleBySlug(
   slug: string,
 ): Promise<ArticleListItem | null> {
-  return prisma.article.findFirst({
+  const article = await prisma.article.findFirst({
     where: { slug, published: true },
   });
+  return article ? mapArticle(article) : null;
 }
 
 export async function adminListArticles(): Promise<ArticlesAdminResult> {
@@ -116,11 +176,11 @@ export async function adminListArticles(): Promise<ArticlesAdminResult> {
       return { success: false, error: "Не авторизован" };
     }
 
-    const data = await prisma.article.findMany({
+    const rows = await prisma.article.findMany({
       orderBy: { createdAt: "desc" },
     });
 
-    return { success: true, data };
+    return { success: true, data: rows.map(mapArticle) };
   } catch (error) {
     console.error("Ошибка при загрузке статей:", error);
     return { success: false, error: "Не удалось загрузить статьи" };
@@ -138,7 +198,7 @@ export async function adminGetArticleById(id: string): Promise<ArticleResult> {
       return { success: false, error: "Статья не найдена" };
     }
 
-    return { success: true, data };
+    return { success: true, data: mapArticle(data) };
   } catch (error) {
     console.error("Ошибка при загрузке статьи:", error);
     return { success: false, error: "Не удалось загрузить статью" };
@@ -153,10 +213,18 @@ function validateArticleInput(input: ArticleInput): {
   body: string;
   imageUrl: string | null;
   published: boolean;
+  seoTitle: string;
+  seoDescription: string;
+  authorName: string;
+  faq: ArticleFaqItem[];
 } {
   const title = input.title.trim();
   const slug = normalizeSlug(input.slug);
   const body = input.body.trim();
+  const seoTitle = (input.seoTitle ?? "").trim();
+  const seoDescription = (input.seoDescription ?? "").trim();
+  const authorName = (input.authorName ?? "").trim();
+  const faq = normalizeArticleFaq(input.faq);
 
   if (!title) {
     return {
@@ -167,6 +235,10 @@ function validateArticleInput(input: ArticleInput): {
       body,
       imageUrl: null,
       published: input.published,
+      seoTitle,
+      seoDescription,
+      authorName,
+      faq,
     };
   }
 
@@ -179,6 +251,10 @@ function validateArticleInput(input: ArticleInput): {
       body,
       imageUrl: null,
       published: input.published,
+      seoTitle,
+      seoDescription,
+      authorName,
+      faq,
     };
   }
 
@@ -191,6 +267,10 @@ function validateArticleInput(input: ArticleInput): {
       body,
       imageUrl: null,
       published: input.published,
+      seoTitle,
+      seoDescription,
+      authorName,
+      faq,
     };
   }
 
@@ -201,6 +281,10 @@ function validateArticleInput(input: ArticleInput): {
     body,
     imageUrl: toNullable(input.imageUrl),
     published: input.published,
+    seoTitle,
+    seoDescription,
+    authorName,
+    faq,
   };
 }
 
@@ -227,12 +311,16 @@ export async function createArticle(input: ArticleInput): Promise<ArticleResult>
         body: parsed.body,
         imageUrl: parsed.imageUrl,
         published: parsed.published,
+        seoTitle: parsed.seoTitle,
+        seoDescription: parsed.seoDescription,
+        authorName: parsed.authorName,
+        faq: parsed.faq,
       },
     });
 
     revalidateArticlePaths(data.slug);
 
-    return { success: true, data };
+    return { success: true, data: mapArticle(data) };
   } catch (error) {
     if (isUniqueError(error)) {
       return { success: false, error: "Статья с таким адресом уже существует" };
@@ -274,6 +362,10 @@ export async function updateArticle(
         body: parsed.body,
         imageUrl: parsed.imageUrl,
         published: parsed.published,
+        seoTitle: parsed.seoTitle,
+        seoDescription: parsed.seoDescription,
+        authorName: parsed.authorName,
+        faq: parsed.faq,
       },
     });
 
@@ -282,7 +374,7 @@ export async function updateArticle(
       revalidateArticlePaths(data.slug);
     }
 
-    return { success: true, data };
+    return { success: true, data: mapArticle(data) };
   } catch (error) {
     if (isUniqueError(error)) {
       return { success: false, error: "Статья с таким адресом уже существует" };

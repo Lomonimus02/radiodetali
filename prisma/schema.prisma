@@ -277,15 +277,19 @@ model Review {
 
 // SEO-статьи раздела «Полезная информация»
 model Article {
-  id        String   @id @default(cuid())
-  title     String
-  slug      String   @unique
-  excerpt   String?  @db.Text
-  body      String   @db.Text
-  imageUrl  String?
-  published Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  title          String
+  slug           String   @unique
+  excerpt        String?  @db.Text
+  body           String   @db.Text
+  imageUrl       String?
+  published      Boolean  @default(false)
+  seoTitle       String   @default("")
+  seoDescription String   @default("") @db.Text
+  authorName     String   @default("")
+  faq            Json     @default("[]")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([published, createdAt])
   @@map("articles")

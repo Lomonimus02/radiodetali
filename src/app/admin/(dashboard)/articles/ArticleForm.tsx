@@ -2,8 +2,8 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, CheckCircle2, ImagePlus, Loader2, Save, X } from "lucide-react";
-import { createArticle, updateArticle } from "@/app/actions";
+import { AlertCircle, CheckCircle2, ImagePlus, Loader2, Plus, Save, Trash2, X } from "lucide-react";
+import { createArticle, updateArticle, type ArticleFaqItem } from "@/app/actions";
 import { BoldTextarea } from "../components/BoldTextarea";
 
 function generateSlug(name: string): string {
@@ -29,6 +29,10 @@ export type ArticleFormValues = {
   body: string;
   imageUrl: string;
   published: boolean;
+  seoTitle: string;
+  seoDescription: string;
+  authorName: string;
+  faq: ArticleFaqItem[];
 };
 
 type ArticleFormProps = {
@@ -44,6 +48,10 @@ const emptyValues: ArticleFormValues = {
   body: "",
   imageUrl: "",
   published: false,
+  seoTitle: "",
+  seoDescription: "",
+  authorName: "",
+  faq: [],
 };
 
 export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
@@ -112,6 +120,10 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
         body: values.body,
         imageUrl: values.imageUrl,
         published: values.published,
+        seoTitle: values.seoTitle,
+        seoDescription: values.seoDescription,
+        authorName: values.authorName,
+        faq: values.faq,
       };
 
       const result =
@@ -158,6 +170,21 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
         </div>
 
         <div>
+          <label htmlFor="article-seo-title" className="mb-2 block text-sm font-medium text-slate-700">
+            Title
+          </label>
+          <input
+            id="article-seo-title"
+            value={values.seoTitle}
+            onChange={(event) => setField("seoTitle", event.target.value)}
+            className="w-full rounded-lg border border-slate-300 px-4 py-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+          />
+          <p className="mt-1 text-xs text-slate-500">
+            Заголовок во вкладке браузера и в поиске. Если пусто — берётся название статьи.
+          </p>
+        </div>
+
+        <div>
           <label htmlFor="article-slug" className="mb-2 block text-sm font-medium text-slate-700">
             Ссылка на статью
           </label>
@@ -191,6 +218,37 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
           />
         </div>
 
+        <div>
+          <label htmlFor="article-seo-description" className="mb-2 block text-sm font-medium text-slate-700">
+            Description
+          </label>
+          <textarea
+            id="article-seo-description"
+            rows={3}
+            value={values.seoDescription}
+            onChange={(event) => setField("seoDescription", event.target.value)}
+            className="w-full resize-y rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+          />
+          <p className="mt-1 text-xs text-slate-500">
+            Краткое описание в поиске. Если пусто — берётся краткое описание.
+          </p>
+        </div>
+
+        <div>
+          <label htmlFor="article-author" className="mb-2 block text-sm font-medium text-slate-700">
+            Автор
+          </label>
+          <input
+            id="article-author"
+            value={values.authorName}
+            onChange={(event) => setField("authorName", event.target.value)}
+            className="w-full rounded-lg border border-slate-300 px-4 py-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+          />
+          <p className="mt-1 text-xs text-slate-500">
+            Необязательно. Если заполнено, на странице статьи будет строка «Автор: …».
+          </p>
+        </div>
+
         <BoldTextarea
           id="article-body"
           label="Текст"
@@ -198,8 +256,85 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
           onChange={(body) => setField("body", body)}
           rows={12}
           allowTable
-          hint="Выделите фрагмент и нажмите «Жирный» — в тексте появится **жирный**. Кнопка «Таблица» вставляет одну сравнительную таблицу."
+          allowStructure
+          hint="Выделите фрагмент и нажмите «Жирный» — в тексте появится **жирный**. «Подзаголовок», «Список» и «Нумерованный список» вставляют ##, «- » и «1. ». Отделяйте такие блоки пустой строкой. Кнопка «Таблица» вставляет одну сравнительную таблицу."
         />
+
+        <div>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm font-medium text-slate-700">Вопросы и ответы</p>
+            <button
+              type="button"
+              onClick={() =>
+                setField("faq", [...values.faq, { question: "", answer: "" }])
+              }
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              <Plus className="h-4 w-4" />
+              Добавить
+            </button>
+          </div>
+          {values.faq.length === 0 ? (
+            <p className="text-xs text-slate-500">
+              Необязательно. Пустые пары при сохранении отбрасываются.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {values.faq.map((item, index) => (
+                <div key={index} className="space-y-3 rounded-lg border border-slate-200 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <label
+                      htmlFor={`article-faq-q-${index}`}
+                      className="block text-sm font-medium text-slate-700"
+                    >
+                      Вопрос
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setField(
+                          "faq",
+                          values.faq.filter((_, itemIndex) => itemIndex !== index),
+                        )
+                      }
+                      className="rounded-lg p-1.5 text-red-500 hover:bg-red-50"
+                      title="Удалить"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <input
+                    id={`article-faq-q-${index}`}
+                    value={item.question}
+                    onChange={(event) => {
+                      const next = values.faq.slice();
+                      next[index] = { ...item, question: event.target.value };
+                      setField("faq", next);
+                    }}
+                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <label
+                    htmlFor={`article-faq-a-${index}`}
+                    className="block text-sm font-medium text-slate-700"
+                  >
+                    Ответ
+                  </label>
+                  <textarea
+                    id={`article-faq-a-${index}`}
+                    rows={3}
+                    value={item.answer}
+                    onChange={(event) => {
+                      const next = values.faq.slice();
+                      next[index] = { ...item, answer: event.target.value };
+                      setField("faq", next);
+                    }}
+                    className="w-full resize-y rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div>
           <p className="mb-2 text-sm font-medium text-slate-700">Изображение</p>

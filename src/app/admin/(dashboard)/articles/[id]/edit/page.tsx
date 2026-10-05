@@ -47,6 +47,10 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
           body: article.body,
           imageUrl: article.imageUrl ?? "",
           published: article.published,
+          seoTitle: article.seoTitle,
+          seoDescription: article.seoDescription,
+          authorName: article.authorName,
+          faq: article.faq,
         }}
       />
     </div>

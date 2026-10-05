@@ -4,7 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2, ImagePlus, Loader2, Plus, Save, Trash2, X } from "lucide-react";
 import { createArticle, updateArticle, type ArticleFaqItem } from "@/app/actions";
-import { BoldTextarea } from "../components/BoldTextarea";
+import { ArticleBodyEditor } from "./ArticleBodyEditor";
 
 function generateSlug(name: string): string {
   return name
@@ -249,15 +249,11 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
           </p>
         </div>
 
-        <BoldTextarea
+        <ArticleBodyEditor
           id="article-body"
           label="Текст"
           value={values.body}
           onChange={(body) => setField("body", body)}
-          rows={12}
-          allowTable
-          allowStructure
-          hint="Выделите фрагмент и нажмите «Жирный» — в тексте появится **жирный**. «Подзаголовок», «Список» и «Нумерованный список» вставляют ##, «- » и «1. ». Отделяйте такие блоки пустой строкой. Кнопка «Таблица» вставляет одну сравнительную таблицу."
         />
 
         <div>

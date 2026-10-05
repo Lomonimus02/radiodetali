@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Fragment } from "react";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { getPublishedArticleBySlug, type ArticleFaqItem } from "@/app/actions";
-import { parseArticleBody, stripArticleTables, type ArticleBodyBlock } from "@/lib/article-body";
-import { parseBoldSegments } from "@/lib/category-info";
+import { articlePlainText, parseArticleBody } from "@/lib/article-body";
+import { ArticleBodyView } from "../../components/ArticleBodyView";
 import { SITE_BRAND } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -18,12 +17,7 @@ interface ArticlePageProps {
 }
 
 function descriptionFromArticle(excerpt: string | null, body: string): string {
-  const plainBody = stripArticleTables(body)
-    .replace(/\*\*/g, "")
-    .replace(/^##\s+/gm, "")
-    .replace(/^\d+\.\s+/gm, "")
-    .replace(/^-\s+/gm, "");
-  const raw = (excerpt?.trim() || plainBody).replace(/\s+/g, " ").trim();
+  const raw = (excerpt?.trim() || articlePlainText(body)).replace(/\s+/g, " ").trim();
   if (raw.length <= 160) return raw;
   return `${raw.slice(0, 160).trimEnd()}…`;
 }
@@ -51,90 +45,6 @@ function absoluteUrl(url: string): string {
 
 function jsonLd(data: unknown): string {
   return JSON.stringify(data).replace(/</g, "\\u003c");
-}
-
-function InlineText({ text }: { text: string }) {
-  return (
-    <>
-      {parseBoldSegments(text).map((segment, index) =>
-        segment.bold ? (
-          <strong key={index}>{segment.text}</strong>
-        ) : (
-          <Fragment key={index}>{segment.text}</Fragment>
-        ),
-      )}
-    </>
-  );
-}
-
-function ArticleBlock({ block }: { block: ArticleBodyBlock }) {
-  if (block.kind === "heading") {
-    return (
-      <h2 className="text-2xl font-bold leading-snug text-[var(--gray-900)]">
-        <InlineText text={block.text} />
-      </h2>
-    );
-  }
-
-  if (block.kind === "ul" || block.kind === "ol") {
-    const ListTag = block.kind === "ul" ? "ul" : "ol";
-    return (
-      <ListTag
-        className={
-          block.kind === "ul"
-            ? "list-disc space-y-2 pl-6"
-            : "list-decimal space-y-2 pl-6"
-        }
-      >
-        {block.items.map((item, index) => (
-          <li key={index}>
-            <InlineText text={item} />
-          </li>
-        ))}
-      </ListTag>
-    );
-  }
-
-  if (block.kind === "paragraph") {
-    return (
-      <p className="whitespace-pre-wrap">
-        <InlineText text={block.text} />
-      </p>
-    );
-  }
-
-  return (
-    <div className="overflow-x-auto rounded-xl border border-[var(--gray-200)] bg-white">
-      <table className="w-full min-w-[20rem] border-collapse text-left text-base leading-6">
-        <thead className="bg-[var(--gray-100)] text-[var(--gray-900)]">
-          <tr>
-            {block.header.map((cell, cellIndex) => (
-              <th
-                key={cellIndex}
-                className="border-b border-[var(--gray-200)] px-4 py-3 font-semibold"
-              >
-                <InlineText text={cell} />
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {block.rows.map((row, rowIndex) => (
-            <tr
-              key={rowIndex}
-              className="border-t border-[var(--gray-200)] odd:bg-white even:bg-[var(--gray-50)]"
-            >
-              {row.map((cell, cellIndex) => (
-                <td key={cellIndex} className="px-4 py-3 align-top">
-                  <InlineText text={cell} />
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
 }
 
 function formatArticleDate(date: Date): string {
@@ -314,10 +224,8 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           </figure>
         ) : null}
 
-        <div className="mt-8 space-y-5 text-[17px] leading-8 text-[var(--gray-800)]">
-          {blocks.map((block, index) => (
-            <ArticleBlock key={index} block={block} />
-          ))}
+        <div className="mt-8">
+          <ArticleBodyView blocks={blocks} />
         </div>
 
         {article.faq.length > 0 ? (
